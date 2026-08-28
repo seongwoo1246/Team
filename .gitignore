@@ -107,3 +107,6 @@ InitTestScene*.unity*
 
 # 에셋 파일  제외
 Assets/ExternalAssets
+
+# 빌드 폴더 제외
+Build/
