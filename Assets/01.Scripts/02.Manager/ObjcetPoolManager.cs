@@ -1,8 +1,8 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Ç®¸µÇØ¼­ »ç¿ëÇÒ ¿ÀºêÁ§Æ®¶ó¸é ¹İµå½Ã ÀÌ 2°¡Áö¸¦ ÇØ¾ßÇÏ±â¿¡ ¸¸µç ÀÎÅÍÆäÀÌ½º 
+/// ì˜¤ë¸Œì íŠ¸ í´ë§ í•  ëª¨ë“  ì¹œêµ¬ë“¤í•œíƒœ ë„£ì–´ì¤„ ì¸í„°í˜ì´ìŠ¤
 /// </summary>
 public interface IPoolable
 {
@@ -14,7 +14,7 @@ public interface IPoolable
 }
 
 /// <summary>
-/// ¿ÀºêÁ§Æ® Æú¸µ ÇÒ¶§ »ç¿ëÇÒ enumÀ» ¿©±â¿¡ Á¤¸® º¯°æ ¹× ÇÊ¿ä½Ã ¼öÁ¤ ¿¹Á¤
+///í´ë§ í• ë•Œ ì‚¬ìš©í•  í‚¤ê°’ë“¤ ë¶ˆëŸ¬ì˜¬ ë•Œ ìì‹ ì´ ë¶ˆëŸ¬ ì˜¤ëŠ” ì¢…ë¥˜ì— ë§ê²Œ ê°€ì ¸ê°€ ì‚¬ìš©
 /// </summary>
 public enum enumType
 {
@@ -27,44 +27,25 @@ public enum enumType
 
 
 /// <summary>
-/// ¸ğµç ¿ÀºêÁ§Æ® Ç®¸µ¿¡ °ü·ÃµÈ ÇÔ¼ö´Â ¿©±â¼­ ´Ù ÇØ°á ÇÒ Å¬·¡½º
+/// ì‹¤ì§ˆì ìœ¼ë¡œ ì‚¬ìš©í•  ì˜¤ë¸Œì íŠ¸ í´ë§ ë§¤ë‹ˆì € í´ë˜ìŠ¤
 /// </summary>
-public class ObjcetPoolManager : MonoBehaviour
+public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
 {
-    public static ObjcetPoolManager Instance {  get; private set; }
-
-    //ÇöÀç´Â enumÀ» ³Ö¾î¼­ »ç¿ëÁß º¯°æ ÇÊ¿ä½Ã º¯°æ¿¹Á¤
+   
     private readonly Dictionary<enumType, object> _pool = new Dictionary<enumType, object>();
 
-    private void Awake()
-    {
-        if(Instance == null)
-        {
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-       
-        
-    }
-
-
-
-    /// <summary>
-    /// »õ·Î¿î Á¾·ùÀÇ ÆúÀ» ¸ñ·Ï¿¡ ÀúÀåÇØµÎ´Â ÇÔ¼ö
-    /// </summary>
-    /// <param name="enumname">ÀÌ Ç®¿¡ µé¾î°¥ enumÀÇ ÀÌ¸§À¸·Î Ç®ÀÇ ÀÌ¸§ÀÌ±âµµ ÇÔ</param>
-    /// <param name="prefab">Âï¾î³¾ ¹°°Ç</param>
-    /// <param name="initialSize">¹Ì¸® Âï¾î³¾ ¼ıÀÚ</param>
+   
+   /// <summary>
+   /// ê²Œì„ ë§¤ë‹ˆì €ê°€ ê°€ì¥ ë¨¼ì € í•´ì¤˜ì•¼ í•˜ëŠ” ë‚´ìš©ë“¤ (ì´ê±¸ ì•ˆí•˜ë©´ ì˜¤ë¸Œì íŠ¸ í´ë§ì„ ì‚¬ìš©í•  ìˆ˜ ì—†ìŒ)
+   /// </summary>
+   /// <param name="enumname">ìì‹ ì´ ë¶ˆëŸ¬ì˜¬ enum ì¢…ë¥˜</param>
+   /// <param name="prefab">ìì‹ ì´ ë§Œë“¤ ì˜¤ë¸Œì íŠ¸</param>
+   /// <param name="initialSize">ìì‹ ì´ ë§Œë“¤ ê°¯ìˆ˜ </param>
     public void RegisterPool<T>(enumType enumname, T prefab, int initialSize = 0) where T : Component, IPoolable
     {
         if (_pool.ContainsKey(enumname))
         {
-            Debug.Log("ÀÌ¹Ì °°Àº ÀÌ¸§ÀÇ ÆúÀÌ ÀÖÀ½");
+            Debug.Log("ï¿½Ì¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½");
             return;
         }
 
@@ -76,13 +57,13 @@ public class ObjcetPoolManager : MonoBehaviour
 
 
     /// <summary>
-    /// °ÔÀÓ¿¡¼­ ¾²±â À§ÇØ ²¨³»´Â ÇÔ¼ö
+    /// ì‹¤ì§ˆì ìœ¼ë¡œ ì†Œí™˜í•  ë•Œ ì‚¬ìš©í•  í•¨ìˆ˜
     /// </summary>
     public T Spawn<T>(enumType enumname) where T : Component, IPoolable
     {
         if (!_pool.TryGetValue(enumname, out object poolObj))
         {
-            Debug.Log($"{enumname}¶ó´Â ÀÌ¸§Ç¥ÀÇ Æú¸µÀÌ ¾ø½À´Ï´Ù. RegisterPoolÀ» ¸ÕÀú ÇØ¾ß ÇÕ´Ï´Ù.");
+            Debug.Log($"{enumname}ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½. RegisterPoolï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ø¾ï¿½ ï¿½Õ´Ï´ï¿½.");
             return null;
         }
         Pool<T> pool = (Pool<T>)poolObj;
@@ -91,13 +72,13 @@ public class ObjcetPoolManager : MonoBehaviour
 
 
     /// <summary>
-    /// ´Ù »ç¿ëÇÑ ÈÄ µÇµ¹¸®±â ÇÔ¼ö
+    ///ì‹¤ì§ˆì ìœ¼ë¡œ ë¹„í™œì„±í™” ì‹œí‚¬ ë•Œ ì‚¬ìš©í•  í•¨ìˆ˜
     /// </summary>
     public void Despawn<T>(enumType enumname, T obj) where T : Component, IPoolable
     {
         if (!_pool.TryGetValue(enumname, out object poolObj))
         {
-            Debug.Log($"{enumname}¶ó´Â ÀÌ¸§Ç¥ÀÇ Æú¸µÀÌ ¾ø½À´Ï´Ù.");
+            Debug.Log($"{enumname}ï¿½ï¿½ï¿½ ï¿½Ì¸ï¿½Ç¥ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
             return;
         }
 
@@ -111,13 +92,13 @@ public class ObjcetPoolManager : MonoBehaviour
 
 class Pool<T> where T : Component , IPoolable
 {
-    // ÇÁ·ÎÁ§Æ®¿¡ »õ·Î ¸¸µé ¶§ ³Ö¾îÁÙ ¼³°èµµ
+    // ì†Œí™˜ ì›ë³¸
     private readonly T _prefab;
-    // ÇÁ·ÎÁ§Æ®¿¡¼­ Á¤¸®ÇØµÑ ºÎ¸ğ ¿ÀºêÁ§Æ® À§Ä¡
+    //ì†Œí™˜ ìœ„ì¹˜
     private readonly Transform _parent;
-    // ¾È¿¡¼­ ½×¾ÆµÎ°í ÀÖÀ» Ã¢°í¿ë
+    // ì˜¤ë¸Œì íŠ¸ í´ë§ ë‹´ì•„ë‘˜ ì½œë ‰ì…˜
     private readonly Stack<T> _inactive = new Stack<T>();
-    //Áö±İ ¹Û¿¡¼­ »ç¿ëÇÏ°í ÀÖÀ» ¹°°Çµé ´ã¾ÆµÎ´Â ¿ëµµ
+    //í˜„ì¬ í™œë™ ì¤‘ì¸ í´ë§ ì†Œí™˜ë¬¼ë“¤
     private readonly HashSet<T> _active = new HashSet<T>();
    
 
@@ -136,17 +117,14 @@ class Pool<T> where T : Component , IPoolable
 
     }
 
-    // Ã³À½ ¸¸µé ¶§ »õ·Î ¸¸µå´Â ÇÔ¼ö
+    // ì²˜ìŒì— ì—†ì„ ì‹œ ì˜¤ë¸Œì íŠ¸ í’€ë§ì„ ë§Œë“¬
     private T CreateNew()
     {
         return Object.Instantiate(_prefab, _parent);
     }
 
 
-   /// <summary>
-   /// ¿ÀºêÁ§Æ® ²¨³»¼­ »ç¿ëÇÒ ¶§ ¾µ ÇÔ¼ö(¾øÀ¸¸é »ı¼º ÀÖÀ¸¸é »ç¿ë)
-   /// </summary>
-   /// <returns></returns>
+ 
     public T Get()
     {
         T obj = _inactive.Count > 0 ? _inactive.Pop() : CreateNew();
@@ -158,15 +136,12 @@ class Pool<T> where T : Component , IPoolable
 
 
 
-    /// <summary>
-    /// Áßº¹ ¼ö³³ÀÌ µÉ °æ¿ì ¹«½ÃÇÏ°í »ç¿ë Áß ¸ñ·Ï¿¡¼­ Á¦¿ÜÈÄ ºñÈ°¼ºÈ­ ÇÏ±â
-    /// </summary>
-    /// <param name="obj"></param>
+
     public void Return(T obj)
     {
         if(!_active.Contains(obj))
         {
-            Debug.Log("Áßº¹ ¼ö³³ µÇ°í ÀÖ½À´Ï´Ù. ¹«½ÃÇÏ°Ú½À´Ï´Ù.");
+            Debug.Log("ï¿½ßºï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½Ç°ï¿½ ï¿½Ö½ï¿½ï¿½Ï´ï¿½. ï¿½ï¿½ï¿½ï¿½ï¿½Ï°Ú½ï¿½ï¿½Ï´ï¿½.");
             return;
         }
 
@@ -183,36 +158,36 @@ class Pool<T> where T : Component , IPoolable
 }
 
 /*
- »ç¿ëÀ» À§ÇÑ ¿¹½Ã
+ ì‚¬ìš©ë°©ë²• ì˜ˆì‹œ
 
-1. Æú¸µÇÒ¶§´Â ¹«Á¶°Ç ÀÎÅÍÆäÀÌ½º ³Ö¾îÁÖ±â
-class Å¬·¡½ºÀÌ¸§ : MonoBehaviour , IPoolable
+1. ì¸í„°í˜ì´ìŠ¤ ì ìš©
+class í´ë˜ìŠ¤ ì´ë¦„ : MonoBehaviour , IPoolable
 {
     public void OnSpawn()
     {
-        µîÀåÇÒ ¶§ ÇÒ °Íµé 
+        ì†Œí™˜í•  ë•Œ í•´ì•¼ í•  ì¼ë“¤
     }
     public void OnDespawn()
     {
-        »ç¶óÁú ¶§ ÇÒ °Íµé 
+        ë¹„í™œì„±í™” í•  ë•Œ í•  ì¼ë“¤
     }
 }
 
 
 
-°ÔÀÓ ½ÃÀÛ½Ã µî·ÏÇÒ ¶§ (°ÔÀÓ ¸Å´ÏÀúµî¿¡¼­ ½ºÅ¸Æ®¿¡ ³Ö¾îÁà¾ß ÇÔ)
-ObjcetPoolManager.Instance.RegisterPool(¼ÒÈ¯ÇÒ enumÀû¾îÁÖ±â,¼ÒÈ¯ÇÒ ÇÁ¸®ÆÕ, initialSize : ¼ÒÈ¯ÇÒ ¼ıÀÚ)
+2. RegisterPoolì„ ê²Œì„ ë§¤ë‹ˆì €ì—ì„œ ì‹¤í–‰
+ObjcetPoolManager.Instance.RegisterPool(ì†Œí™˜í•  enumì¢…ë¥˜,ì†Œí™˜í•  ì˜¤ë¸Œì íŠ¸, initialSize : ì†Œí™˜í•  ê°¯ìˆ˜)
 
   void Start()
     {
         ObjcetPoolManager.Instance.RegisterPool(enumType.Cartoon, monster, 5);
     }
 
-²¨³¾ ¶§ 
-¼ÒÈ¯ÇÒ ¶§ ¸®½ºÆ®(Queue)¿¡ ´ã¾ÆÁà¾ß ¿©·¯°³ ¼ÒÈ¯, ¿©·¯°³ ÇØÁ¦ÇÒ ¶§ °¡´É
-Å¬·¡½ºÀÌ¸§ º¯¼öÀÌ¸§  = ObjcetPoolManager.Instance.Spawn<Å¬·¡½ºÀÌ¸§>("¼ÒÈ¯ÇÒ enumÀû¾îÁÖ±â")
+êº¼ë‚¼ ë•Œ
+ì´ê±°ë¥¼ ì‚¬ìš© í•  ë•ŒëŠ” ë¯¸ë¦¬ Listí˜¹ì€ Queue, Stackë“±ìœ¼ë¡œ ë¯¸ë¦¬ ë§Œë“¤ì–´ë‘ê³  ë‹´ì•„ì¨ì•¼ ì—¬ëŸ¬ê°œ ê°€ëŠ¥
+ì†Œí™˜í´ë˜ìŠ¤ ë³€ìˆ˜ëª…  = ObjcetPoolManager.Instance.Spawn<ì†Œí™˜í´ë˜ìŠ¤>("ì†Œí™˜í•  enumì¢…ë¥˜")
 
- public void ²¨³»´Â ÇÔ¼ö()
+ public void ì†Œí™˜í•¨ìˆ˜()
     {
         test T = ObjcetPoolManager.Instance.Spawn<test>(enumType.Cartoon);
         if(T != null )
@@ -222,15 +197,15 @@ ObjcetPoolManager.Instance.RegisterPool(¼ÒÈ¯ÇÒ enumÀû¾îÁÖ±â,¼ÒÈ¯ÇÒ ÇÁ¸®ÆÕ, initi
 
     }
 
-Áı¾î³ÖÀ» ¶§ 
-ObjcetPoolManager.Instance.Despawn("¼ÒÈ¯ÇÒ enumÀû¾îÁÖ±â",º¯¼öÀÌ¸§)
+ì§‘ì–´ ë„£ì„ ë•Œ
+ObjcetPoolManager.Instance.Despawn("ì†Œí™˜í´ë˜ìŠ¤",ë³€ìˆ˜ëª…)
 
-public void Áı¾î ³Ö´Â ÇÔ¼ö()
+public void ë¹„í™œì„±í™” í•¨ìˆ˜()
     {
-        if (¸®½ºÆ®(Queue).Count == 0) return;
+        if (ï¿½ï¿½ï¿½ï¿½Æ®(Queue).Count == 0) return;
 
-        int lastIndex = ¸®½ºÆ®(Queue).Count - 1;
-        test targetObj = ¸®½ºÆ®(Queue)[lastIndex];
+        int lastIndex = List(Queue).Count - 1;
+        test targetObj = List(Queue)[lastIndex];
         
         ObjcetPoolManager.Instance.Despawn(enumType.Cartoon, targetObj);
         spwan.RemoveAt(lastIndex);
