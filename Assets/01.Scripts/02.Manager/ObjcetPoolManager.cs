@@ -29,31 +29,12 @@ public enum enumType
 /// <summary>
 /// 실질적으로 사용할 오브젝트 폴링 매니저 클래스
 /// </summary>
-public class ObjcetPoolManager : MonoBehaviour
+public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
 {
-    public static ObjcetPoolManager Instance {  get; private set; }
-
    
     private readonly Dictionary<enumType, object> _pool = new Dictionary<enumType, object>();
 
-    private void Awake()
-    {
-        if(Instance == null)
-        {
-
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-       
-        
-    }
-
-
-
+   
    /// <summary>
    /// 게임 매니저가 가장 먼저 해줘야 하는 내용들 (이걸 안하면 오브젝트 폴링을 사용할 수 없음)
    /// </summary>
