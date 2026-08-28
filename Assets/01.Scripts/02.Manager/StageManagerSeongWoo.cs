@@ -18,7 +18,6 @@ public class StageManagerSeongWoo : Singleton<StageManagerSeongWoo>
     public void SelectStage()
     {
         // 스테이지 선택
-        // 캐릭터, 장비 등 확인 
         // 성에서 바닥으로 나가서 스테이지로 이동하는 애니메이션 연출
         // 스테이지 선택 후 이동시 초기화
         ScenesManager.instance.LoadScenes(ScenesName.Lobby);
