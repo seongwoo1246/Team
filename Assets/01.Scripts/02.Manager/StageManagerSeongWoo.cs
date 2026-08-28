@@ -17,17 +17,21 @@ public class StageManagerSeongWoo : Singleton<StageManagerSeongWoo>
 
     public void SelectStage()
     {
-
+        // 스테이지 선택
+        // 캐릭터, 장비 등 확인 
+        // 성에서 바닥으로 나가서 스테이지로 이동하는 애니메이션 연출
+        // 스테이지 선택 후 이동시 초기화
+        ScenesManager.instance.LoadScenes(ScenesName.Lobby);
     }
 
     public async UniTask AutoBattle()
     {
         while(isAutoBattling)
         {
-            // 자동전투를 하며 분당 금액을 저장중
+            // 자동전투를 애니메이션 연출
         }
 
-        //스테이지 전투 혹은 
+        //스테이지 전투 혹은 백그라운드시 멈춰있을 예정
     }
 
 
