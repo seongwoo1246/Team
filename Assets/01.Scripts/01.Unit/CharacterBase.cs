@@ -17,7 +17,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
-/// 캐릭터 공통 기반 클래스. 프리팹에 붙여 사용하며, 하위 클래스가 공격 방식을 정의한다.
+/// 캐릭터 공통 기반 클래스. 프리팹에 붙여 사용하며, 하위 클래스가 공격 방식을 정의
 /// </summary>
 public class CharacterBase : MonoBehaviour, IEntity
 {
@@ -34,9 +34,6 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 이 캐릭터의 기본 스탯 SO. CSV 임포터가 만든 에셋을 넣음
     [SerializeField] private BaseStatData statData;
 
-    // 시작 레벨
-    [SerializeField] private int startLevel = 1;
-
     [Header("전투 설정")]
     // 자동 공격 간격(초)
     [SerializeField] private float attackInterval = DEFAULT_ATTACK_INTERVAL;
@@ -50,19 +47,22 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 아군으로 인식할 레이어 (캐릭터 레이어). 힐러가 사용해야함
     [SerializeField] private LayerMask allyLayer;
 
-    // 현재 레벨 기준으로 계산된 실시간 스탯 (전투하면서 계속 바뀌니까 직렬화안했어요)
-    private int _level;
+    // 파티 강화 트랙 레벨 기준으로 계산된 실시간 스탯 (전투하면서 계속 바뀌니까 직렬화 안함)
     private float _currentHP;
     private float _currentMaxHP;
     private float _currentPower;
+
+    // AttackSpeed 트랙이 반영된 실제 공격 간격 (attackInterval 을 속도 계수로 나눈 값)
+    private float _currentAttackInterval;
+
+    // 파티 강화 시스템 (트랙 레벨을 읽고, 강화 이벤트를 구독)
+    private UpgradeSystem _upgradeSystem;
 
     // OverlapCircle 결과를 매번 새로 만들지 않도록 재사용하는 버퍼 (2D)
     private readonly Collider2D[] _targetBuffer = new Collider2D[MAX_TARGET_BUFFER];
 
     // 2D 물리 탐지에 쓰는 필터 (struct라 매번 만들어도 GC 없음)
     private ContactFilter2D _contactFilter;
-
-    public int Level => _level;
 
     public float CurrentHP => _currentHP;
 
@@ -90,39 +90,49 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     private void Awake()
     {
-        _level = startLevel;
         RecalculateStats();
         _currentHP = _currentMaxHP;
     }
 
     private void Start()
     {
-        // 오브젝트가 파괴되면 루프도 자동으로 멈추도록 유니테스크
+        // 파티 강화 시스템 구독 (트랙이 오르면 스탯 재계산)
+        _upgradeSystem = UpgradeSystem.instance;
+        if (_upgradeSystem != null)
+        {
+            _upgradeSystem.TrackUpgraded += OnTrackUpgraded;
+        }
+
+        // Awake 시점엔 UpgradeSystem 이 아직 없었을 수 있으니 한 번 더 계산
+        RecalculateStats();
+        _currentHP = _currentMaxHP;
+
+        // 오브젝트가 파괴되면 루프도 자동으로 멈추도록 유니태스크 취소 토큰
         RunAutoAttackLoop(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
-    /// <summary>
-    /// 레벨을 바꾸고 스탯을 다시 계산 체력 비율은 최대한 유지
-    /// 강화 상한은 없음
-    /// 치명타 확률만 100%에서 멈춘다.
-    /// </summary>
-    /// <param name="newLevel">설정할 레벨 (0 미만은 0으로 보정)</param>
-    public void SetLevel(int newLevel)
+    private void OnDestroy()
     {
-        if (statData == null)
+        if (_upgradeSystem != null)
         {
-            return;
+            _upgradeSystem.TrackUpgraded -= OnTrackUpgraded;
         }
+    }
 
+    /// <summary>
+    /// 파티 트랙이 강화됐을 때. 스탯을 다시 계산하되 체력 비율은 유지
+    /// </summary>
+    private void OnTrackUpgraded(UpgradeTrack track)
+    {
         float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
-        _level = Mathf.Max(0, newLevel);
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
     }
 
     /// <summary>
-    /// 현재 레벨에 맞는 최대 체력과 공격력(힐량)을 StatCalculator로 계산해 저장
-    /// 스탯 계산 방식을 바꾸고 싶으면 하위 클래스에서 override
+    /// 현재 파티 트랙 레벨에 맞는 최대 체력과 실효 공격력(힐량)을 계산해 저장.
+    /// 공격력=Power 트랙, 체력=Hp 트랙, 치명타=Crit 트랙 을 각각 사용한다.
+    /// 계산 방식을 바꾸고 싶으면 하위 클래스에서 override 한다.
     /// </summary>
     protected virtual void RecalculateStats()
     {
@@ -130,11 +140,20 @@ public class CharacterBase : MonoBehaviour, IEntity
         {
             _currentMaxHP = 1f;
             _currentPower = 0f;
+            _currentAttackInterval = attackInterval;
             return;
         }
 
-        _currentMaxHP = StatCalculator.GetMaxHP(statData, _level);
-        _currentPower = StatCalculator.GetEffectiveStatValue(statData, _level);
+        int powerLevel = _upgradeSystem != null ? _upgradeSystem.GetLevel(UpgradeTrack.Power) : 0;
+        int hpLevel = _upgradeSystem != null ? _upgradeSystem.GetLevel(UpgradeTrack.Hp) : 0;
+        int critChanceLevel = _upgradeSystem != null ? _upgradeSystem.GetLevel(UpgradeTrack.Crit) : 0;
+        int critDamageLevel = _upgradeSystem != null ? _upgradeSystem.GetLevel(UpgradeTrack.CritDamage) : 0;
+
+        _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel);
+        _currentPower = StatCalculator.GetEffectiveStatValue(statData, powerLevel, critChanceLevel, critDamageLevel);
+
+        float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;
+        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / Mathf.Max(0.01f, speedFactor));
     }
 
     /// <summary>
@@ -145,7 +164,8 @@ public class CharacterBase : MonoBehaviour, IEntity
     {
         while (!IsDead)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(attackInterval), cancellationToken: token);
+            // _currentAttackInterval 은 AttackSpeed 강화 시 바뀌므로 매 반복마다 읽는다
+            await UniTask.Delay(TimeSpan.FromSeconds(_currentAttackInterval), cancellationToken: token);
 
             if (IsDead)
             {
@@ -291,7 +311,7 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 사망 처리. 게임오브젝트를 비활성화
+    /// 사망 처리. 게임오브젝트를 비활성화 풀로돌려보내
     /// </summary>
     public virtual void Die()
     {

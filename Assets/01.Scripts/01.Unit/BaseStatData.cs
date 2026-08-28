@@ -38,25 +38,21 @@ public class BaseStatData : ScriptableObject
     // 레벨 0 기준 최대 체력. 시트: base_hp
     [SerializeField] private float baseHp = 200f;
 
-    [Header("강화 비용")]
-    // 레벨 0 → 1 강화 기본 비용. 시트: base_upgrade_cost
-    [SerializeField] private float baseUpgradeCost = 50f;
-
     [Header("치명타")]
     // 치명타 확률. 0.15 = 15%. 시트: crit_chance
     [SerializeField] private float critChance = 0.15f;
 
-    // 치명타 시 추가 피해 배수 1.0 = 평타의 2배, 2.0 = 3배. 시트: crit_bonus
+    // 치명타 시 추가 피해 배수 (0레벨 기준) 1.0 = 평타의 2배, 2.0 = 3배. 시트: crit_bonus
     [SerializeField] private float critBonus = 1.0f;
 
-    // 레벨당 치명타 확률 증가치 합계가 1.0(100%)을 넘으면 100%에서 멈춤. 시트: crit_chance_per_level
+    // CritDamage 트랙 레벨당 치명타 피해 배수 증가치. 시트: crit_bonus_per_level
+    [SerializeField] private float critBonusPerLevel = 0.05f;
+
+    // Crit 트랙 레벨당 치명타 확률 증가치 합계가 1.0(100%)을 넘으면 100%에서 멈춤. 시트: crit_chance_per_level
     [SerializeField] private float critChancePerLevel = 0.01f;
 
-    [Header("성장률 (보통 시트 _Config 값과 동일하게)")]
-    // 레벨당 강화 비용 증가율
-    [SerializeField] private float costGrowthRate = StatCalculator.DEFAULT_COST_GROWTH;
-
-    // 레벨당 체력 증가율
+    [Header("성장률")]
+    // Hp 트랙 레벨당 체력 증가율 (캐릭터별로 다르게 줄 수 있음). 시트: hp_growth
     [SerializeField] private float hpGrowthRate = StatCalculator.DEFAULT_HP_GROWTH;
 
     public string Id => id;
@@ -75,15 +71,13 @@ public class BaseStatData : ScriptableObject
 
     public float BaseHp => baseHp;
 
-    public float BaseUpgradeCost => baseUpgradeCost;
-
     public float CritChance => critChance;
 
     public float CritBonus => critBonus;
 
-    public float CritChancePerLevel => critChancePerLevel;
+    public float CritBonusPerLevel => critBonusPerLevel;
 
-    public float CostGrowthRate => costGrowthRate;
+    public float CritChancePerLevel => critChancePerLevel;
 
     public float HpGrowthRate => hpGrowthRate;
 }

@@ -99,66 +99,73 @@ public static class StatCalculator
     }
 
 
-    /// <summary>
-    /// 캐릭터 SO 기준으로 강화 비용을 계산
-    /// </summary>
-    public static double GetUpgradeCost(BaseStatData data, int level)
-    {
-        if (data == null)
-        {
-            return 0d;
-        }
-        return GetUpgradeCost(data.BaseUpgradeCost, data.CostGrowthRate, level);
-    }
+    // ── 편의형: 캐릭터 SO + 파티 트랙 레벨 ──────────────────────
+    // 파티 강화는 Power / Hp / Crit 트랙이 각각 따로 레벨업된다.
+    // powerLevel = 공격력 트랙, hpLevel = 체력 트랙, critLevel = 치명타 트랙.
 
     /// <summary>
-    /// 캐릭터 SO 기준으로 순수 능력치(공격력 또는 힐량)를 계산
+    /// 캐릭터 SO 기준으로 순수 능력치(공격력 또는 힐량)를 계산. powerLevel = Power 트랙 레벨.
     /// </summary>
-    public static float GetStatValue(BaseStatData data, int level)
+    public static float GetStatValue(BaseStatData data, int powerLevel)
     {
         if (data == null)
         {
             return 0f;
         }
-        return GetStatValue(data.BasePower, data.PowerPerLevel, level);
+        return GetStatValue(data.BasePower, data.PowerPerLevel, powerLevel);
     }
 
     /// <summary>
-    /// 캐릭터 SO 기준으로 최대 체력을 계산
+    /// 캐릭터 SO 기준으로 최대 체력을 계산. hpLevel = Hp 트랙 레벨.
     /// </summary>
-    public static float GetMaxHP(BaseStatData data, int level)
+    public static float GetMaxHP(BaseStatData data, int hpLevel)
     {
         if (data == null)
         {
             return 0f;
         }
-        return GetMaxHP(data.BaseHp, data.HpGrowthRate, level);
+        return GetMaxHP(data.BaseHp, data.HpGrowthRate, hpLevel);
     }
 
     /// <summary>
-    /// 캐릭터 SO 기준으로 현재 레벨의 치명타 확률을 계산 (100%에서 멈춤)
+    /// 캐릭터 SO 기준으로 치명타 확률을 계산 (100%에서 멈춤). critChanceLevel = Crit 트랙 레벨.
     /// </summary>
-    public static float GetCritChance(BaseStatData data, int level)
+    public static float GetCritChance(BaseStatData data, int critChanceLevel)
     {
         if (data == null)
         {
             return 0f;
         }
-        return GetCritChance(data.CritChance, data.CritChancePerLevel, level);
+        return GetCritChance(data.CritChance, data.CritChancePerLevel, critChanceLevel);
     }
 
     /// <summary>
-    /// 캐릭터 SO 기준으로 치명타 기대값이 반영된 실효 공격력(또는 힐량)을 계산함
-    /// 치명타 확률은 레벨에 따라 오르고 100%에서 멈춘다.
+    /// 캐릭터 SO 기준으로 치명타 피해 배수를 계산. critDamageLevel = CritDamage 트랙 레벨.
+    /// 상한 없음 (1.0 = 크리 시 평타의 2배, 2.0 = 3배 ...).
     /// </summary>
-    public static float GetEffectiveStatValue(BaseStatData data, int level)
+    public static float GetCritBonus(BaseStatData data, int critDamageLevel)
     {
         if (data == null)
         {
             return 0f;
         }
-        float raw = GetStatValue(data, level);
-        float critChance = GetCritChance(data, level);
-        return GetCritDamage(raw, critChance, data.CritBonus);
+        int safeLevel = Mathf.Max(0, critDamageLevel);
+        return data.CritBonus + (data.CritBonusPerLevel * safeLevel);
+    }
+
+    /// <summary>
+    /// 캐릭터 SO 기준으로 치명타 기대값이 반영된 실효 공격력(또는 힐량)을 계산.
+    /// 공격력 = Power 트랙, 치명타 확률 = Crit 트랙, 치명타 피해 = CritDamage 트랙.
+    /// </summary>
+    public static float GetEffectiveStatValue(BaseStatData data, int powerLevel, int critChanceLevel, int critDamageLevel)
+    {
+        if (data == null)
+        {
+            return 0f;
+        }
+        float raw = GetStatValue(data, powerLevel);
+        float critChance = GetCritChance(data, critChanceLevel);
+        float critBonus = GetCritBonus(data, critDamageLevel);
+        return GetCritDamage(raw, critChance, critBonus);
     }
 }
