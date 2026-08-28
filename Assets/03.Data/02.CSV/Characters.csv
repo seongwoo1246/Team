@@ -1,0 +1,4 @@
+id,name_kr,attack_type,target_type,base_power,power_per_level,base_hp,base_upgrade_cost,crit_chance,crit_bonus,crit_chance_per_level
+char_warrior,전사,Physical,Single,20,5,200,50,0.15,1.0,0.01
+char_mage,메이지,Magic,Multi,12,3,120,80,0.1,1.5,0.008
+char_healer,힐러,Heal,Multi,15,4,140,70,0.05,1.0,0.005

@@ -1,0 +1,5 @@
+﻿id,name_kr,kind,base_hp,base_attack,base_gold,move_speed
+mon_slime,슬라임,Normal,50,5,10,1.5
+mon_bat,박쥐,Normal,35,7,12,2.5
+mon_golem,바위골렘,Normal,120,12,25,0.8
+mon_boss_orc,오크 대장,Boss,400,20,100,1.0
