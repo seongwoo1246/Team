@@ -30,10 +30,12 @@ public class DataImporterWindow : EditorWindow
     private const string OUTPUT_ROOT = "Assets/03.Data/00.UnitSO";
     private const string CHARACTER_OUTPUT = OUTPUT_ROOT + "/Characters";
     private const string MONSTER_OUTPUT = OUTPUT_ROOT + "/Monsters";
+    private const string CONFIG_OUTPUT = OUTPUT_ROOT + "/GameConfig.asset";
 
     // CSV 파일 이름 후보 (숫자 접두사가 붙어도 찾을 수 있게)
     private static readonly string[] CharacterCsvNames = { "Characters.csv", "3_Characters.csv" };
     private static readonly string[] MonsterCsvNames = { "Monsters.csv", "5_Monsters.csv" };
+    private static readonly string[] ConfigCsvNames = { "Config.csv", "_Config.csv", "1_Config.csv" };
 
     [MenuItem("Tools/데이터 임포터")]
     private static void Open()
@@ -61,12 +63,18 @@ public class DataImporterWindow : EditorWindow
             ImportMonsters();
         }
 
+        if (GUILayout.Button("Config CSV 가져오기 (강화 비용)", GUILayout.Height(30f)))
+        {
+            ImportConfig();
+        }
+
         EditorGUILayout.Space(6f);
 
         if (GUILayout.Button("전체 가져오기", GUILayout.Height(34f)))
         {
             ImportCharacters();
             ImportMonsters();
+            ImportConfig();
         }
     }
 
@@ -136,6 +144,41 @@ public class DataImporterWindow : EditorWindow
         EditorUtility.DisplayDialog("데이터 임포터", $"몬스터 {count}개 가져오기 완료", "확인");
     }
 
+    /// <summary>
+    /// _Config CSV (key,value 형식) 를 읽어 GameConfig 에셋을 생성/갱신한다.
+    /// </summary>
+    private void ImportConfig()
+    {
+        string path = FindCsv(ConfigCsvNames);
+        if (path == null)
+        {
+            EditorUtility.DisplayDialog("데이터 임포터", $"Config CSV 를 찾지 못했습니다.\n{CSV_FOLDER} 에 Config.csv 를 넣어주세요.", "확인");
+            return;
+        }
+
+        EnsureFolder(OUTPUT_ROOT);
+
+        // key,value 세로 형식 → 하나의 딕셔너리로 합친다
+        List<Dictionary<string, string>> rows = ReadCsv(path);
+        Dictionary<string, string> kv = new Dictionary<string, string>();
+        foreach (Dictionary<string, string> row in rows)
+        {
+            if (row.TryGetValue("key", out string key)
+                && row.TryGetValue("value", out string value)
+                && !string.IsNullOrWhiteSpace(key))
+            {
+                kv[key.Trim()] = value;
+            }
+        }
+
+        GameConfig asset = GetOrCreateAsset<GameConfig>(CONFIG_OUTPUT);
+        ApplyRow(asset, kv);
+
+        SaveAll();
+        DebugLogger<DataImporterWindow>.Log($"Config {kv.Count}개 항목 가져오기 완료");
+        EditorUtility.DisplayDialog("데이터 임포터", "GameConfig 가져오기 완료", "확인");
+    }
+
     // 에셋 유틸
 
     /// <summary>
@@ -197,9 +240,10 @@ public class DataImporterWindow : EditorWindow
                 break;
 
             case SerializedPropertyType.Float:
-                if (float.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out float f))
+                // doubleValue 는 float 필드에도 double 필드에도 안전하게 쓸 수 있다
+                if (double.TryParse(value, NumberStyles.Any, CultureInfo.InvariantCulture, out double f))
                 {
-                    prop.floatValue = f;
+                    prop.doubleValue = f;
                 }
                 break;
 
