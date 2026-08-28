@@ -4,9 +4,9 @@
 /// <summary>
 /// 스테이지의 흐름  웨이브 관리등을 할 클래스
 /// </summary>
-public class StageManager : MonoBehaviour
+public class StageManagerSeongWoo : MonoBehaviour
 {
-    public static StageManager Instance { get; private set; }
+    public static StageManagerSeongWoo Instance { get; private set; }
 
 
     private bool isStageClear = false;
