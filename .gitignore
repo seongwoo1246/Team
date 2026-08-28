@@ -107,3 +107,5 @@ InitTestScene*.unity*
 
 # 에셋 파일  제외
 Assets/ExternalAssets
+# 유니티가 자동 생성 — 각 머신에서 재생성됨
+/Packages/packages-lock.json
