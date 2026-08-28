@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9246a508121a6c24997d51bb28d6b660, type: 3}
+  m_Name: GameConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameConfig
+  powerUpgradeBase: 30
+  powerUpgradeGrowth: 1.15
+  hpUpgradeBase: 25
+  hpUpgradeGrowth: 1.15
+  critUpgradeBase: 50
+  critUpgradeGrowth: 1.25
+  critDamageUpgradeBase: 60
+  critDamageUpgradeGrowth: 1.2
+  goldGainUpgradeBase: 40
+  goldGainUpgradeGrowth: 1.18
+  goldGainPerLevel: 0.02
+  attackSpeedUpgradeBase: 45
+  attackSpeedUpgradeGrowth: 1.2
+  attackSpeedPerLevel: 0.02
