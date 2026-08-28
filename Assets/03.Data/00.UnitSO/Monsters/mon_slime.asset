@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d263f68393e5c742afcf48e5df5f27e, type: 3}
+  m_Name: mon_slime
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterStatData
+  id: mon_slime
+  nameKr: "\uC2AC\uB77C\uC784"
+  kind: 0
+  baseHp: 50
+  baseAttack: 5
+  baseGold: 10
+  moveSpeed: 1.5
+  hpGrowthPerLevel: 1.2
+  goldGrowthPerLevel: 1.1
