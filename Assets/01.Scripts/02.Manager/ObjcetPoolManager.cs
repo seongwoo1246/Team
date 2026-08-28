@@ -6,7 +6,7 @@ using UnityEngine;
 /// </summary>
 public interface IPoolable
 {
-    // µî
+    
     void OnSpawn();
 
     void OnDespawn();
@@ -21,6 +21,7 @@ public enum enumType
     Cartoon,
     Pixel,
     Item,
+    Particle,
 
 }
 
