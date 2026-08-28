@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "502389656303",
+    "project_id": "unitypvsc",
+    "storage_bucket": "unitypvsc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:502389656303:android:831d64193e862bbad9a91a",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.Team"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI9qhBPmtmVmjDM3dt4vh5MF8UYlCJMyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
