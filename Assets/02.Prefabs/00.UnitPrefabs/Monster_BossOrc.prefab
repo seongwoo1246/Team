@@ -171,7 +171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   statData: {fileID: 11400000, guid: 87364b131fafd1841830c05198ab09fd, type: 2}
   level: 1
-  bossHpMultiplier: 10
+  bossHpMultiplier: 4
   bossGoldMultiplier: 5
   attackInterval: 2.5
   attackRange: 0.7
