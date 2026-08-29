@@ -263,7 +263,7 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 2D 원형 범위 안에서 해당 레이어의 콜라이더를 buffer에 채우고 개수를 돌려주는 공통 함수.
+    /// 2D 원형 범위 안에서 해당 레이어의 콜라이더를 buffer에 채우고 개수를 돌려주는 공통 함수
     /// </summary>
     private int OverlapCircle(LayerMask layer, Collider2D[] buffer)
     {
@@ -318,5 +318,23 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentHP = 0f;
         OnDied();
         gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 죽은 캐릭터를 되살린다. 체력을 최대로 채우고 게임오브젝트를 다시 활성화
+    /// 자동 공격 루프는 죽을 때 while(!IsDead) 조건에 걸려 완전히 끝나버리고 SetActive만으로는
+    /// 다시 안 돌기 때문에, 여기서 직접 루프를 재시작
+    /// </summary>
+    public void Revive()
+    {
+        RecalculateStats();
+        _currentHP = _currentMaxHP;
+
+        if (!gameObject.activeSelf)
+        {
+            gameObject.SetActive(true);
+        }
+
+        RunAutoAttackLoop(this.GetCancellationTokenOnDestroy()).Forget();
     }
 }
