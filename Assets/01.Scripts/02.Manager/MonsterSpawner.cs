@@ -12,7 +12,7 @@ using UnityEngine;
 /// <summary>
 /// 몬스터 프리팹을 받아 소환하고, 죽으면 프리팹별 풀로 되돌리는 스포너
 /// </summary>
-public sealed class MonsterSpawnerJulian : MonoBehaviour
+public sealed class MonsterSpawner : MonoBehaviour
 {
     [Header("소환 위치")]
     [Tooltip("몬스터가 소환될 지점들. 여러 개면 그중 무작위 위치에 소환한다")]
