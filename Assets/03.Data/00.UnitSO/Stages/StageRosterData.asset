@@ -23,7 +23,7 @@ MonoBehaviour:
   - monsterPrefab: {fileID: 2162109254367515413, guid: bf069e7077b7b3442b8883e22ee8543b, type: 3}
     unlockStage: 1
   baseWaveCount: 3
-  stagesPerWaveIncrease: 10
+  stagesPerWaveIncrease: 0
   maxWaveCount: 10
   monstersPerWave: 5
   spawnInterval: 0.5
