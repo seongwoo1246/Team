@@ -4,6 +4,18 @@ using UnityEngine;
 public class GameManager : Singleton<GameManager>
 {
     private bool isLoadDone = false;
+    private bool FristDownload = false;
+
+
+
+
+
+
+   
+
+
+
+
 
     /// <summary>
     ///  로딩화면 보여주고 씬 넘어갈 때 isLoadDone를 true로 바꿔주면 씬 넘어가는 비동기 유니테스크
@@ -12,10 +24,39 @@ public class GameManager : Singleton<GameManager>
     /// <returns></returns>
     private async UniTask LoadingDone(ScenesName scenes)
     {
-
+        //로딩창 화면함수 
         await UniTask.WaitUntil(() => isLoadDone);
+        //로딩창 화면함수 
         ScenesManager.instance.LoadScenes(scenes);
     }
+
+
+
+
+
+
+    //서버가 들고있어야 할 것
+    /*
+     처음에 받아올 것들(처음에 전체 데이터 리소스를 다운로드 최초1회)
+    1. adressable에 있는 에셋번들(스프라이트, 애니메이션 클립, )
+    2. 사운드
+    다운로드 후 bool true로 바꾸기
+    
+    
+    유저가 입력한 아이디를 키값으로 하는 딕셔너리를 만든후 로그인시 아이디가 같고 비밀번호가 틀리지 않다면 받아오는 정보들
+    1. 유닛 데이터 (픽셀, 카툰)
+    2. 스테이지 정보
+    3. 재화정보
+    4. 우편함 정보
+    5. 
+
+    */
+
+    // 로컬이 들고 있어도 되는 것
+    /*
+     
+
+     */
 
 
 
@@ -23,7 +64,7 @@ public class GameManager : Singleton<GameManager>
     /*
 
    DataManager -> GameManager 게임 시작 관련 데이터 정보 초기화 및 받아오기
-  ex)사운드, 로그인씬 Ui, 로딩중 화면 
+  ex)사운드, 
 
    */
 
@@ -57,7 +98,18 @@ public class GameManager : Singleton<GameManager>
 
      */
 
+    //챌린지 모드일 때 할 행동들
+    /*
+     
 
+
+
+     
+     
+     
+     
+     
+     */
 
 
 
