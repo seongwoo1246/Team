@@ -10,13 +10,13 @@ using UnityEditor.AddressableAssets.Settings;
 /// <summary>
 /// 위 에디터 스크립트에 합치기 전에 실험 혹은 합치기 전 필요한 걸 만들기 위해 만든 스크립트
 /// </summary>
-public class UnityEditorTest : EditorWindow
+public class AddressableEditor : EditorWindow
 {
 
     [MenuItem("Tools/Fast Addressable Builder")]
     public static void ShowWindow()
     {
-        GetWindow<UnityEditorTest>("Addressable Quick Builder");
+        GetWindow<AddressableEditor>("Addressable Quick Builder");
     }
 
     private void OnGUI()
@@ -28,14 +28,14 @@ public class UnityEditorTest : EditorWindow
         if(GUILayout.Button("1. Clean Build Cache", GUILayout.Height(30)))
         {
             AddressableAssetSettings.CleanPlayerContent();
-            //로그 Addressable 캐시가 삭제된다는 내용
+            DebugLogger<AddressableEditor>.Log("캐시가 삭제되었습니다.");
         }
 
         // Addressable 원본 전체 빌드
         if(GUILayout.Button("2. Build New Addressable", GUILayout.Height(30)))
         {
             AddressableAssetSettings.BuildPlayerContent();
-            //로그 전체 빌드가 완료 되었다는 내용
+            DebugLogger<AddressableEditor>.Log("전체 빌드가 완료되었습니다.");
         }
 
         // 변경사항 패치 (업데이트 내용)
@@ -45,7 +45,11 @@ public class UnityEditorTest : EditorWindow
             if(!string.IsNullOrEmpty(buildPath) )
             {
                 ContentUpdateScript.BuildContentUpdate(AddressableAssetSettingsDefaultObject.Settings, buildPath);
-                // 로그 패치 빌드가 완료되었습니다.
+                DebugLogger<AddressableEditor>.Log("패치 빌드가 완료 했습니다.");
+            }
+            else
+            {
+                DebugLogger<AddressableEditor>.Log("패치 파일이 없습니다. 먼저 빌드를 하고 와주세요.");
             }
         }
 

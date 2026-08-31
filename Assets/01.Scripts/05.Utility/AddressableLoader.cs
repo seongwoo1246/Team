@@ -51,7 +51,8 @@ public class AddressableLoader : MonoBehaviour
 
         if(downloadSize > 0)
         {
-            //로그 Addressable Manager 다운로드 필요 용량 : {downloadSize / (1024f*1024f) : F2}MB
+            DebugLogger<AddressableLoader>.Log($"Addressable Manager 다운로드 필요 용량 : {downloadSize / (1024f * 1024f): F2}MB");
+           
 
 
             //에셋 패치 다운로드 진행
@@ -95,8 +96,7 @@ public class AddressableLoader : MonoBehaviour
             _instanceHandles[result] = handle;
             return result;
         }
-
-        //로그 Instantiate 실패했다는 내용 {key}가 문제라는 듯
+        DebugLogger<AddressableLoader>.Log($"Instantiate 실패했습니다. {key}를 다시 한번 확인 부탁드립니다.");
         return null;
     }
 
@@ -122,8 +122,7 @@ public class AddressableLoader : MonoBehaviour
             _assetHandles[key] = handle;
             return result;
         }
-
-        // 로그 LoadAsset 실패 {key}
+        DebugLogger<AddressableLoader>.Log($"LoadAsset 실패 {key}");
         return null;
     }
 
