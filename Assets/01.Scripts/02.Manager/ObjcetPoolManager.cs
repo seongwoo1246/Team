@@ -45,12 +45,12 @@ public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
     {
         if (_pool.ContainsKey(enumname))
         {
-            Debug.Log("�̹� ���� �̸��� ���� ����");
+            DebugLogger<ObjcetPoolManager>.Log("이미 같은 이름의 Pool이 있습니다.");
             return;
         }
 
         Transform PoolParent = new GameObject($"Pool_{enumname}").transform;
-        // PoolParent.SetParent(transform);
+         PoolParent.SetParent(transform);
 
         _pool[enumname] = new Pool<T>(prefab, PoolParent, initialSize);
     }
@@ -63,7 +63,7 @@ public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
     {
         if (!_pool.TryGetValue(enumname, out object poolObj))
         {
-            Debug.Log($"{enumname}��� �̸�ǥ�� ������ �����ϴ�. RegisterPool�� ���� �ؾ� �մϴ�.");
+            DebugLogger<ObjcetPoolManager>.Log("소환할 오브젝트가 없습니다.");
             return null;
         }
         Pool<T> pool = (Pool<T>)poolObj;
@@ -78,7 +78,7 @@ public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
     {
         if (!_pool.TryGetValue(enumname, out object poolObj))
         {
-            Debug.Log($"{enumname}��� �̸�ǥ�� ������ �����ϴ�.");
+            DebugLogger<ObjcetPoolManager>.Log("오브젝트를 되돌릴게 없습니다.");
             return;
         }
 
@@ -141,7 +141,7 @@ class Pool<T> where T : Component , IPoolable
     {
         if(!_active.Contains(obj))
         {
-            Debug.Log("�ߺ� ���� �ǰ� �ֽ��ϴ�. �����ϰڽ��ϴ�.");
+            DebugLogger<ObjcetPoolManager>.Log("중복으로 비활성화 되려고 합니다.");
             return;
         }
 
@@ -202,7 +202,7 @@ ObjcetPoolManager.Instance.Despawn("소환클래스",변수명)
 
 public void 비활성화 함수()
     {
-        if (����Ʈ(Queue).Count == 0) return;
+        if (List(Queue).Count == 0) return;
 
         int lastIndex = List(Queue).Count - 1;
         test targetObj = List(Queue)[lastIndex];
