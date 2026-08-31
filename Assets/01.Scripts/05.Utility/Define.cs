@@ -60,3 +60,15 @@ public enum UpgradeTrack
     // 공격 속도 (공격 간격을 1 + attack_speed_per_level × 이 레벨 로 나눔)
     AttackSpeed = 5,
 }
+
+/// <summary>
+/// 스테이지 진행 모드
+/// </summary>
+public enum StageMode
+{
+    // 메인 화면 무한 파밍 (몬스터 체력 관리 없이 계속 사냥)
+    Farming,
+
+    // 챌린지 스테이지 (지정된 웨이브를 순서대로 진행한 뒤 보스)
+    Challenge,
+}

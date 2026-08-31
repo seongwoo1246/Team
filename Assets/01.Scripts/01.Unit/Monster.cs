@@ -60,6 +60,9 @@ public class Monster : MonoBehaviour, IEntity
     private ContactFilter2D _targetFilter;
     private readonly Collider2D[] _targetBuffer = new Collider2D[16];
 
+    // true면 공격 동작은 하되 캐릭터에게 실제 피해를 주지 않음 (파밍처럼 캐릭터 체력을 관리하지 않는 모드용)
+    private bool _isHarmless;
+
     // 이 몬스터가 죽었을 때 발생. 인자로 자신을 넘김
     public event Action<Monster> Died;
 
@@ -95,6 +98,7 @@ public class Monster : MonoBehaviour, IEntity
         _currentHP = _maxHP;
         _target = null;
         _targetTf = null;
+        _isHarmless = false;
 
         // 자동 공격 루프 시작 (이번 활성화 동안만 유효한 토큰)
         _attackCts = new CancellationTokenSource();
@@ -198,6 +202,17 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
+    /// 이 몬스터가 캐릭터에게 실제 피해를 줄지 정한다
+    /// 파밍처럼 캐릭터 체력을 관리하지 않는 모드에서 스포너가 소환 시점에 호출
+    /// harmless여도 공격 동작(OnAttack 훅)은 그대로 일어나고, 실제 데미지만 안들어감
+    /// </summary>
+    /// <param name="harmless">true면 공격해도 피해를 주지 않음</param>
+    public void SetHarmless(bool harmless)
+    {
+        _isHarmless = harmless;
+    }
+
+    /// <summary>
     /// 현재 레벨 기준으로 최대 체력과 보상 골드를 계산한다
     /// 참고: 1레벨을 기본값으로 두고 싶으면 지수를 (level - 1)로 바꿈
     /// </summary>
@@ -236,7 +251,7 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 자동 공격 루프. attackInterval 마다 사거리 안 캐릭터 1명을 공격한다.
+    /// 자동 공격 루프. attackInterval 마다 사거리 안 캐릭터 1명을 공격
     /// </summary>
     /// <param name="token">비활성/파괴 시 루프를 멈추는 취소 토큰</param>
     private async UniTaskVoid RunAttackLoop(CancellationToken token)
@@ -255,8 +270,8 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 실제 공격. 기본은 사거리 안 가장 가까운 캐릭터에게 AttackPower 만큼 피해.
-    /// 다른 방식(범위 공격 등)이 필요하면 하위 클래스에서 override 한다.
+    /// 실제 공격. 기본은 사거리 안 가장 가까운 캐릭터에게 AttackPower 만큼 피해
+    /// 다른 방식(범위 공격 등)이 필요하면 하위 클래스에서 override 한다
     /// [2D] Physics2D.OverlapCircle 사용.
     /// </summary>
     protected virtual void PerformAttack()
@@ -291,7 +306,11 @@ public class Monster : MonoBehaviour, IEntity
 
         if (nearest != null)
         {
-            nearest.TakeDamage(_attackPower);
+            if (!_isHarmless)
+            {
+                nearest.TakeDamage(_attackPower);
+            }
+
             OnAttack();
         }
     }
@@ -344,6 +363,16 @@ public class Monster : MonoBehaviour, IEntity
         _currentHP = 0f;
         OnDied();
         Died?.Invoke(this);
+        gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 죽은 것으로 치지 않고 그냥 회수한다 (스테이지/파밍 모드 전환 등으로 강제로 필드를 비울 때 사용).
+    /// Die()와 달리 보상이 지급되지 않도록 Died 구독을 전부 정리한 뒤 비활성화한다.
+    /// </summary>
+    public void Despawn()
+    {
+        Died = null;
         gameObject.SetActive(false);
     }
 

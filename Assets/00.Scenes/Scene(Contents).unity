@@ -176,6 +176,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: fdf24372724a9884982065dfb6f45fe5, type: 3}
+--- !u!114 &17014586 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 2780961738642383884, guid: fdf24372724a9884982065dfb6f45fe5, type: 3}
+  m_PrefabInstance: {fileID: 17014585}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 27b4839e532ccd94b94f2d97b82ee055, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MagicDealer
 --- !u!1001 &88550357
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -365,6 +376,51 @@ Transform:
   - {fileID: 2073546199}
   - {fileID: 1718647927}
   m_Father: {fileID: 1817068081}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &654723024
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 654723026}
+  - component: {fileID: 654723025}
+  m_Layer: 0
+  m_Name: MonsterSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &654723025
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 654723024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4b04ea86d36b774ab9711c014ce6e70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterSpawnerJulian
+  spawnPoints: []
+--- !u!4 &654723026
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 654723024}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2144197701}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &815746709 stripped
 Transform:
@@ -611,6 +667,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9c7dd4fbeb084f646a2a8b81f411d7dc, type: 3}
+--- !u!114 &1034290512 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1323544607613993296, guid: 9c7dd4fbeb084f646a2a8b81f411d7dc, type: 3}
+  m_PrefabInstance: {fileID: 1034290511}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a92fa8820262e734e9d13ed595bf0b5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PhysicDealer
 --- !u!1001 &1041207845
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -668,6 +735,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: bd05556964c5a0845936ebc310e7a2a8, type: 3}
+--- !u!114 &1041207846 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5546140587935567617, guid: bd05556964c5a0845936ebc310e7a2a8, type: 3}
+  m_PrefabInstance: {fileID: 1041207845}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cc31a97c85c0fd54d90f54acc88128b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Healer
 --- !u!4 &1432946494 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2431904031658816370, guid: fdf24372724a9884982065dfb6f45fe5, type: 3}
@@ -911,6 +989,66 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8802484857713202068, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
   m_PrefabInstance: {fileID: 88550357}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &2144197699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2144197701}
+  - component: {fileID: 2144197700}
+  m_Layer: 0
+  m_Name: StageSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2144197700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2144197699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d31571c62a9b374894638781df59e59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StageManagerJulian
+  isDDOL: 0
+  spawner: {fileID: 654723025}
+  farmingMonsters:
+  - {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+  - {fileID: 8302749502758054592, guid: a79810249d5c823408edd622b461c492, type: 3}
+  - {fileID: 774649218372171895, guid: a9b5d42cbfce3cf469010d774f65a660, type: 3}
+  farmingSpawnInterval: 1
+  farmingMonsterLevel: 1
+  maxFarmingMonsterCount: 5
+  roster: {fileID: 11400000, guid: ce0c2888b35095b4eaea0da4487cabfe, type: 2}
+  party:
+  - {fileID: 1034290512}
+  - {fileID: 17014586}
+  - {fileID: 1041207846}
+  goldMultiplierPerClearedStage: 0.03
+--- !u!4 &2144197701
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2144197699}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 654723026}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -919,3 +1057,4 @@ SceneRoots:
   - {fileID: 556972760}
   - {fileID: 955527134}
   - {fileID: 1817068081}
+  - {fileID: 2144197701}
