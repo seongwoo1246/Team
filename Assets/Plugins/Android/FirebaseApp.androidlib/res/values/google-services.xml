@@ -1,9 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id">
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/firebase_database_url,@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_android_client_id,@string/default_web_client_id">
+  <string name="firebase_database_url" translatable="false">https://unitypvsc-default-rtdb.firebaseio.com</string>
   <string name="gcm_defaultSenderId" translatable="false">502389656303</string>
   <string name="google_storage_bucket" translatable="false">unitypvsc.firebasestorage.app</string>
   <string name="project_id" translatable="false">unitypvsc</string>
   <string name="google_api_key" translatable="false">AIzaSyBI9qhBPmtmVmjDM3dt4vh5MF8UYlCJMyE</string>
   <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBI9qhBPmtmVmjDM3dt4vh5MF8UYlCJMyE</string>
   <string name="google_app_id" translatable="false">1:502389656303:android:831d64193e862bbad9a91a</string>
+  <string name="default_android_client_id" translatable="false">502389656303-lvo6038j3tjaqagl2o5imlt0komvtmla.apps.googleusercontent.com</string>
+  <string name="default_web_client_id" translatable="false">502389656303-70u82ggb4kjpl8spirld6tkjdhaecj3q.apps.googleusercontent.com</string>
 </resources>
