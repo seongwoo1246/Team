@@ -131,9 +131,39 @@ public class AddressableLoader : MonoBehaviour
 
     #region 메모리 해제(Release)
 
+    /// <summary>
+    /// InstanfiatAsync로 생성한 게임 오브젝트는 이걸로 파괴 및 메모리 해제
+    /// </summary>
+    /// <param name="Go"></param>
+    public void ReleaseInstance(GameObject Go)
+    {
+        if (Go == null) return;
 
-    public void Rles
+        if(_instanceHandles.TryGetValue(Go,out var handle))
+        {
+            Addressables.ReleaseInstance(Go);
+            _instanceHandles.Remove(Go);
+        }
+        else
+        {
+            Destroy(Go);
+        }
+    }
 
+    /// <summary>
+    /// LoadAssetAsync로 로드한 메모리 에셋을 해제하는 함수
+    /// </summary>
+    /// <param name="key">해제할 에셋이름</param>
+    public void ReleaseAsset(string key)
+    {
+        if( _assetHandles.TryGetValue(key,out var handle))
+        {
+            Addressables.Release(handle);
+            _assetHandles.Remove(key);
+        }
+    }
+
+    #endregion
 }
 
 /*

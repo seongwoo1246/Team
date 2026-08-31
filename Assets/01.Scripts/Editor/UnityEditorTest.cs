@@ -1,6 +1,9 @@
-﻿using UnityEngine;
+﻿
+#if UNITY_EDITOR //에디터에서만 사용하는 기능들
+using UnityEngine;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
+using UnityEditor.AddressableAssets.Build;
 using UnityEditor.AddressableAssets.Settings;
 
 
@@ -9,7 +12,7 @@ using UnityEditor.AddressableAssets.Settings;
 /// </summary>
 public class UnityEditorTest : EditorWindow
 {
-#if UNITY_EDITOR //에디터에서만 사용하는 기능들
+
     [MenuItem("Tools/Fast Addressable Builder")]
     public static void ShowWindow()
     {
@@ -38,7 +41,12 @@ public class UnityEditorTest : EditorWindow
         // 변경사항 패치 (업데이트 내용)
         if (GUILayout.Button("3. Update Addressable (patch)", GUILayout.Height(30)))
         {
-            //string buildPath =
+            string buildPath = ContentUpdateScript.GetContentStateDataPath(false);
+            if(!string.IsNullOrEmpty(buildPath) )
+            {
+                ContentUpdateScript.BuildContentUpdate(AddressableAssetSettingsDefaultObject.Settings, buildPath);
+                // 로그 패치 빌드가 완료되었습니다.
+            }
         }
 
         EditorGUILayout.Space();
