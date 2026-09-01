@@ -112,17 +112,15 @@ Assets/ExternalAssets
 # 빌드 파일 제외
 Build/
 # 노출되면 안되는 파일+폴더
-#Assets/Firebase/
-#Assets/Android/
-#Assets/ExternalDependencyManager/
+Assets/Firebase/
+Assets/Android/
+Assets/ExternalDependencyManager/
 
 # ==========================================
 # Firebase Configuration & Credentials
 # ==========================================
 **/google-services.json
 **/google-services.json.meta
-**/GoogleService-Info.plist
-**/GoogleService-Info.plist.meta
 *firebase*.json
 *service-account*.json
 
