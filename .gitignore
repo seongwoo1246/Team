@@ -113,7 +113,7 @@ Assets/ExternalAssets
 Build/
 # 노출되면 안되는 파일+폴더
 Assets/Firebase/
-Assets/Android/
+Assets/Plugins/Android/
 Assets/ExternalDependencyManager/
 
 # ==========================================
