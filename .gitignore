@@ -115,4 +115,4 @@ Build/
 #Assets/Firebase/
 #Assets/Android/
 #Assets/ExternalDependencyManager/
-#google-services.json
+google-services.json
