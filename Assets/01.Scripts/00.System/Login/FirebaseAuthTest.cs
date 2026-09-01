@@ -1,5 +1,6 @@
 ﻿using Firebase.Auth;
 using System;
+using UnityEngine;
 using Debug = DebugLogger<FirebaseAuthTest>;
 
 

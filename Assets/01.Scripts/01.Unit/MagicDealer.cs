@@ -21,8 +21,19 @@ public class MagicDealer : CharacterBase
     [Tooltip("폭발 이펙트")]
     [SerializeField] private ParticleSystem explosionEffect;
 
+    [Header("스킬1: 파이어볼")]
+    [Tooltip("파이어볼 데미지 배율 (평타 대비). 평소와 반대로 한 대상에게 크게 터짐")]
+    [SerializeField] private float fireballMultiplier = 3f;
+
+    [Header("스킬2: 메테오")]
+    [Tooltip("메테오 데미지 배율 (평타 대비). maxTargets 제한 없이 사거리 안 전체에게 적용")]
+    [SerializeField] private float meteorMultiplier = 1.2f;
+
     // OverlapCircle 결과 재사용 버퍼 (매 공격마다 새로 만들지 않는다)
     private readonly Collider2D[] _hitBuffer = new Collider2D[MAX_TARGET_BUFFER];
+
+    // 메테오(스킬2)용 OverlapCircle 결과 재사용 버퍼. 평타용(_hitBuffer)이랑 겹쳐 쓰지 않게 따로 둠
+    private readonly Collider2D[] _skillBuffer = new Collider2D[MAX_TARGET_BUFFER];
 
     /// <summary>
     /// 마법 공격. 사거리 안 적을 모두 찾아 maxTargets 만큼 범위 피해를줌
@@ -70,4 +81,53 @@ public class MagicDealer : CharacterBase
             explosionEffect.Play();
         }
     }
+
+    /// <summary>스킬1: 파이어볼. 가장 가까운 적 1체에게 평타보다 훨씬 센 단일 타격</summary>
+    protected override void UseSkill1()
+    {
+        IEntity target = GetNearestEntity(EnemyLayer);
+        if (target == null || target.IsDead)
+        {
+            return;
+        }
+
+        target.TakeDamage(Power * fireballMultiplier);
+    }
+
+    /// <summary>스킬2: 메테오. maxTargets 제한 없이 사거리 안 적 전체에게 피해</summary>
+    protected override void UseSkill2()
+    {
+        int count = FindEntitiesInRange(EnemyLayer, _skillBuffer);
+        if (count <= 0)
+        {
+            return;
+        }
+
+        float damage = Power * meteorMultiplier;
+
+        for (int i = 0; i < count; i++)
+        {
+            Collider2D hit = _skillBuffer[i];
+            if (hit == null)
+            {
+                continue;
+            }
+
+            if (!hit.TryGetComponent(out IEntity target) || target.IsDead)
+            {
+                continue;
+            }
+
+            target.TakeDamage(damage);
+        }
+    }
+
+    /// <summary>파이어볼/메테오 공용: 사거리 안에 적이 있을 때만 사용 가능
+    /// (오토 스킬이 근처에 몬스터가 없을 때 헛발질로 쿨다운만 날리지 않게 막는다)</summary>
+    protected override bool CanUseSkill1() => HasEnemyInRange();
+
+    /// <summary>스킬2(메테오)도 동일한 조건</summary>
+    protected override bool CanUseSkill2() => HasEnemyInRange();
+
+    private bool HasEnemyInRange() => GetNearestEntity(EnemyLayer) != null;
 }

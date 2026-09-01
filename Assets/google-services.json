@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "502389656303",
+    "firebase_url": "https://unitypvsc-default-rtdb.firebaseio.com",
+    "project_id": "unitypvsc",
+    "storage_bucket": "unitypvsc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:502389656303:android:831d64193e862bbad9a91a",
+        "android_client_info": {
+          "package_name": "com.DefaultCompany.Team"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "502389656303-lvo6038j3tjaqagl2o5imlt0komvtmla.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.DefaultCompany.Team",
+            "certificate_hash": "f611366fa5336b575d612a565df5c09b115ac521"
+          }
+        },
+        {
+          "client_id": "502389656303-70u82ggb4kjpl8spirld6tkjdhaecj3q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI9qhBPmtmVmjDM3dt4vh5MF8UYlCJMyE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "502389656303-70u82ggb4kjpl8spirld6tkjdhaecj3q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
