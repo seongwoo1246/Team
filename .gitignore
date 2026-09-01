@@ -112,8 +112,7 @@ Assets/ExternalAssets
 # 빌드 파일 제외
 Build/
 # 노출되면 안되는 파일+폴더
-Assets/Firebase/
-Assets/Plugins/Android/
-Assets/ExternalDependencyManager/
-Assets/google-services.json
-user.keystore
+#Assets/Firebase/
+#Assets/Android/
+#Assets/ExternalDependencyManager/
+#google-services.json
