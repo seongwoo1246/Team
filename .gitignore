@@ -113,8 +113,14 @@ Assets/ExternalAssets
 Build/
 # 노출되면 안되는 파일+폴더
 Assets/Firebase/
-Assets/Plugins/Android/
+Assets/Plugins/
 Assets/ExternalDependencyManager/
+Assets/StreamingAssets/
+
+Assets/Firebase.meta
+Assets/Plugins.meta
+Assets/ExternalDependencyManager.meta
+Assets/StreamingAssets.meta
 
 # ==========================================
 # Firebase Configuration & Credentials
