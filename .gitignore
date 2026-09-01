@@ -115,5 +115,23 @@ Build/
 #Assets/Firebase/
 #Assets/Android/
 #Assets/ExternalDependencyManager/
-Assets/google-services.json
+
+# ==========================================
+# Firebase Configuration & Credentials
+# ==========================================
+**/google-services.json
+**/google-services.json.meta
+**/GoogleService-Info.plist
+**/GoogleService-Info.plist.meta
+*firebase*.json
+*service-account*.json
+
+# ==========================================
+# Firebase & EDM4U Generated / Cache Files
+# ==========================================
+**/Assets/Firebase/m2repository/
+**/Assets/Firebase/m2repository.meta
+**/Assets/Plugins/Android/m2repository/
+**/Assets/Plugins/Android/m2repository.meta
+
 user.keystore
