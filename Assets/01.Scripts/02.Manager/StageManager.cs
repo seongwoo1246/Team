@@ -52,7 +52,7 @@ public sealed class StageManager : Singleton<StageManager>
 
     [Header("챌린지 시간 제한")]
     [Tooltip("챌린지 스테이지(웨이브+보스 전체)를 클리어해야 하는 제한 시간(초). 0 이하면 시간 제한 없음")]
-    [SerializeField] private float challengeTimeLimit = 30f;
+    [SerializeField] private float challengeTimeLimit = 60f;
 
     [Header("클리어 보상")]
     [Tooltip("클리어한 스테이지 1개당 파밍 골드 획득 배율 증가율 (복리). 0.03 = 스테이지당 ×1.03배씩 누적")]
@@ -80,6 +80,15 @@ public sealed class StageManager : Singleton<StageManager>
     // 클리어해도 자동으로 파밍 복귀하지 않으므로, UI가 이 이벤트를 구독해서
     // "다음 스테이지" / "파밍으로" 선택 화면을 띄우는 용도로 쓴다
     public event Action<int> StageCleared;
+
+    // 챌린지가 실패(파티 전멸 / 시간 초과)했을 때 발생. 인자 = 실패한 스테이지 번호.
+    // 클리어와 마찬가지로 자동으로 파밍 복귀하지 않으므로, UI가 이 이벤트를 구독해서
+    // "다시 하기" / "파밍으로" 선택 화면을 띄우는 용도로 쓴다
+    public event Action<int> StageFailed;
+
+    // 챌린지가 시작(재시작 포함)됐을 때 발생. 인자 = 시작한 스테이지 번호.
+    // 클리어/실패 화면(타이머 정지, 선택 패널)을 원래대로 되돌리는 용도로 UI가 구독해서 쓴다
+    public event Action<int> ChallengeStarted;
 
     // 현재 진행 모드
     public StageMode CurrentMode => _currentMode;
@@ -129,6 +138,7 @@ public sealed class StageManager : Singleton<StageManager>
         RestartFlow();
         _currentMode = StageMode.Farming;
         RevivePartyIfNeeded();
+        ResetPartySkillCooldowns();
         RunFarmingLoopAsync(_flowCts.Token).Forget();
     }
 
@@ -140,6 +150,16 @@ public sealed class StageManager : Singleton<StageManager>
     public void ContinueToNextStage(int clearedStageNumber)
     {
         EnterChallenge(clearedStageNumber + 1);
+    }
+
+    /// <summary>
+    /// 실패했던 스테이지를 같은 번호로 다시 시도한다
+    /// 실패 화면에서 "다시 하기" 버튼을 눌렀을 때 UI가 호출
+    /// </summary>
+    /// <param name="failedStageNumber">다시 시도할 스테이지 번호</param>
+    public void RetryStage(int failedStageNumber)
+    {
+        EnterChallenge(failedStageNumber);
     }
 
     /// <summary>
@@ -164,6 +184,8 @@ public sealed class StageManager : Singleton<StageManager>
         RestartFlow();
         _currentMode = StageMode.Challenge;
         _challengeStartTime = Time.time;
+        ResetPartySkillCooldowns();
+        ChallengeStarted?.Invoke(stageNumber);
         RunChallengeLoopAsync(stageNumber, _flowCts.Token).Forget();
     }
 
@@ -226,7 +248,7 @@ public sealed class StageManager : Singleton<StageManager>
             bool waveCleared = await RunWaveAsync(stageNumber, token);
             if (!waveCleared)
             {
-                RetreatFromFailure();
+                HandleChallengeFailure(stageNumber);
                 return;
             }
         }
@@ -238,7 +260,7 @@ public sealed class StageManager : Singleton<StageManager>
         }
         else if (IsPartyWiped() || IsTimeUp())
         {
-            RetreatFromFailure();
+            HandleChallengeFailure(stageNumber);
         }
     }
 
@@ -262,6 +284,8 @@ public sealed class StageManager : Singleton<StageManager>
             if (prefab == null)
             {
                 DebugLogger<StageManager>.LogWarning($"스테이지 {stageNumber}에 등장 가능한 일반 몬스터가 없음 (roster의 normalMonsters 설정 확인)");
+                await UniTask.Delay(TimeSpan.FromSeconds(roster.SpawnInterval), cancellationToken: token);
+                continue;
             }
 
             // 챌린지는 진짜 전투이므로 harmless: false (실제 피해가 들어감)
@@ -355,6 +379,27 @@ public sealed class StageManager : Singleton<StageManager>
     }
 
     /// <summary>
+    /// 파티 전원의 스킬1/스킬2 쿨다운을 초기화 파밍 진입, 챌린지 진입 시마다 호출해서
+    /// 모드가 바뀔 때마다 스킬을 바로 다시 쓸수있게함
+    /// </summary>
+    private void ResetPartySkillCooldowns()
+    {
+        if (party == null)
+        {
+            return;
+        }
+
+        for (int partyIndex = 0; partyIndex < party.Length; partyIndex++)
+        {
+            CharacterBase character = party[partyIndex];
+            if (character != null)
+            {
+                character.ResetSkillCooldowns();
+            }
+        }
+    }
+
+    /// <summary>
     /// 파티 전원이 죽었는지 확인한다. party가 비어있으면 전멸 판정을 하지 않는다(항상 false)
     /// </summary>
     private bool IsPartyWiped()
@@ -390,14 +435,21 @@ public sealed class StageManager : Singleton<StageManager>
     }
 
     /// <summary>
-    /// 파티 전멸 또는 시간 초과로 챌린지를 더 진행할 수 없을 때, 챌린지를 중단하고 파밍으로 후퇴
-    /// (EnterFarming이 파티도 다시 부활시켜준다)
+    /// 파티 전멸 또는 시간 초과로 챌린지를 더 진행할 수 없을 때 호출.
+    /// 클리어와 마찬가지로 자동으로 파밍 복귀하지 않는다 - 남아있던 몬스터를 정리하고 파티를 회복시킨 뒤
+    /// StageFailed 이벤트만 발생시킨 채 대기한다. 실패 화면에서 UI가 RetryStage / EnterFarming 중
+    /// 하나를 호출할 때까지 대기
     /// </summary>
-    private void RetreatFromFailure()
+    /// <param name="stageNumber">실패한 스테이지 번호</param>
+    private void HandleChallengeFailure(int stageNumber)
     {
         string reason = IsPartyWiped() ? "파티 전멸" : "제한 시간 초과";
-        DebugLogger<StageManager>.LogWarning($"{reason}로 챌린지를 중단하고 파밍으로 후퇴함");
-        EnterFarming();
+        DebugLogger<StageManager>.LogWarning($"{reason}로 스테이지 {stageNumber} 실패");
+
+        RestartFlow();
+        RevivePartyIfNeeded();
+
+        StageFailed?.Invoke(stageNumber);
     }
 
     /// <summary>
