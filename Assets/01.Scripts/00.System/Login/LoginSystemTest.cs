@@ -27,7 +27,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         if (dependencyStatus == DependencyStatus.Available)
         {
             auth = FirebaseAuth.DefaultInstance;
-            // static으로 인한 user 메모리 저장을 해제하는 임시 처리
+            // static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서
             if (auth.CurrentUser != null)
             {
                 SignOut();
@@ -49,8 +49,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
             bool signedIn = (auth.CurrentUser != user && auth.CurrentUser != null);
             user = auth.CurrentUser;
 
-            string statusMsg = signedIn
-                ? (user.Email ?? user.DisplayName ?? user.UserId)
+            string statusMsg = signedIn ? (user.Email ?? user.DisplayName ?? user.UserId)
                 : string.Empty;
 
             OnAuthStateChanged?.Invoke(signedIn, statusMsg);
@@ -62,7 +61,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     {
         try
         {
-            var authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
+            AuthResult authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
             return authResult != null;
         }
         catch (OperationCanceledException)
@@ -81,7 +80,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     {
         try
         {
-            var authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
+            AuthResult authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
             return authResult != null;
         }
         catch (OperationCanceledException)
@@ -101,7 +100,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         try
         {
             Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
-            var authResult = await auth.SignInWithCredentialAsync(credential).AsUniTask().AttachExternalCancellation(ct);
+            FirebaseUser authResult = await auth.SignInWithCredentialAsync(credential).AsUniTask().AttachExternalCancellation(ct);
             return authResult != null;
         }
         catch (OperationCanceledException)
@@ -115,6 +114,36 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
     }
 
+    public async UniTask<(bool success, string errorMessage)> DeleteAccountAsync(CancellationToken ct = default)
+    {
+        if (user == null)
+        {
+            return (false, "로그인된 계정이 없습니다.");
+        }
+        try
+        {
+            // Firebase 계정 삭제 실행
+            await user.DeleteAsync().AsUniTask().AttachExternalCancellation(ct);
 
-    public void SignOut() => auth?.SignOut();
+            // 삭제 성공 시 유저 참조 초기화
+            user = null;
+            return (true, string.Empty);
+        }
+        catch (OperationCanceledException)
+        {
+            return (false, "작업이 취소되었습니다.");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"계정 삭제 실패: {ex.Message}");
+            return (false, ex.Message);
+        }
+    }
+
+
+    public void SignOut()
+    {
+        auth?.SignOut();
+        user = null;
+    }
 }

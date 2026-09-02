@@ -11,7 +11,7 @@ public class EmailLoginTest : MonoBehaviour
     [SerializeField] private Button loginButton;
     [SerializeField] private Button registerButton;
     [SerializeField] private Button closeButton;
-
+    
     private void Awake()
     {
         // 람다 없이 메서드 바인딩 (GC Alloc 방지)

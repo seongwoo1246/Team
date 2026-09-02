@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,7 @@ public class LoginUITest : MonoBehaviour
     [SerializeField] private Button emailPopupButton;
     [SerializeField] private Button googleLoginButton;
     [SerializeField] private Button logoutButton;
+    [SerializeField] private Button deleteAccountButton;
     [SerializeField] private TextMeshProUGUI statusText;
 
     private void Awake()
@@ -20,6 +22,9 @@ public class LoginUITest : MonoBehaviour
         emailPopupButton.onClick.AddListener(emailLogin.OpenPopup);
         googleLoginButton.onClick.AddListener(googleLogin.RequestGoogleLogin);
         logoutButton.onClick.AddListener(OnLogoutClicked);
+
+        if(deleteAccountButton != null)
+            deleteAccountButton.onClick.AddListener(OnDeleteAccountClicked);
     }
 
     private void Start()
@@ -44,11 +49,18 @@ public class LoginUITest : MonoBehaviour
 
         if (googleLogin != null)
             googleLogin.OnLogStatus -= UpdateStatusText;
+
+        if(deleteAccountButton != null)
+            deleteAccountButton.onClick.RemoveListener(OnDeleteAccountClicked);
     }
 
     private void OnLogoutClicked()
     {
         LoginSystemTest.instance.SignOut();
+    }
+    private void OnDeleteAccountClicked()
+    {
+        ExcuteDeleteAccountAsync().Forget();
     }
 
     private void UpdateAuthUI(bool isLoggedIn, string message)
@@ -57,6 +69,18 @@ public class LoginUITest : MonoBehaviour
         logoutButton.gameObject.SetActive(isLoggedIn);
         emailPopupButton.gameObject.SetActive(!isLoggedIn);
         googleLoginButton.gameObject.SetActive(!isLoggedIn);
+    }
+    private async UniTaskVoid ExcuteDeleteAccountAsync()
+    {
+        var (success, erroMsg) = await LoginSystemTest.instance.DeleteAccountAsync(this.GetCancellationTokenOnDestroy());
+        if (success)
+        {
+            UpdateStatusText("계정 삭제 완료");
+        }
+        else
+        {
+            UpdateStatusText("계정 삭제 실패");
+        }
     }
 
     private void UpdateStatusText(string message)
