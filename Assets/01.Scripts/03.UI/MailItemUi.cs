@@ -9,7 +9,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 우편 목록 내부에 들어갈 프리팹 바인딩 스크립트
 /// </summary>
-public class MailItemUi : MonoBehaviour
+public class MailItemUi : MonoBehaviour , IPoolable
 {
     [Header("Ui 컴포넌트들")]
     [SerializeField] private TextMeshPro titleText; //우편 제목
@@ -18,9 +18,38 @@ public class MailItemUi : MonoBehaviour
     [SerializeField] private Button claimButton; // 수령 버튼
     [SerializeField] private Image rewardIcon; // 첫 번째 대표 아이템 아이콘
 
+
     private string currnetMailId;
+    private mailItem currentData;
+
+    //풀에서 꺼내질 때 초기화를 진행 
+    public void OnSpawn()
+    {
+        // 잔재 데이터 제거
+        titleText.text = string.Empty;
+        contentText.text = string.Empty;
+        expireText.text = string.Empty;
+        // 이전 우편에 있던 버튼 이벤트를 제거해서 충돌 방지
+        claimButton.onClick.RemoveAllListeners();
+        // 버튼 상태 초기화
+        claimButton.interactable = true;
+
+        gameObject.SetActive(true);
+    }
+
+    public void OnDespawn()
+    {
+        // 주의를 위해 생성과 해제시에 한번씩 진행
+        claimButton.onClick.RemoveAllListeners();
+        currentData = null;
+        gameObject.SetActive(false);
+    }
+
+
+
     public void Setup(mailItem mail)
     {
+        currentData = mail;
         currnetMailId = mail.mailId;
         titleText.text = mail.titile;
         contentText.text = mail.content;
