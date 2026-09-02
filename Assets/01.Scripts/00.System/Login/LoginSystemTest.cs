@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*
+Firebase를 이용한 로그인 시스템 테스트용 클래스입니다.
+Email / Password 로그인, Google 로그인, 계정 삭제 기능을 포함하고 있으며, 인증 상태 변경 이벤트를 통해 UI 업데이트를 지원합니다.
+ */
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Firebase;
@@ -21,13 +25,17 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         InitializeFirebaseAsync().Forget();
     }
 
+    /// <summary>
+    /// Firebase 초기화 및 종속성 확인 후 FirebaseAuth 인스턴스를 가져옵니다.
+    /// </summary>
+    /// <returns></returns>
     private async UniTaskVoid InitializeFirebaseAsync()
     {
         var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
         if (dependencyStatus == DependencyStatus.Available)
         {
             auth = FirebaseAuth.DefaultInstance;
-            // static으로 인한 user 메모리 저장을 해제하는 임시 처리
+            // static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서
             if (auth.CurrentUser != null)
             {
                 SignOut();
@@ -40,6 +48,12 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
     }
 
+    /// <summary>
+    /// Firebase 인증 상태 변경 이벤트를 처리합니다. 로그인 상태가 변경될 때마다 OnAuthStateChanged 이벤트를 호출합니다.
+    /// 추후 진행에 따라 Lobby 씬에서 로그인 상태를 확인하고 UI를 업데이트하도록 변경 필요.
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     private void HandleAuthStateChanged(object sender, EventArgs e)
     {
         if (auth == null) return;
@@ -49,20 +63,25 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
             bool signedIn = (auth.CurrentUser != user && auth.CurrentUser != null);
             user = auth.CurrentUser;
 
-            string statusMsg = signedIn
-                ? (user.Email ?? user.DisplayName ?? user.UserId)
+            string statusMsg = signedIn ? (user.Email ?? user.DisplayName ?? user.UserId)
                 : string.Empty;
 
             OnAuthStateChanged?.Invoke(signedIn, statusMsg);
         }
     }
 
-    // 이메일 로그인
+    /// <summary>
+    /// Firebase 이메일/비밀번호 기반 로그인 메서드입니다. 로그인 성공 시 true, 실패 시 false를 반환합니다.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="password"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async UniTask<bool> SignInWithEmailAsync(string email, string password, CancellationToken ct = default)
     {
         try
         {
-            var authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
+            AuthResult authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
             return authResult != null;
         }
         catch (OperationCanceledException)
@@ -76,12 +95,18 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
     }
 
-    // 이메일 회원가입
+    /// <summary>
+    /// Firebase 이메일/비밀번호 기반 회원가입 메서드입니다. 회원가입 성공 시 true, 실패 시 false를 반환합니다.
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="password"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async UniTask<bool> CreateWithEmailAsync(string email, string password, CancellationToken ct = default)
     {
         try
         {
-            var authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
+            AuthResult authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
             return authResult != null;
         }
         catch (OperationCanceledException)
@@ -95,13 +120,18 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
     }
 
-    // 구글 토큰 기반 로그인
+    /// <summary>
+    /// Firebase 구글 인증 토큰 기반 로그인 메서드입니다. 로그인 성공 시 true, 실패 시 false를 반환합니다.
+    /// </summary>
+    /// <param name="idToken"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
     public async UniTask<bool> SignInWithGoogleTokenAsync(string idToken, CancellationToken ct = default)
     {
         try
         {
             Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
-            var authResult = await auth.SignInWithCredentialAsync(credential).AsUniTask().AttachExternalCancellation(ct);
+            FirebaseUser authResult = await auth.SignInWithCredentialAsync(credential).AsUniTask().AttachExternalCancellation(ct);
             return authResult != null;
         }
         catch (OperationCanceledException)
@@ -115,6 +145,41 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
     }
 
+    /// <summary>
+    /// Firebase 계정 삭제 메서드입니다. 로그인된 계정이 없으면 실패를 반환하며, 삭제 성공 시 true, 실패 시 false를 반환합니다.
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async UniTask<(bool success, string errorMessage)> DeleteAccountAsync(CancellationToken ct = default)
+    {
+        if (user == null)
+        {
+            return (false, "로그인된 계정이 없습니다.");
+        }
+        try
+        {
+            // Firebase 계정 삭제 실행
+            await user.DeleteAsync().AsUniTask().AttachExternalCancellation(ct);
 
-    public void SignOut() => auth?.SignOut();
+            // 삭제 성공 시 유저 참조 초기화
+            user = null;
+            return (true, string.Empty);
+        }
+        catch (OperationCanceledException)
+        {
+            return (false, "작업이 취소되었습니다.");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"계정 삭제 실패: {ex.Message}");
+            return (false, ex.Message);
+        }
+    }
+
+
+    public void SignOut()
+    {
+        auth?.SignOut();
+        user = null;
+    }
 }
