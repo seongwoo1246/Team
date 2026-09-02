@@ -18,7 +18,6 @@ public class LoginUITest : MonoBehaviour
 
     private void Awake()
     {
-        // 람다 제거 바인딩
         emailPopupButton.onClick.AddListener(emailLogin.OpenPopup);
         googleLoginButton.onClick.AddListener(googleLogin.RequestGoogleLogin);
         logoutButton.onClick.AddListener(OnLogoutClicked);
@@ -58,11 +57,17 @@ public class LoginUITest : MonoBehaviour
     {
         LoginSystemTest.instance.SignOut();
     }
+
     private void OnDeleteAccountClicked()
     {
         ExcuteDeleteAccountAsync().Forget();
     }
 
+    /// <summary>
+    /// Firebase 인증 상태 변경 시 UI를 업데이트하는 메서드. 로그인 상태에 따라 버튼 활성화/비활성화 및 상태 텍스트를 변경하도록 되어 있으나 추후 진행에 따라 삭제
+    /// </summary>
+    /// <param name="isLoggedIn"></param>
+    /// <param name="message"></param>
     private void UpdateAuthUI(bool isLoggedIn, string message)
     {
         UpdateStatusText(isLoggedIn ? $"로그인 완료: {message}" : "로그아웃 상태");
@@ -70,6 +75,11 @@ public class LoginUITest : MonoBehaviour
         emailPopupButton.gameObject.SetActive(!isLoggedIn);
         googleLoginButton.gameObject.SetActive(!isLoggedIn);
     }
+
+    /// <summary>
+    /// Firebase 서버에서 등록된 계정을 삭제하는 비동기 메서드. 추후 LogUI가 아닌 메인 로비 씬에서 계정 삭제를 진행하도록 변경 필요.
+    /// </summary>
+    /// <returns></returns>
     private async UniTaskVoid ExcuteDeleteAccountAsync()
     {
         var (success, erroMsg) = await LoginSystemTest.instance.DeleteAccountAsync(this.GetCancellationTokenOnDestroy());
