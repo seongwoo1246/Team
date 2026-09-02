@@ -111,31 +111,3 @@ Assets/ExternalAssets
 /Packages/packages-lock.json
 # 빌드 파일 제외
 Build/
-# 노출되면 안되는 파일+폴더
-Assets/Firebase/
-Assets/Plugins/
-Assets/ExternalDependencyManager/
-Assets/StreamingAssets/
-
-Assets/Firebase.meta
-Assets/Plugins.meta
-Assets/ExternalDependencyManager.meta
-Assets/StreamingAssets.meta
-
-# ==========================================
-# Firebase Configuration & Credentials
-# ==========================================
-**/google-services.json
-**/google-services.json.meta
-*firebase*.json
-*service-account*.json
-
-# ==========================================
-# Firebase & EDM4U Generated / Cache Files
-# ==========================================
-**/Assets/Firebase/m2repository/
-**/Assets/Firebase/m2repository.meta
-**/Assets/Plugins/Android/m2repository/
-**/Assets/Plugins/Android/m2repository.meta
-
-user.keystore

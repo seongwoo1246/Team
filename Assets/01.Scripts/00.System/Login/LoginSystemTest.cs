@@ -1,120 +1,34 @@
-﻿using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using Firebase;
-using Firebase.Auth;
-using Debug = DebugLogger<LoginSystemTest>;
+﻿using TMPro;
+using UnityEngine;
 
-public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
+public class LoginSystemTest : MonoBehaviour
 {
-    private FirebaseAuth auth;
-    private FirebaseUser user;
+    public TMP_InputField email;
+    public TMP_InputField password;
 
-    public FirebaseUser CurrentUser => user;
-    public string UserId => user != null ? user.UserId : string.Empty;
+    public TMP_Text outputText;
 
-    public event Action<bool, string> OnAuthStateChanged;
-
-    public override void Init()
+    void Start()
     {
-        base.Init();
-        InitializeFirebaseAsync().Forget();
+        FirebaseAuthTest.instance.Init();
+        FirebaseAuthTest.instance.LoginState += OnChangedState;
     }
 
-    private async UniTaskVoid InitializeFirebaseAsync()
+    private void OnChangedState(bool sign)
     {
-        var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
-        if (dependencyStatus == DependencyStatus.Available)
-        {
-            auth = FirebaseAuth.DefaultInstance;
-            // static으로 인한 user 메모리 저장을 해제하는 임시 처리
-            if (auth.CurrentUser != null)
-            {
-                SignOut();
-            }
-            auth.StateChanged += HandleAuthStateChanged;
-        }
-        else
-        {
-            Debug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
-        }
+        outputText.text = sign ? "로그인 : " : "로그아웃 : ";
+        outputText.text += FirebaseAuthTest.instance.UserId;
     }
-
-    private void HandleAuthStateChanged(object sender, EventArgs e)
+    public void Create()
     {
-        if (auth == null) return;
-
-        if (auth.CurrentUser != user)
-        {
-            bool signedIn = (auth.CurrentUser != user && auth.CurrentUser != null);
-            user = auth.CurrentUser;
-
-            string statusMsg = signedIn
-                ? (user.Email ?? user.DisplayName ?? user.UserId)
-                : string.Empty;
-
-            OnAuthStateChanged?.Invoke(signedIn, statusMsg);
-        }
+        FirebaseAuthTest.instance.Create(email.text, password.text);
     }
-
-    // 이메일 로그인
-    public async UniTask<bool> SignInWithEmailAsync(string email, string password, CancellationToken ct = default)
+    public void Login()
     {
-        try
-        {
-            var authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
-            return authResult != null;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"이메일 로그인 실패: {ex.Message}");
-            return false;
-        }
+        FirebaseAuthTest.instance.Login(email.text, password.text);
     }
-
-    // 이메일 회원가입
-    public async UniTask<bool> CreateWithEmailAsync(string email, string password, CancellationToken ct = default)
+    public void Logout()
     {
-        try
-        {
-            var authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
-            return authResult != null;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"회원가입 실패: {ex.Message}");
-            return false;
-        }
+        FirebaseAuthTest.instance.LogOut();
     }
-
-    // 구글 토큰 기반 로그인
-    public async UniTask<bool> SignInWithGoogleTokenAsync(string idToken, CancellationToken ct = default)
-    {
-        try
-        {
-            Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
-            var authResult = await auth.SignInWithCredentialAsync(credential).AsUniTask().AttachExternalCancellation(ct);
-            return authResult != null;
-        }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"구글 인증 실패: {ex.Message}");
-            return false;
-        }
-    }
-
-
-    public void SignOut() => auth?.SignOut();
 }
