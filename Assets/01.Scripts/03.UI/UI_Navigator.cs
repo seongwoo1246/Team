@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class UI_transition : MonoBehaviour
+public class UI_Navigator : MonoBehaviour
 {
     // 맨 아래 메뉴 버튼들 각각 패널 이동
 
@@ -8,7 +8,7 @@ public class UI_transition : MonoBehaviour
     [SerializeField] private GameObject characterPanel;
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject rankingPanel;
-    [SerializeField] private GameObject settingsPanel;
+    [SerializeField] private GameObject challengePanel;
 
     public void OpenMain()
     {
@@ -34,10 +34,10 @@ public class UI_transition : MonoBehaviour
         rankingPanel.SetActive(true);
     }
 
-    public void OpenSettings()
+    public void OpenChallenge()
     {
         CloseAllPanels();
-        settingsPanel.SetActive(true);
+        challengePanel.SetActive(true);
     }
 
     private void CloseAllPanels()
@@ -46,6 +46,6 @@ public class UI_transition : MonoBehaviour
         characterPanel.SetActive(false);
         shopPanel.SetActive(false);
         rankingPanel.SetActive(false);
-        settingsPanel.SetActive(false);
+        challengePanel.SetActive(false);
     }
 }
