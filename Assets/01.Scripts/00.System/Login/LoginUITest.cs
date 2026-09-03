@@ -2,6 +2,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using Debug = DebugLogger<LoginUITest>;
 
 public class LoginUITest : MonoBehaviour
 {
@@ -22,7 +23,7 @@ public class LoginUITest : MonoBehaviour
         googleLoginButton.onClick.AddListener(googleLogin.RequestGoogleLogin);
         logoutButton.onClick.AddListener(OnLogoutClicked);
 
-        if(deleteAccountButton != null)
+        if (deleteAccountButton != null)
             deleteAccountButton.onClick.AddListener(OnDeleteAccountClicked);
     }
 

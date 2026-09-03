@@ -55,7 +55,6 @@ public class EmailLoginTest : MonoBehaviour
     /// <summary>
     /// 이메일 계정과 비밀번호를 사용하여 로그인 시도
     /// </summary>
-    /// <returns></returns>
     private async UniTaskVoid ExecuteEmailLoginAsync()
     {
         string email = emailInput.text.Trim();
@@ -74,7 +73,6 @@ public class EmailLoginTest : MonoBehaviour
     /// <summary>
     /// 이메일 계정과 비밀번호를 사용하여 회원가입 시도
     /// </summary>
-    /// <returns></returns>
     private async UniTaskVoid ExecuteEmailRegisterAsync()
     {
         string email = emailInput.text.Trim();
