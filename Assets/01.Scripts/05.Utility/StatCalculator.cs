@@ -24,9 +24,6 @@ public static class StatCalculator
     /// <summary>몬스터 체력 증가율 기본값 (_Config: monster_hp_growth)</summary>
     public const float DEFAULT_MONSTER_HP_GROWTH = 1.20f;
 
-    /// <summary>보상 골드 증가율 기본값 (_Config: gold_growth)</summary>
-    public const float DEFAULT_GOLD_GROWTH = 1.10f;
-
     // ── 기본형: 공식을 그대로 옮긴 함수 ────────────────────────
 
     /// <summary>
