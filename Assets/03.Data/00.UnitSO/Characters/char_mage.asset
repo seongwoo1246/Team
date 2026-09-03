@@ -19,9 +19,8 @@ MonoBehaviour:
   basePower: 12
   powerPerLevel: 3
   baseHp: 120
-  baseUpgradeCost: 80
   critChance: 0.1
   critBonus: 1.5
+  critBonusPerLevel: 0.05
   critChancePerLevel: 0.008
-  costGrowthRate: 1.15
   hpGrowthRate: 1.17

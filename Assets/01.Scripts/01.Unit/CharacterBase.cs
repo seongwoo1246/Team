@@ -12,6 +12,9 @@
   - 스탯은 저장하지 않고 StatCalculator로 현재 레벨에 맞게 계산해서 보유
   - 스킬은 TryUseSkill1()/TryUseSkill2()
     스킬 버튼 UI랑 오토 스킬 루프 둘 다 이 함수를 거쳐가서 쿨다운이 항상 하나로 관리됨
+  - 장비는 Equip()/Unequip()이 유일한 진입점. 부위(EquipmentSlot)마다 담당 스탯이 고정되있고
+    장착/해제할 때마다 RecalculateStats()가 자동으로 다시 불림 (인벤토리 UI는 저장/보관만 맡고,
+    실제 장착 반영은 항상 이 함수를 거쳐감)
 */
 
 using System;
@@ -79,6 +82,9 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     // AttackSpeed 트랙이 반영된 실제 공격 간격 (attackInterval 을 속도 계수로 나눈 값)
     private float _currentAttackInterval;
+
+    // 부위별 장착 장비. 인덱스 = (int)EquipmentSlot. 비어있는 부위는 null
+    private readonly EquippedItem[] _equippedItems = new EquippedItem[System.Enum.GetValues(typeof(EquipmentSlot)).Length];
 
     // 파티 강화 시스템 (트랙 레벨을 읽고, 강화 이벤트를 구독)
     private UpgradeSystem _upgradeSystem;
@@ -186,8 +192,10 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 현재 파티 트랙 레벨에 맞는 최대 체력과 실효 공격력(힐량)을 계산해 저장.
-    /// 공격력=Power 트랙, 체력=Hp 트랙, 치명타=Crit 트랙 을 각각 사용한다.
+    /// 현재 파티 트랙 레벨 + 장착 장비에 맞는 최대 체력과 실효 공격력(힐량)을 계산해 저장
+    /// 공격력=Power 트랙, 체력=Hp 트랙, 치명타=Crit 트랙 을 각각 사용하고, 장비 보너스(%)를 그 위에 더 얹음
+    /// (Weapon=공격력, Armor=체력, Gloves=치명타율, Ring=치명타피해, Shoes=공격속도. Pants=골드획득은
+    /// 캐릭터 개인 스탯이 아니라 파티 전체 골드에 적용되므로 여기서 다루지 않음 - GetEquippedBonusRatio로 외부에서 조회)
     /// 계산 방식을 바꾸고 싶으면 하위 클래스에서 override 한다.
     /// </summary>
     protected virtual void RecalculateStats()
@@ -205,15 +213,105 @@ public class CharacterBase : MonoBehaviour, IEntity
         int critChanceLevel = _upgradeSystem != null ? _upgradeSystem.GetLevel(UpgradeTrack.Crit) : 0;
         int critDamageLevel = _upgradeSystem != null ? _upgradeSystem.GetLevel(UpgradeTrack.CritDamage) : 0;
 
-        _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel);
-        _currentPower = StatCalculator.GetEffectiveStatValue(statData, powerLevel, critChanceLevel, critDamageLevel);
+        // 치명타 확률/피해는 장갑(Gloves)/반지(Ring) 장비 보너스를 트랙 계산값에 더한 뒤 최종 데미지를 뽑음
+        float rawPower = StatCalculator.GetStatValue(statData, powerLevel);
+        float critChance = StatCalculator.GetCritChance(statData, critChanceLevel) + GetEquippedBonusRatio(EquipmentSlot.Gloves);
+        float critBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
+        float effectivePower = StatCalculator.GetCritDamage(rawPower, Mathf.Clamp01(critChance), critBonus);
+
+        _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
+        _currentPower = effectivePower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
 
         float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;
-        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / Mathf.Max(0.01f, speedFactor));
+        float equipmentSpeedFactor = 1f + GetEquippedBonusRatio(EquipmentSlot.Shoes);
+        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / Mathf.Max(0.01f, speedFactor * equipmentSpeedFactor));
     }
 
     /// <summary>
-    /// 자동공격 루프 + 오토 스킬 루프를 전부 새로 시작한다.
+    /// 이 캐릭터가 해당 부위/장비를 장착할 수 있는지 확인
+    /// 무기(Weapon)는 장비의 AllowedAttackType이 이 캐릭터의 AttackType과 같아야 하고, 나머지 부위는 항 가능
+    /// </summary>
+    /// <param name="slot">장착하려는 부위</param>
+    /// <param name="data">장착하려는 장비 (고정 정보)</param>
+    /// 장착 가능하면 true
+    public bool CanEquip(EquipmentSlot slot, EquipmentData data)
+    {
+        if (data == null || data.Slot != slot)
+        {
+            return false;
+        }
+
+        if (slot == EquipmentSlot.Weapon && data.AllowedAttackType != AttackType)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 장비를 장착한다. CanEquip을 통과 못 하면 아무것도 하지 않고 false
+    /// 인벤토리 UI가 아이템을 이 캐릭터에게 씌울 때 호출하는 용도. 저장/보관은 인벤토리쪽 책임, 여기선 장착 반영만 함
+    /// </summary>
+    /// <param name="slot">장착할 부위</param>
+    /// <param name="item">장착할 장비 인스턴스</param>
+    /// 장착에 성공했으면 true
+    public bool Equip(EquipmentSlot slot, EquippedItem item)
+    {
+        if (item == null || !CanEquip(slot, item.Data))
+        {
+            return false;
+        }
+
+        // 체력 비율은 유지한 채로 스탯만 다시 계산 (파티 강화 때와 동일한 방식)
+        float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
+        _equippedItems[(int)slot] = item;
+        RecalculateStats();
+        _currentHP = _currentMaxHP * hpRatio;
+
+        return true;
+    }
+
+    /// <summary>
+    /// 지정한 부위의 장비를 해제한다. 이미 비어있으면 아무 일도 안함
+    /// </summary>
+    /// <param name="slot">해제할 부위</param>
+    public void Unequip(EquipmentSlot slot)
+    {
+        if (_equippedItems[(int)slot] == null)
+        {
+            return;
+        }
+
+        float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
+        _equippedItems[(int)slot] = null;
+        RecalculateStats();
+        _currentHP = _currentMaxHP * hpRatio;
+    }
+
+    /// <summary>
+    /// 지정한 부위에 현재 장착된 장비를 돌려준다. 비어있으면 null
+    /// </summary>
+    /// <param name="slot">조회할 부위</param>
+    public EquippedItem GetEquipped(EquipmentSlot slot)
+    {
+        return _equippedItems[(int)slot];
+    }
+
+    /// <summary>
+    /// 지정한 부위에 장착된 장비의 보너스 비율을 돌려준다 (7% 장비면 0.07). 비어있으면 0
+    /// RecalculateStats 내부에서 쓰이고, Pants(골드획득)처럼 캐릭터 개인 스탯이 아니라
+    /// 파티 전체에 적용되는 보너스는 StageManager 같은 외부에서 이 함수로 직접 조회해서 씀
+    /// </summary>
+    /// <param name="slot">조회할 부위</param>
+    public float GetEquippedBonusRatio(EquipmentSlot slot)
+    {
+        EquippedItem item = _equippedItems[(int)slot];
+        return item != null ? item.RollPercent / 100f : 0f;
+    }
+
+    /// <summary>
+    /// 자동공격 루프 + 오토 스킬 루프를 전부 새로 시작
     /// Start()와 Revive() 둘 다 여기를 호출 - 부활했을 때도 루프가 다시 돌아야 하기 때문
     /// </summary>
     private void StartCombatLoops()

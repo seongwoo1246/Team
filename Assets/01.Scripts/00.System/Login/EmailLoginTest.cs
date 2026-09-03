@@ -1,4 +1,7 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/*
+ LoginSystemTest에 내장된 Firebase 메서드를 통해 이메일로 회원가입 및 로그인 기능을 테스트하는 스크립트.
+ */
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -11,7 +14,7 @@ public class EmailLoginTest : MonoBehaviour
     [SerializeField] private Button loginButton;
     [SerializeField] private Button registerButton;
     [SerializeField] private Button closeButton;
-
+    
     private void Awake()
     {
         // 람다 없이 메서드 바인딩 (GC Alloc 방지)
@@ -49,6 +52,9 @@ public class EmailLoginTest : MonoBehaviour
         ExecuteEmailRegisterAsync().Forget();
     }
 
+    /// <summary>
+    /// 이메일 계정과 비밀번호를 사용하여 로그인 시도
+    /// </summary>
     private async UniTaskVoid ExecuteEmailLoginAsync()
     {
         string email = emailInput.text.Trim();
@@ -64,6 +70,9 @@ public class EmailLoginTest : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 이메일 계정과 비밀번호를 사용하여 회원가입 시도
+    /// </summary>
     private async UniTaskVoid ExecuteEmailRegisterAsync()
     {
         string email = emailInput.text.Trim();

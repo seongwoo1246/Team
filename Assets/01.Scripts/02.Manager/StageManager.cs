@@ -11,8 +11,12 @@
         실패(파티 전멸 / 시간 초과)는 그 즉시 자동으로 파밍 복귀 (선택할 게 없으므로)
         (스테이지가 수백 개 있어도 에셋을 스테이지마다 안 만들어도 되도록 전부 수식으로 계산함)
 
-보상은 GoldWallet.AddKillReward로 지급한다 (UpgradeSystem의 GoldGain 배율은 그 안에서 자동 적용됨)
-스테이지 클리어 배율(ClearGoldMultiplier)은 여기서 별도로 곱해서 넘김!
+골드는 더 이상 몬스터를 잡아서 받지 않는다 - GoldWallet이 분당 고정 골드를 알아서 지급함
+(ClearGoldMultiplier / PartyEquipmentGoldBonusRatio를 GoldWallet이 읽어가서 분당 골드에 반영함)
+_maxClearedStage는 PlayerPrefs에 저장해서 앱을 다시 켜도 배율/오프라인 보상이 안 초기화되게 함
+
+몬스터가 장비를 드랍하면(낮은 확률) EquipmentDropped 이벤트로 던져준다 - 인벤토리 시스템은
+몬스터 풀링/파밍·웨이브·보스 구분을 몰라도 되게, 이 매니저 하나만 구독하면됨
 */
 
 using System;
@@ -58,6 +62,10 @@ public sealed class StageManager : Singleton<StageManager>
     [Tooltip("클리어한 스테이지 1개당 파밍 골드 획득 배율 증가율 (복리). 0.03 = 스테이지당 ×1.03배씩 누적")]
     [SerializeField] private double goldMultiplierPerClearedStage = 0.03d;
 
+    // 지금까지 클리어한 최대 스테이지 번호를 저장해두는 PlayerPrefs 키
+    // (이게 없으면 앱을 다시 켤 때마다 ClearGoldMultiplier/파밍 몬스터 레벨이 전부 초기화돼버림)
+    private const string MAX_CLEARED_STAGE_KEY = "StageManager_MaxClearedStage";
+
     // 현재 진행 모드
     private StageMode _currentMode = StageMode.Farming;
 
@@ -90,6 +98,10 @@ public sealed class StageManager : Singleton<StageManager>
     // 클리어/실패 화면(타이머 정지, 선택 패널)을 원래대로 되돌리는 용도로 UI가 구독해서 쓴다
     public event Action<int> ChallengeStarted;
 
+    // 파밍/웨이브/보스 몬스터 상관없이, 누구든 장비를 드랍하면 발생. 인자 = 드랍된 장비 인스턴스
+    // 인벤토리 시스템은 몬스터 풀링을 몰라도 되게, 이 이벤트 하나만 구독하면 됨
+    public event Action<EquippedItem> EquipmentDropped;
+
     // 현재 진행 모드
     public StageMode CurrentMode => _currentMode;
 
@@ -100,6 +112,32 @@ public sealed class StageManager : Singleton<StageManager>
     // 파밍 몬스터 레벨도 maxClearedStage로 지수 성장하기 때문에, 이 배율도 선형이 아니라 복리로 둬야
     // 스테이지가 쌓여도 괜찮음
     public double ClearGoldMultiplier => System.Math.Pow(1d + goldMultiplierPerClearedStage, _maxClearedStage);
+
+    // 파티원 중 누구든 바지(Pants=골드획득) 장비를 끼고 있으면 보너스를 전부 더한 값 (7% 하나면 0.07)
+    // 골드획득은 캐릭터 개인 스탯이 아니라 파티 전체 골드에 적용되는 값이라, 누가 잡았는지와 상관없이
+    // 파티 중 아무나 끼고 있으면 항상 적용됨. GoldWallet이 분당 골드를 계산할 때 이 값을 읽어감
+    public double PartyEquipmentGoldBonusRatio
+    {
+        get
+        {
+            if (party == null)
+            {
+                return 0d;
+            }
+
+            double total = 0d;
+            for (int partyIndex = 0; partyIndex < party.Length; partyIndex++)
+            {
+                CharacterBase character = party[partyIndex];
+                if (character != null)
+                {
+                    total += character.GetEquippedBonusRatio(EquipmentSlot.Pants);
+                }
+            }
+
+            return total;
+        }
+    }
 
     // 챌린지 남은 시간(초). 시간 제한이 없으면(challengeTimeLimit이 0 이하) -1을 반환
     // UI(타이머 표시)가 이 값을 읽어서 보여줌
@@ -114,6 +152,15 @@ public sealed class StageManager : Singleton<StageManager>
 
             return Mathf.Max(0f, challengeTimeLimit - (Time.time - _challengeStartTime));
         }
+    }
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        // GoldWallet.Start()가 분당 골드/오프라인 보상을 계산하기 전에 값이 준비돼 있어야 하므로
+        // Start가 아니라 Awake에서 로드함 (유니티는 모든 오브젝트의 Awake가 끝난 뒤에 Start를 부름)
+        _maxClearedStage = PlayerPrefs.GetInt(MAX_CLEARED_STAGE_KEY, 0);
     }
 
     private void Start()
@@ -228,6 +275,7 @@ public sealed class StageManager : Singleton<StageManager>
                 {
                     _aliveInFarming++;
                     monster.Died += OnFarmingMonsterDied;
+                    monster.EquipmentDropped += OnMonsterEquipmentDropped;
                 }
             }
 
@@ -294,6 +342,7 @@ public sealed class StageManager : Singleton<StageManager>
             {
                 _aliveInWave++;
                 monster.Died += OnWaveMonsterDied;
+                monster.EquipmentDropped += OnMonsterEquipmentDropped;
             }
 
             await UniTask.Delay(TimeSpan.FromSeconds(roster.SpawnInterval), cancellationToken: token);
@@ -323,38 +372,50 @@ public sealed class StageManager : Singleton<StageManager>
         void OnBossDied(Monster deadBoss)
         {
             bossDefeated = true;
-            GrantKillReward(deadBoss.RewardGold);
         }
 
         boss.Died += OnBossDied;
+        boss.EquipmentDropped += OnMonsterEquipmentDropped;
 
         await UniTask.WaitUntil(() => bossDefeated || IsPartyWiped() || IsTimeUp(), cancellationToken: token);
 
         boss.Died -= OnBossDied;
+        boss.EquipmentDropped -= OnMonsterEquipmentDropped;
 
         return bossDefeated;
     }
 
     /// <summary>
-    /// 파밍 중 소환된 몬스터가 죽었을 때 보상을 지급
+    /// 파밍 중 소환된 몬스터가 죽었을 때. 골드는 더 이상 여기서 안 주고(GoldWallet이 분당으로 지급),
+    /// 살아있는 수만 줄여서 다음 소환 여유를 만들어줌
     /// </summary>
     /// <param name="monster">죽은 몬스터</param>
     private void OnFarmingMonsterDied(Monster monster)
     {
         monster.Died -= OnFarmingMonsterDied;
+        monster.EquipmentDropped -= OnMonsterEquipmentDropped;
         _aliveInFarming--;
-        GrantKillReward(monster.RewardGold);
     }
 
     /// <summary>
-    /// 웨이브 중 소환된 몬스터가 죽었을 때 남은 수를 줄이고 보상을 지급
+    /// 웨이브 중 소환된 몬스터가 죽었을 때 남은 수를 줄인다. 골드는 더 이상 여기서 안 줌(GoldWallet이 분당으로 지급)
     /// </summary>
     /// <param name="monster">죽은 몬스터</param>
     private void OnWaveMonsterDied(Monster monster)
     {
         monster.Died -= OnWaveMonsterDied;
+        monster.EquipmentDropped -= OnMonsterEquipmentDropped;
         _aliveInWave--;
-        GrantKillReward(monster.RewardGold);
+    }
+
+    /// <summary>
+    /// 몬스터가 장비를 드랍했을 때, 우리 자신의 EquipmentDropped 이벤트로 그대로 다시 던져줌
+    /// (인벤토리 시스템은 몬스터 풀링/파밍·웨이브·보스 구분을 몰라도 되게, 이 매니저 하나만 구독하면 됨)
+    /// </summary>
+    /// <param name="item">드랍된 장비 인스턴스</param>
+    private void OnMonsterEquipmentDropped(EquippedItem item)
+    {
+        EquipmentDropped?.Invoke(item);
     }
 
     /// <summary>
@@ -453,22 +514,9 @@ public sealed class StageManager : Singleton<StageManager>
     }
 
     /// <summary>
-    /// 처치 보상을 골드로 지급한다. 스테이지 클리어 배율을 곱한 뒤 GoldWallet에 넘기면
-    /// GoldWallet 안에서 UpgradeSystem의 GoldGain 배율이 추가로 자동 적용
-    /// </summary>
-    /// <param name="baseReward">몬스터의 기본 보상 골드 (Monster.RewardGold)</param>
-    private void GrantKillReward(double baseReward)
-    {
-        if (GoldWallet.instance == null)
-        {
-            return;
-        }
-
-        GoldWallet.instance.AddKillReward(baseReward * ClearGoldMultiplier);
-    }
-
-    /// <summary>
-    /// 스테이지 클리어 처리. 최고 기록을 갱신하고 StageCleared 이벤트를 발생
+    /// 스테이지 클리어 처리. 최고 기록을 갱신해서 PlayerPrefs에 저장해두고 StageCleared 이벤트를 발생
+    /// (골드 보상은 더 이상 여기서 안 줌 - GoldWallet이 ClearGoldMultiplier를 읽어가서 분당 골드에 반영하고,
+    /// 클리어 순간 보너스도 GoldWallet이 StageCleared를 직접 구독해서 알아서 지급함)
     /// 여기서 자동으로 파밍 복귀하지 않는다 - 몬스터는 이미 다 처리된 상태라 위험은 없고
     /// 클리어 화면에서 UI가 ContinueToNextStage / EnterFarming 중 하나를 호출할 때까지 대기
     /// </summary>
@@ -478,6 +526,8 @@ public sealed class StageManager : Singleton<StageManager>
         if (stageNumber > _maxClearedStage)
         {
             _maxClearedStage = stageNumber;
+            PlayerPrefs.SetInt(MAX_CLEARED_STAGE_KEY, _maxClearedStage);
+            PlayerPrefs.Save();
         }
 
         StageCleared?.Invoke(stageNumber);

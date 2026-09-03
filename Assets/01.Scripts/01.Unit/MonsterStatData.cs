@@ -22,16 +22,11 @@ public class MonsterStatData : ScriptableObject
 
     [SerializeField] private float baseAttack = 5f;
 
-    [SerializeField] private float baseGold = 10f;
-
     [SerializeField] private float moveSpeed = 1.5f;
 
     [Header("레벨(스테이지) 성장률")]
     // 레벨당 체력 증가율
     [SerializeField] private float hpGrowthPerLevel = StatCalculator.DEFAULT_MONSTER_HP_GROWTH;
-
-    // 레벨당 보상 골드 증가율
-    [SerializeField] private float goldGrowthPerLevel = StatCalculator.DEFAULT_GOLD_GROWTH;
 
     public string Id => id;
 
@@ -44,11 +39,7 @@ public class MonsterStatData : ScriptableObject
 
     public float BaseAttack => baseAttack;
 
-    public float BaseGold => baseGold;
-
     public float MoveSpeed => moveSpeed;
 
     public float HpGrowthPerLevel => hpGrowthPerLevel;
-
-    public float GoldGrowthPerLevel => goldGrowthPerLevel;
 }
