@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Firebase.Database;
 using Firebase.Extensions;
-using Unity.VisualScripting;
+using Debug = DebugLogger<MailBoxManager>;
 
 
 public enum RewardType
@@ -98,7 +98,7 @@ public class MailBoxManager : Singleton<MailBoxManager>
     {
         if(args.DatabaseError != null)
         {
-            Debug.Log($"데이터 로드 실패 = {args.DatabaseError.Message}");
+            Debug.LogError($"데이터 로드 실패 = {args.DatabaseError.Message}");
             return;
         }
 
@@ -162,7 +162,7 @@ public class MailBoxManager : Singleton<MailBoxManager>
         }
         catch(Exception ex)
         {
-            Debug.Log($"우편 수령중 문제 발생 : {ex.Message}");
+            Debug.LogWarning($"우편 수령중 문제 발생 : {ex.Message}");
             return false;
         }
     }
@@ -203,7 +203,7 @@ public class MailBoxManager : Singleton<MailBoxManager>
         }
         catch(Exception ex)
         {
-            Debug.Log($"전체 우편 수령 실패 : {ex.Message}");
+            Debug.LogWarning($"전체 우편 수령 실패 : {ex.Message}");
         }
     }
 

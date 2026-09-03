@@ -4,6 +4,7 @@ using UnityEngine.ResourceManagement.AsyncOperations;
 using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using Debug = DebugLogger<AddressableLoader>;
 
 
 
@@ -51,7 +52,7 @@ public class AddressableLoader : MonoBehaviour
 
         if(downloadSize > 0)
         {
-            DebugLogger<AddressableLoader>.Log($"Addressable Manager 다운로드 필요 용량 : {downloadSize / (1024f * 1024f): F2}MB");
+            Debug.Log($"Addressable Manager 다운로드 필요 용량 : {downloadSize / (1024f * 1024f): F2}MB");
            
 
 
@@ -96,7 +97,7 @@ public class AddressableLoader : MonoBehaviour
             _instanceHandles[result] = handle;
             return result;
         }
-        DebugLogger<AddressableLoader>.Log($"Instantiate 실패했습니다. {key}를 다시 한번 확인 부탁드립니다.");
+        Debug.LogWarning($"Instantiate 실패했습니다. {key}를 다시 한번 확인 부탁드립니다.");
         return null;
     }
 
@@ -122,7 +123,7 @@ public class AddressableLoader : MonoBehaviour
             _assetHandles[key] = handle;
             return result;
         }
-        DebugLogger<AddressableLoader>.Log($"LoadAsset 실패 {key}");
+        Debug.LogWarning($"LoadAsset 실패 {key}");
         return null;
     }
 

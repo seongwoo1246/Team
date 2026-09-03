@@ -3,9 +3,8 @@ using Firebase.Database;
 using Firebase.Extensions;
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
+using Debug = DebugLogger<AchievementManager>;
 
 /// <summary>
 /// 업적 관련 정보를 담고 있는 클래스
@@ -191,7 +190,7 @@ public class AchievementManager : Singleton<AchievementManager>
 
                 if (task.IsFaulted)
                 {
-                    DebugLogger<AchievementManager>.Log($"파이어 베이스 저장 실패 : {task.Exception}");
+                    Debug.LogError($"파이어 베이스 저장 실패 : {task.Exception}");
                 }
             });
 
@@ -208,7 +207,7 @@ public class AchievementManager : Singleton<AchievementManager>
             {
                 if (task.IsFaulted)
                 {
-                    DebugLogger<AchievementManager>.Log($"파이어 베이스 데이터 로드 실패");
+                    Debug.LogError($"파이어 베이스 데이터 로드 실패");
                     return;
                 }
 
@@ -226,7 +225,7 @@ public class AchievementManager : Singleton<AchievementManager>
                             achievementsDictionary[loadedAch.id].currentProgress = loadedAch.currentProgress;
                             achievementsDictionary[loadedAch.id].isUnLocked = loadedAch.isUnLocked;
                         }
-                        DebugLogger<AchievementManager>.Log($"파이어 베이스 업적 데이터 불러오기 성공");
+                        Debug.Log($"파이어 베이스 업적 데이터 불러오기 성공");
                     }
                 }
             });

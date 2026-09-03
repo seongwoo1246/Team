@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using Debug = DebugLogger<ObjcetPoolManager>;
 
 /// <summary>
 /// 오브젝트 폴링 할 모든 친구들한태 넣어줄 인터페이스
@@ -45,7 +46,7 @@ public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
     {
         if (_pool.ContainsKey(enumname))
         {
-            DebugLogger<ObjcetPoolManager>.Log("이미 같은 이름의 Pool이 있습니다.");
+            Debug.LogWarning("이미 같은 이름의 Pool이 있습니다.");
             return;
         }
 
@@ -63,7 +64,7 @@ public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
     {
         if (!_pool.TryGetValue(enumname, out object poolObj))
         {
-            DebugLogger<ObjcetPoolManager>.Log("소환할 오브젝트가 없습니다.");
+            Debug.LogWarning("소환할 오브젝트가 없습니다.");
             return null;
         }
         Pool<T> pool = (Pool<T>)poolObj;
@@ -78,7 +79,7 @@ public class ObjcetPoolManager : Singleton<ObjcetPoolManager>
     {
         if (!_pool.TryGetValue(enumname, out object poolObj))
         {
-            DebugLogger<ObjcetPoolManager>.Log("오브젝트를 되돌릴게 없습니다.");
+            Debug.LogWarning("오브젝트를 되돌릴게 없습니다.");
             return;
         }
 
@@ -141,7 +142,7 @@ class Pool<T> where T : Component , IPoolable
     {
         if(!_active.Contains(obj))
         {
-            DebugLogger<ObjcetPoolManager>.Log("중복으로 비활성화 되려고 합니다.");
+            Debug.LogWarning("중복으로 비활성화 되려고 합니다.");
             return;
         }
 

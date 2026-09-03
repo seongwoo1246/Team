@@ -5,6 +5,7 @@ using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Build;
 using UnityEditor.AddressableAssets.Settings;
+using Debug = DebugLogger<AddressableEditor>;
 
 
 /// <summary>
@@ -28,14 +29,14 @@ public class AddressableEditor : EditorWindow
         if(GUILayout.Button("1. Clean Build Cache", GUILayout.Height(30)))
         {
             AddressableAssetSettings.CleanPlayerContent();
-            DebugLogger<AddressableEditor>.Log("캐시가 삭제되었습니다.");
+            Debug.Log("캐시가 삭제되었습니다.");
         }
 
         // Addressable 원본 전체 빌드
         if(GUILayout.Button("2. Build New Addressable", GUILayout.Height(30)))
         {
             AddressableAssetSettings.BuildPlayerContent();
-            DebugLogger<AddressableEditor>.Log("전체 빌드가 완료되었습니다.");
+            Debug.Log("전체 빌드가 완료되었습니다.");
         }
 
         // 변경사항 패치 (업데이트 내용)
@@ -45,11 +46,11 @@ public class AddressableEditor : EditorWindow
             if(!string.IsNullOrEmpty(buildPath) )
             {
                 ContentUpdateScript.BuildContentUpdate(AddressableAssetSettingsDefaultObject.Settings, buildPath);
-                DebugLogger<AddressableEditor>.Log("패치 빌드가 완료 했습니다.");
+                Debug.Log("패치 빌드가 완료 했습니다.");
             }
             else
             {
-                DebugLogger<AddressableEditor>.Log("패치 파일이 없습니다. 먼저 빌드를 하고 와주세요.");
+                Debug.LogError("패치 파일이 없습니다. 먼저 빌드를 하고 와주세요.");
             }
         }
 

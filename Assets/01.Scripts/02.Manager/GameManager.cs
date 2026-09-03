@@ -1,7 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using UnityEngine;
 using System;
- 
+using Debug = DebugLogger<GameManager>;
 /// <summary>
 /// 게임의 전체 상태를 나타내는 상태판
 /// </summary>
@@ -42,26 +42,26 @@ public class GameManager : Singleton<GameManager>
     {
         //1단계 에셋 다운로드 및 초기 설정
         ChangeState(GameState.Init);
-        DebugLogger<GameManager>.Log("[GameManager] : addressable 패치 및 다운로드 시작");
+        Debug.Log("[GameManager] : addressable 패치 및 다운로드 시작");
         bool isAssetReady = await addressableLoader.CheckAndDownLoadUpdateAsync(Progress =>
         {
-            DebugLogger<GameManager>.Log($" 다운로드 진행율 : {Progress * 100}%");
+            Debug.Log($" 다운로드 진행율 : {Progress * 100}%");
         });
 
         if(!isAssetReady)
         {
-            DebugLogger<GameManager>.Log(" 에셋 다운로드 실패했습니다. 인터넷을 확인하세요.");
+            Debug.LogWarning(" 에셋 다운로드 실패했습니다. 인터넷을 확인하세요.");
             return;
         }
 
         //2단계 파이어베이스 로그인
         ChangeState(GameState.Login);
-        DebugLogger<GameManager>.Log("[GameManager] : 로그인 화면으로 나왔습니다.");
+        Debug.Log("[GameManager] : 로그인 화면으로 나왔습니다.");
         string userId = await WaitForUserLoginAsync();
 
         //3단계 유저 데이터 받아오기
         ChangeState(GameState.FatchUserData);
-        DebugLogger<GameManager>.Log($"[GameManager] : {userId}님의 유저 데이터를 받아옵니다.");
+        Debug.Log($"[GameManager] : {userId}님의 유저 데이터를 받아옵니다.");
         await FetchFirebaseUserDataAsync(userId);
 
         //4단계 로비 진입 및 자동 사냥 시작
@@ -88,7 +88,7 @@ public class GameManager : Singleton<GameManager>
     {
         //여기서 파이어베이스 서버와 아이디가 같은지 확인하고 정보 받는 부분
         await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
-        DebugLogger<GameManager>.Log("[GameManager] : 유저 데이터 로드 완료");
+        Debug.Log("[GameManager] : 유저 데이터 로드 완료");
     }
 
     #endregion
@@ -101,7 +101,7 @@ public class GameManager : Singleton<GameManager>
     public void EnterLoddy()
     {
         ChangeState(GameState.Lobby);
-        DebugLogger<GameManager>.Log("[GameManager] : 로비로 돌아왔습니다. (처치보상/분당보상)이 쌓이기 시작합니다.");
+        Debug.Log("[GameManager] : 로비로 돌아왔습니다. (처치보상/분당보상)이 쌓이기 시작합니다.");
         //이 부분에서 게임 나가 있는 동안 쌓인 보상들 받는 함수
         ScenesManager.instance.LoadScenes(ScenesName.Lobby);
 
@@ -115,7 +115,7 @@ public class GameManager : Singleton<GameManager>
     public async UniTaskVoid StartSStageAsync(int  stageId)
     {
         ChangeState(GameState.StageBattle);
-        DebugLogger<GameManager>.Log($"{stageId}번째 스테이지 입장");
+        Debug.Log($"{stageId}번째 스테이지 입장");
 
        // 로비씬 초기화 하며 스테이지 시작
     }
@@ -132,21 +132,21 @@ public class GameManager : Singleton<GameManager>
     {
         if(!focus)
         {
-            DebugLogger<GameManager>.Log("[GameManager] : 게임이 백그라운드로 돌아갔습니다. Ui와 진행상황 저장");
+            Debug.Log("[GameManager] : 게임이 백그라운드로 돌아갔습니다. Ui와 진행상황 저장");
             // 혹은 타임스케줄을 0으로 만들어서 일시 정지 등등
         }
         else
         {
-            DebugLogger<GameManager>.Log("[GameManager] : 유저가 게임으로 복귀했습니다.");
+            Debug.Log("[GameManager] : 유저가 게임으로 복귀했습니다.");
             //혹은 타임스케줄을 1으로 만들어서 일시 정지 해제 등등
         }
     }
 
     private void ChangeState(GameState state)
     {
-        DebugLogger<GameManager>.Log("");
+        
         CurrentState = state;
-        DebugLogger<GameManager>.Log($"[상태 변경] => {state}");
+        Debug.Log($"[상태 변경] => {state}");
     }
 
     #endregion
