@@ -9,8 +9,10 @@
   2) 프로젝트의  Assets/03.Data/02.CSV/  폴더에 넣는다
         Characters.csv  (또는 3_Characters.csv)
         Monsters.csv    (또는 5_Monsters.csv)
+        Equipment.csv   (또는 6_Equipment.csv)
   3) 상단 메뉴  Tools → 데이터 임포터  에서 창을 열고 버튼을 누름
-  4) 결과 SO는  Assets/03.Data/00.UnitSO/Characters , /Monsters  에 생성됨
+  4) 결과 SO는  Assets/03.Data/00.UnitSO/Characters , /Monsters ,
+     Assets/03.Data/01.InventorySO/Equipment  에 생성됨
 */
 
 using System.Collections.Generic;
@@ -32,10 +34,14 @@ public class DataImporterWindow : EditorWindow
     private const string MONSTER_OUTPUT = OUTPUT_ROOT + "/Monsters";
     private const string CONFIG_OUTPUT = OUTPUT_ROOT + "/GameConfig.asset";
 
+    // 장비는 인벤토리 쪽 데이터 폴더에 따로 (Characters/Monsters랑 폴더가 다름)
+    private const string EQUIPMENT_OUTPUT = "Assets/03.Data/01.InventorySO/Equipment";
+
     // CSV 파일 이름 후보 (숫자 접두사가 붙어도 찾을 수 있게)
     private static readonly string[] CharacterCsvNames = { "Characters.csv", "3_Characters.csv" };
     private static readonly string[] MonsterCsvNames = { "Monsters.csv", "5_Monsters.csv" };
     private static readonly string[] ConfigCsvNames = { "Config.csv", "_Config.csv", "1_Config.csv" };
+    private static readonly string[] EquipmentCsvNames = { "Equipment.csv", "6_Equipment.csv" };
 
     [MenuItem("Tools/데이터 임포터")]
     private static void Open()
@@ -68,6 +74,11 @@ public class DataImporterWindow : EditorWindow
             ImportConfig();
         }
 
+        if (GUILayout.Button("장비 CSV 가져오기", GUILayout.Height(30f)))
+        {
+            ImportEquipment();
+        }
+
         EditorGUILayout.Space(6f);
 
         if (GUILayout.Button("전체 가져오기", GUILayout.Height(34f)))
@@ -75,6 +86,7 @@ public class DataImporterWindow : EditorWindow
             ImportCharacters();
             ImportMonsters();
             ImportConfig();
+            ImportEquipment();
         }
     }
 
@@ -145,7 +157,40 @@ public class DataImporterWindow : EditorWindow
     }
 
     /// <summary>
-    /// _Config CSV (key,value 형식) 를 읽어 GameConfig 에셋을 생성/갱신한다.
+    /// Equipment CSV를 읽어 EquipmentData 에셋을 생성/갱신
+    /// </summary>
+    private void ImportEquipment()
+    {
+        string path = FindCsv(EquipmentCsvNames);
+        if (path == null)
+        {
+            return;
+        }
+
+        EnsureFolder(EQUIPMENT_OUTPUT);
+        List<Dictionary<string, string>> rows = ReadCsv(path);
+        int count = 0;
+
+        foreach (Dictionary<string, string> row in rows)
+        {
+            if (!row.TryGetValue("id", out string id) || string.IsNullOrWhiteSpace(id))
+            {
+                continue;
+            }
+
+            string assetPath = $"{EQUIPMENT_OUTPUT}/{id}.asset";
+            EquipmentData asset = GetOrCreateAsset<EquipmentData>(assetPath);
+            ApplyRow(asset, row);
+            count++;
+        }
+
+        SaveAll();
+        DebugLogger<DataImporterWindow>.Log($"장비 {count}개 가져오기 완료");
+        EditorUtility.DisplayDialog("데이터 임포터", $"장비 {count}개 가져오기 완료", "확인");
+    }
+
+    /// <summary>
+    /// _Config CSV (key,value 형식) 를 읽어 GameConfig 에셋을 생성/갱신
     /// </summary>
     private void ImportConfig()
     {

@@ -37,8 +37,8 @@ public enum MonsterKind
 }
 
 /// <summary>
-/// 파티 강화 트랙. 각 트랙은 따로 레벨업되고 모든 캐릭터에 동시 적용된다.
-/// (int 값이 UpgradeSystem 내부 배열 인덱스로 쓰이므로 순서 바꾸지 말 것 / 마지막에만 추가)
+/// 파티 강화 트랙. 각 트랙은 따로 레벨업되고 모든 캐릭터에 동시 적용
+/// (int 값이 UpgradeSystem 내부 배열 인덱스로 쓰이므로 순서 바꾸지 말것 / 마지막에만 추가)
 /// </summary>
 public enum UpgradeTrack
 {
@@ -71,4 +71,30 @@ public enum StageMode
 
     // 챌린지 스테이지 (지정된 웨이브를 순서대로 진행한 뒤 보스)
     Challenge,
+}
+
+/// <summary>
+/// 장비 부위. 부위마다 담당하는 스탯이 고정되있다
+/// (Weapon=공격력, Armor=체력, Pants=골드획득, Gloves=치명타율, Ring=치명타피해, Shoes=공격속도)
+/// 무기(Weapon)만 캐릭터의 AttackType에 맞는 것만 장착 가능하고, 나머지 5부위는 캐릭터 공통
+/// </summary>
+public enum EquipmentSlot
+{
+    // 무기 - 공격력. 캐릭터마다 전용 무기가 따로 있음 (AttackType으로 제한)
+    Weapon,
+
+    // 갑옷 - 체력
+    Armor,
+
+    // 바지 - 골드 획득량 (파티 전체에 적용, 캐릭터 개인스탯 아님주의)
+    Pants,
+
+    // 장갑 - 치명타율
+    Gloves,
+
+    // 반지 - 치명타 피해
+    Ring,
+
+    // 신발 - 공격 속도
+    Shoes,
 }

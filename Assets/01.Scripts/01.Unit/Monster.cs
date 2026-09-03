@@ -1,8 +1,10 @@
 ﻿/*
-MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력과 보상 골드를 계산함
-  현재 체력   = 기본체력   × (체력증가율   ^ 레벨)
-  보상 골드   = 기본골드   × (골드증가율   ^ 레벨)
-보스는 별도 배율(bossHpMultiplier / bossGoldMultiplier)을 추가로 곱함
+MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력을 계산함
+  현재 체력 = 기본체력 × (체력증가율 ^ 레벨)
+보스는 별도 배율(bossHpMultiplier)을 추가로 곱함
+
+(골드 보상은 더 이상 몬스터 개별로 안 줌 - GoldWallet이 분당 고정 골드로 지급하는 방식으로 바뀌어서
+ base_gold/gold_growth_per_level 관련 필드는 전부 제거함)
 */
 
 using System;
@@ -26,9 +28,6 @@ public class Monster : MonoBehaviour, IEntity
     // 보스일 때 체력에 추가로 곱할 배율
     [SerializeField] private float bossHpMultiplier = 1f;
 
-    //보스일 때 보상 골드에 추가로 곱할 배율
-    [SerializeField] private float bossGoldMultiplier = 1f;
-
     [Header("전투")]
     // 공격 간격(초)
     [SerializeField] private float attackInterval = 1.5f;
@@ -43,10 +42,16 @@ public class Monster : MonoBehaviour, IEntity
     // 캐릭터가 이 거리 안에 있으면 타겟으로 잡는다 (사실상 화면 전체면 크게)
     [SerializeField] private float aggroRange = 50f;
 
+    [Header("장비 드랍")]
+    [Tooltip("죽었을 때 장비가 드랍될 확률 (0~1). 0.02 = 2%")]
+    [SerializeField] private float equipmentDropChance = 0.001f;
+
+    [Tooltip("드랍 가능한 장비 후보들. 죽을 때 이 중 하나를 무작위로 골라 1~10% 랜덤 옵션으로 드랍함")]
+    [SerializeField] private EquipmentData[] possibleDrops;
+
     // 레벨 기준으로 계산된 실시간값
     private float _currentHP;
     private float _maxHP;
-    private double _rewardGold;
     private float _attackPower;
     private float _moveSpeed;
 
@@ -66,14 +71,15 @@ public class Monster : MonoBehaviour, IEntity
     // 이 몬스터가 죽었을 때 발생. 인자로 자신을 넘김
     public event Action<Monster> Died;
 
+    // 이 몬스터가 장비를 드랍했을 때 발생. 인자 = 드랍된 장비 인스턴스 (인벤토리 시스템이 구독해서 가져가는 용도)
+    public event Action<EquippedItem> EquipmentDropped;
+
     public float CurrentHP => _currentHP;
 
     public float MaxHP => _maxHP;
 
     // 이미 죽었는지 여부
     public bool IsDead => _currentHP <= 0f;
-
-    public double RewardGold => _rewardGold;
 
     //몬스터 종류
     public MonsterKind Kind => statData != null ? statData.Kind : MonsterKind.Normal;
@@ -213,7 +219,7 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 현재 레벨 기준으로 최대 체력과 보상 골드를 계산한다
+    /// 현재 레벨 기준으로 최대 체력을 계산한다
     /// 참고: 1레벨을 기본값으로 두고 싶으면 지수를 (level - 1)로 바꿈
     /// </summary>
     protected virtual void Recalculate()
@@ -221,7 +227,6 @@ public class Monster : MonoBehaviour, IEntity
         if (statData == null)
         {
             _maxHP = 1f;
-            _rewardGold = 0d;
             _attackPower = 0f;
             _moveSpeed = 0f;
             return;
@@ -241,13 +246,6 @@ public class Monster : MonoBehaviour, IEntity
         _attackPower = statData.BaseAttack * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
 
         _moveSpeed = statData.MoveSpeed;
-
-        double gold = statData.BaseGold * System.Math.Pow(statData.GoldGrowthPerLevel, safeLevel);
-        if (isBoss)
-        {
-            gold *= bossGoldMultiplier;
-        }
-        _rewardGold = gold;
     }
 
     /// <summary>
@@ -356,24 +354,57 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 사망 처리. Died 이벤트를 발생시키고 게임오브젝트를 비활성화 (풀반환)
+    /// 사망 처리. 낮은 확률로 장비를 드랍시키고 Died 이벤트를 발생시킨 뒤 게임오브젝트를 비활성화 (풀반환)
+    /// 장비 드랍이 Died보다 먼저 발동해야 함 - 구독자가 보통 Died 핸들러 안에서 구독을 해제하는데
+    /// 순서가 반대면 EquipmentDropped가 발동하기도 전에 구독이 풀려서 이벤트를 놓치게 됨
     /// </summary>
     public virtual void Die()
     {
         _currentHP = 0f;
         OnDied();
+        TryDropEquipment();
         Died?.Invoke(this);
         gameObject.SetActive(false);
     }
 
     /// <summary>
     /// 죽은 것으로 치지 않고 그냥 회수한다 (스테이지/파밍 모드 전환 등으로 강제로 필드를 비울 때 사용).
-    /// Die()와 달리 보상이 지급되지 않도록 Died 구독을 전부 정리한 뒤 비활성화한다.
+    /// Die()와 달리 보상이 지급되지 않도록 Died/EquipmentDropped 구독을 전부 정리한 뒤 비활성화
+    /// (풀링으로 재사용되는 인스턴스라, 구독을 안 지우면 다음에 재사용될 때 예전 구독이 중복으로 남아있게 됨)
+    /// (Die()를 안 거치므로 장비도 드랍 안 됨)
     /// </summary>
     public void Despawn()
     {
         Died = null;
+        EquipmentDropped = null;
         gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// possibleDrops 중 하나를 무작위로 골라 equipmentDropChance 확률로 장비를 드랍
+    /// 드랍되면 1~10% 사이 랜덤 보너스로 EquippedItem을 만들어 EquipmentDropped 이벤트로 넘긴다
+    /// </summary>
+    private void TryDropEquipment()
+    {
+        if (possibleDrops == null || possibleDrops.Length == 0)
+        {
+            return;
+        }
+
+        if (UnityEngine.Random.value > equipmentDropChance)
+        {
+            return;
+        }
+
+        EquipmentData picked = possibleDrops[UnityEngine.Random.Range(0, possibleDrops.Length)];
+        if (picked == null)
+        {
+            return;
+        }
+
+        float rollPercent = UnityEngine.Random.Range(1f, 10f);
+        EquippedItem dropped = new EquippedItem(picked, rollPercent);
+        EquipmentDropped?.Invoke(dropped);
     }
 
     // 등장 연출
