@@ -197,5 +197,5 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     }
     #endregion
 
-    private void ClearLocalData() => CurrentData = null;
+    public void ClearLocalData() => CurrentData = null;
 }

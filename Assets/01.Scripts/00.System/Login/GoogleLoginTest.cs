@@ -53,8 +53,6 @@ public class GoogleLoginTest : MonoBehaviour
     /// <summary>
     /// Firebase에 구글 토큰을 사용하여 로그인 시도. 성공 여부에 따라 상태 메시지를 업데이트.
     /// </summary>
-    /// <param name="token"></param>
-    /// <returns></returns>
     private async UniTaskVoid ProcessGoogleSignInAsync(string token)
     {
         bool success = await LoginSystemTest.instance.SignInWithGoogleTokenAsync(token, this.GetCancellationTokenOnDestroy());
