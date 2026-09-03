@@ -13,7 +13,6 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     private DatabaseReference rootRef;
     public UserData CurrentData { get; private set; }
     private const string LastLoginTimestamp = "lastLoginTimestamp";
-    private const string IsTutorialCompleted = "isTutorialCompleted";
 
 
     public override void Init()
@@ -149,28 +148,6 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     }
 
      */
-
-    /// <summary>
-    /// 튜토리얼 완료 상태 동기화
-    /// </summary>
-    public async UniTask SetTutorialCompletedAsync(bool isCompleted, CancellationToken ct = default)
-    {
-        if (CurrentData == null)
-        {
-            Debug.LogError("UpdateCurrentAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
-            return;
-        }
-
-        CurrentData.isTutorialCompleted = isCompleted;
-        try
-        {
-            await GetUserRef(CurrentData.uid).Child(IsTutorialCompleted).SetValueAsync(isCompleted).AsUniTask().AttachExternalCancellation(ct);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"튜토리얼 완료 갱신 실패 {ex.Message}");
-        }
-    }
     #endregion
 
     #region [Delete]
