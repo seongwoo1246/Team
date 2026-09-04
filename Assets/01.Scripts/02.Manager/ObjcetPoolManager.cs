@@ -23,6 +23,7 @@ public enum enumType
     Pixel,
     Item,
     Particle,
+    UI,
 
 }
 
