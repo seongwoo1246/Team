@@ -11,7 +11,6 @@ public class UserData
 {
     public string uid;  // 고유 id. 이 값을 통해 UserData를 구분
     public string nickname;
-    public bool isTutorialCompleted;
     public int level;
     public int currentStage;
     public long lastLoginTimestamp; // 방치 보상 계산용
@@ -30,14 +29,26 @@ public class UserData
         {
             uid = uid,
             nickname = nickname,
-            isTutorialCompleted = false,
             level = 1,
             currentStage = 1,
             lastLoginTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             gold = 0,
             dia = 0
-            
+
             // 추가될 내용 있을 시 아래에 추가
+        };
+    }
+
+    public Dictionary<string, object> ToDictionary()
+    {
+        return new Dictionary<string, object>
+        {
+            { nameof(uid), uid},
+            { nameof(nickname), nickname },
+            { nameof(level), level},
+            { nameof(currentStage), currentStage},
+            { nameof(gold), gold},
+            { nameof(dia), dia},
         };
     }
 }
