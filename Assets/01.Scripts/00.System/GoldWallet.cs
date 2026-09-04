@@ -1,4 +1,4 @@
-/*
+﻿/*
 게임 전체 골드 보유량. 어디서든 GoldWallet.instance 로 접근
 골드는 방치형 특성상 아주 커지므로 double씀
 
@@ -226,6 +226,7 @@ public class GoldWallet : Singleton<GoldWallet>
                 double reward = GetCurrentGoldPerMinute() * offlineMinutes;
                 AddPassiveGold(reward);
                 DebugLogger<GoldWallet>.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
+                RewardManager.instance.GetPlayerReward.text = reward.ToString();
             }
         }
 

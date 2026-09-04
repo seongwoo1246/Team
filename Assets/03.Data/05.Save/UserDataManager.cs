@@ -6,14 +6,14 @@ using Firebase.Database;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Debug = DebugLogger<UserDataManager>;
+using Unity.VisualScripting;
+using UtilDebug = DebugLogger<UserDataManager>;
 
 public class UserDataManager : NonMonoSingleton<UserDataManager>
 {
     private DatabaseReference rootRef;
     public UserData CurrentData { get; private set; }
     private const string LastLoginTimestamp = "lastLoginTimestamp";
-    private const string IsTutorialCompleted = "isTutorialCompleted";
 
 
     public override void Init()
@@ -38,9 +38,10 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
                 string json = snapshot.GetRawJsonValue();
                 UserData data = UnityEngine.JsonUtility.FromJson<UserData>(json);
                 CurrentData = data;
-                return (true, data);
+                return (true, CurrentData);
             }
 
+            CurrentData = null;
             return (false, null);
         }
         catch (OperationCanceledException)
@@ -49,7 +50,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"데이터 로드 실패 {ex.Message}");
+            UtilDebug.LogError($"데이터 로드 실패 {ex.Message}");
             return (false, null);
         }
     }
@@ -64,10 +65,18 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
         try
         {
             UserData newUserData = UserData.CreateNewUser(uid, nickname);
-            string json = UnityEngine.JsonUtility.ToJson(newUserData);
 
-            await GetUserRef(uid).SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
+            var updates = new Dictionary<string, object>()
+            {
+                { $"users/{uid}", newUserData.ToDictionary() },
+                { $"nicknames/{nickname}", uid }
+            };
+
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+
             CurrentData = newUserData;
+            UtilDebug.Log($"신규 유저 데이터 및 닉네임 등록 완료: {nickname} (UID: {uid})");
+
             return true;
         }
         catch (OperationCanceledException)
@@ -76,7 +85,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"유저 생성 실패 {ex.Message}");
+            UtilDebug.LogError($"유저 생성 실패 {ex.Message}");
             return false;
         }
     }
@@ -90,7 +99,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     {
         if (CurrentData == null)
         {
-            Debug.LogError("SaveAllDataAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
+            UtilDebug.LogError("SaveAllDataAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
             return false;
         }
         try
@@ -101,7 +110,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"데이터 전체 동기화 실패 {ex.Message}");
+            UtilDebug.LogError($"데이터 전체 동기화 실패 {ex.Message}");
             return false;
         }
     }
@@ -113,7 +122,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     {
         if (CurrentData == null)
         {
-            Debug.LogError("UpdateLastLoginTimeAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
+            UtilDebug.LogError("UpdateLastLoginTimeAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
             return;
         }
 
@@ -126,7 +135,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"접속 시간 갱신 실패 {ex.Message}");
+            UtilDebug.LogError($"접속 시간 갱신 실패 {ex.Message}");
         }
     }
 
@@ -149,29 +158,28 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     }
 
      */
+    #endregion
 
-    /// <summary>
-    /// 튜토리얼 완료 상태 동기화
-    /// </summary>
-    public async UniTask SetTutorialCompletedAsync(bool isCompleted, CancellationToken ct = default)
+    #region Check
+    public async UniTask<bool> IsNicknameDuplicateAsync(string nickname, CancellationToken ct = default)
     {
-        if (CurrentData == null)
-        {
-            Debug.LogError("UpdateCurrentAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
-            return;
-        }
-
-        CurrentData.isTutorialCompleted = isCompleted;
         try
         {
-            await GetUserRef(CurrentData.uid).Child(IsTutorialCompleted).SetValueAsync(isCompleted).AsUniTask().AttachExternalCancellation(ct);
+            var snapshot = await rootRef.Child("nickname").Child(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            return snapshot != null && snapshot.Exists;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
         }
         catch (Exception ex)
         {
-            Debug.LogError($"튜토리얼 완료 갱신 실패 {ex.Message}");
+            UtilDebug.LogError($"닉네임 중복 {ex.Message}");
+            return true; ;
         }
     }
     #endregion
+
 
     #region [Delete]
     /// <summary>
@@ -181,8 +189,21 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     {
         try
         {
-            await GetUserRef(uid).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            string nickname = CurrentData?.nickname;
+
+            var updates = new Dictionary<string, object>
+            {
+                { $"users/{uid}", null }
+            };
+
+            if (!string.IsNullOrEmpty(nickname))
+            {
+                updates.Add($"nicknames/{nickname}", null);
+            }
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+
             ClearLocalData();
+            UtilDebug.Log($"유저 데이터 및 닉네임 인덱스 삭제 완료 (UID: {uid})");
             return true;
         }
         catch (OperationCanceledException)
@@ -191,7 +212,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"DB 유저 데이터 삭제 실패 {ex.Message}");
+            UtilDebug.LogError($"DB 유저 데이터 삭제 실패 {ex.Message}");
             return false;
         }
     }

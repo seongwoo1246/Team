@@ -15,7 +15,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 
     public async UniTask<bool> ProcessAccountDeletionAsync(CancellationToken ct = default)
     {
-        string uid = LoginSystemTest.instance.UserId;
+        string uid = AuthLoginSystem.instance.UserId;
         if (string.IsNullOrEmpty(uid))
         {
             Debug.LogError("사용자 ID를 가져올 수 없습니다. 로그인 상태를 확인하세요.");
@@ -31,7 +31,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         }
 
         // 2. Firebase Auth 계정 삭제
-        var (authSucces, erroMsg) = await LoginSystemTest.instance.DeleteAccountAsync(ct);
+        var (authSucces, erroMsg) = await AuthLoginSystem.instance.DeleteAccountAsync(ct);
         if(!authSucces)
         {
             Debug.LogError($"계정 삭제에 실패했습니다. 오류 메시지: {erroMsg}");
