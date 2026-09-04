@@ -7,9 +7,9 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
-using Debug = DebugLogger<LoginSystemTest>;
+using UtilDebug = DebugLogger<AuthLoginSystem>;
 
-public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
+public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
 {
     private FirebaseAuth auth;
     private FirebaseUser user;
@@ -28,7 +28,6 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     /// <summary>
     /// Firebase 초기화 및 종속성 확인 후 FirebaseAuth 인스턴스를 가져옵니다.
     /// </summary>
-    /// <returns></returns>
     private async UniTaskVoid InitializeFirebaseAsync()
     {
         var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
@@ -44,7 +43,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
         else
         {
-            Debug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
+            UtilDebug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
         }
     }
 
@@ -52,8 +51,6 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     /// Firebase 인증 상태 변경 이벤트를 처리합니다. 로그인 상태가 변경될 때마다 OnAuthStateChanged 이벤트를 호출합니다.
     /// 추후 진행에 따라 Lobby 씬에서 로그인 상태를 확인하고 UI를 업데이트하도록 변경 필요.
     /// </summary>
-    /// <param name="sender"></param>
-    /// <param name="e"></param>
     private void HandleAuthStateChanged(object sender, EventArgs e)
     {
         if (auth == null) return;
@@ -73,10 +70,6 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     /// <summary>
     /// Firebase 이메일/비밀번호 기반 로그인 메서드입니다. 로그인 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    /// <param name="email"></param>
-    /// <param name="password"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async UniTask<bool> SignInWithEmailAsync(string email, string password, CancellationToken ct = default)
     {
         try
@@ -90,7 +83,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"이메일 로그인 실패: {ex.Message}");
+            UtilDebug.LogError($"이메일 로그인 실패: {ex.Message}");
             return false;
         }
     }
@@ -98,10 +91,6 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     /// <summary>
     /// Firebase 이메일/비밀번호 기반 회원가입 메서드입니다. 회원가입 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    /// <param name="email"></param>
-    /// <param name="password"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async UniTask<bool> CreateWithEmailAsync(string email, string password, CancellationToken ct = default)
     {
         try
@@ -115,7 +104,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"회원가입 실패: {ex.Message}");
+            UtilDebug.LogError($"회원가입 실패: {ex.Message}");
             return false;
         }
     }
@@ -123,9 +112,6 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     /// <summary>
     /// Firebase 구글 인증 토큰 기반 로그인 메서드입니다. 로그인 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    /// <param name="idToken"></param>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async UniTask<bool> SignInWithGoogleTokenAsync(string idToken, CancellationToken ct = default)
     {
         try
@@ -140,7 +126,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"구글 인증 실패: {ex.Message}");
+            UtilDebug.LogError($"구글 인증 실패: {ex.Message}");
             return false;
         }
     }
@@ -148,8 +134,6 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
     /// <summary>
     /// Firebase 계정 삭제 메서드입니다. 로그인된 계정이 없으면 실패를 반환하며, 삭제 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async UniTask<(bool success, string errorMessage)> DeleteAccountAsync(CancellationToken ct = default)
     {
         if (user == null)
@@ -171,7 +155,7 @@ public class LoginSystemTest : NonMonoSingleton<LoginSystemTest>
         }
         catch (Exception ex)
         {
-            Debug.LogError($"계정 삭제 실패: {ex.Message}");
+            UtilDebug.LogError($"계정 삭제 실패: {ex.Message}");
             return (false, ex.Message);
         }
     }

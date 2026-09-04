@@ -2,21 +2,23 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Debug = DebugLogger<NicknamePopupUI>;
+using UtilDebug = DebugLogger<NicknamePopupUI>;
 
 public class NicknamePopupUI : MonoBehaviour
 {
     [SerializeField] private TMP_InputField nicknameInput;
     [SerializeField] private Button confirmButton;
+    [SerializeField] private TMP_Text duplicaiotnCheck;
 
+    // LoginController에서 참조
     public event Action<string> OnNicknameConfirmed;
 
-    private void Awake()
+    private void OnEnable()
     {
         confirmButton.onClick.AddListener(OnConfirmClicked);
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
         confirmButton.onClick.RemoveListener(OnConfirmClicked);
     }
@@ -25,6 +27,7 @@ public class NicknamePopupUI : MonoBehaviour
     public void Open()
     {
         nicknameInput.text = string.Empty;
+        duplicaiotnCheck.text = string.Empty;
         gameObject.SetActive(true);
     }
 
@@ -38,11 +41,16 @@ public class NicknamePopupUI : MonoBehaviour
         string nick = nicknameInput.text.Trim();
         if (string.IsNullOrEmpty(nick) || nick.Length < 2)
         {
-            // 닉네임 유효성 검사 체크 처리
             return;
         }
-        Debug.Log($"닉네임 입력 완료: {nick}, 클릭");
+        UtilDebug.Log($"닉네임 입력 완료: {nick}, 클릭");
 
         OnNicknameConfirmed?.Invoke(nick);
+    }
+
+    public void ShowDuplication(string duplication)
+    {
+        duplicaiotnCheck.text = duplication;
+        UtilDebug.Log($"닉네임 중복 {duplication}");
     }
 }

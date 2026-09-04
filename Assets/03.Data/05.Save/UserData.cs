@@ -34,8 +34,21 @@ public class UserData
             lastLoginTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             gold = 0,
             dia = 0
-            
+
             // 추가될 내용 있을 시 아래에 추가
+        };
+    }
+
+    public Dictionary<string, object> ToDictionary()
+    {
+        return new Dictionary<string, object>
+        {
+            { nameof(uid), uid},
+            { nameof(nickname), nickname },
+            { nameof(level), level},
+            { nameof(currentStage), currentStage},
+            { nameof(gold), gold},
+            { nameof(dia), dia},
         };
     }
 }
