@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
+
+/// <summary>
+/// 가챠 돌리고 나오는 패널에 붙여줄 스크립트
+/// </summary>
 public class GachaResultPanel : MonoBehaviour
 {
   
@@ -18,6 +21,8 @@ public class GachaResultPanel : MonoBehaviour
         confirmButton.onClick.AddListener(CloseResultWindow);
         
     }
+
+    //임시로 만들었고 나중에 오브젝트 풀링으로 해서 다시 만들 예정
     public void OpenResultWindow(List<GachaRewardItem> list)
     {
         if (list == null || list.Count == 0) return;
