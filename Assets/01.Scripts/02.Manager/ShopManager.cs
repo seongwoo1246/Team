@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System;
 using UnityEngine;
-using Dedug = DebugLogger<Shop>;
+using Dedug = DebugLogger<ShopManager>;
+using UnityEngine.UI;
 
 
 //아이템 등급에 관련된 enum 필요없어질 시 천장 달성시 원하는 아이템을 주는 식으로 변경
@@ -35,8 +36,10 @@ public enum CurrencyType
 public class GachaRewardItem
 {
     public int itemCode; // 아이템 코드
+    public string itemName; //아이템 이름
     public int amount;  // 지급 수량
     public int weight; // 가중치
+    public Sprite itemIcon; // 아이템 스프라이트
     public ItemRarity rarity; // 아이템 등급
 }
 
@@ -48,6 +51,7 @@ public class ShopProduct
 {
     public int productId;
     public string productName;
+    public Sprite productIcon;
     public ShopType shoptype;
     public CurrencyType currencyType;
     public double price;
@@ -64,8 +68,10 @@ public class ShopProduct
 /// <summary>
 /// 상점 기능을 구현한 스크립트 / 가챠형과 고정형을 같이 만들 예정
 /// </summary>
-public class Shop : Singleton<Shop>
+public class ShopManager: Singleton<ShopManager>
 {
+
+   
     private DatabaseReference dbRef;
     private string currentUserId = ""; // 나중에는 Auth UID사용
 
@@ -79,7 +85,10 @@ public class Shop : Singleton<Shop>
     {
         base.Awake();
         dbRef = FirebaseDatabase.DefaultInstance.RootReference;
+        
     }
+
+   
 
     #region 가챠를 위한 코드들
     /// <summary>
@@ -223,7 +232,7 @@ public class Shop : Singleton<Shop>
 
 
         //고정형 상품 수령 
-        GrantItem(product.fixedItemCode, product.fixedItemAmount);
+        GrantItem(product.fixedItemCode, product.fixedItemAmount,product.productIcon);
         Dedug.Log($"[고정 상품 구매 성공] 아이템 Id {product.fixedItemCode} x{product.fixedItemAmount}");
 
 
@@ -331,17 +340,17 @@ public class Shop : Singleton<Shop>
             // 배치 업데이트용 처리
             updates[itemPath] = reward.amount;
 
-            GrantItem(reward.itemCode, reward.amount);
+            GrantItem(reward.itemCode, reward.amount,reward.itemIcon);
         }
 
         //배치 통신 한번에 결과 저장
         await dbRef.UpdateChildrenAsync(updates);
     }
 
-    private void GrantItem(int itemCode, int amount)
+    private void GrantItem(int itemCode, int amount ,Sprite icon)
     {
         //유저 인벤토리로 아이템을 보냄
-        //UserInventory.instance.GetItem(itemCode,아이템 스프라이트,amount)
+        UserInventory.instance.GetItem(itemCode, icon, amount);
     }
 
     #endregion

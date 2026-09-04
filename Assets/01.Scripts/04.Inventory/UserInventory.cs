@@ -19,7 +19,7 @@ public class UserInventory : Singleton<UserInventory>
    double gold = GoldWallet.instance.Balance;
 
     // 인벤토리에서 보여질 화면
-    public Image icon;
+    public Sprite icon;
     public TextMeshProUGUI Name;
     //아이템에 대한 설명
     public TextMeshProUGUI des;
@@ -46,7 +46,7 @@ public class UserInventory : Singleton<UserInventory>
         //{
         //    Name.text = Data.name;
         //    des.text = Data.description;
-        //    icon.sprite = Data.icon;
+        //    icon = Data.icon;
         //}
 
     }
