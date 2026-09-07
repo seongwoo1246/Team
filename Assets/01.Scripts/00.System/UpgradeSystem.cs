@@ -5,6 +5,9 @@
 트랙별 비용:  base × (growth ^ 현재 트랙레벨)   ← GameConfig 에서 base/growth 를 읽음
 강화 상한 없음 (Crit 트랙은 확률이 100%에서 멈추므로 사실상 유한).
 
+각 트랙의 레벨은 PlayerLevelSystem의 플레이어 레벨을 못 넘음 (트랙레벨 < 플레이어레벨이어야 강화 가능)
+- 한 트랙만 몰빵해서 빨리 최대치를 찍는 걸 막기 위한 상한. PlayerLevelSystem이 없으면 상한 없이 그냥 강화됨
+
 UI 의 강화 버튼이 UpgradeSystem.instance.TryUpgrade(UpgradeTrack.Power) 식으로 호출
 싱글톤은 팀 공용 Singleton<T>를 상속
 */
@@ -45,12 +48,33 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
             _levels[(int)track]);
     }
 
-    // 골드가 충분하면 트랙을 1레벨 올리고 true. 부족하거나 설정이 없으면 false.
+    /// <summary>
+    /// 이 트랙이 지금 플레이어 레벨 상한에 걸려서 더 강화 못 하는 상태인지 확인
+    /// (트랙레벨이 플레이어레벨 이상이면 상한에 걸림 - 레벨을 더 올려야 다음 단계 강화 가능)
+    /// PlayerLevelSystem이 없으면 상한 없음(항상 false)으로 취급
+    /// </summary>
+    public bool IsAtLevelCap(UpgradeTrack track)
+    {
+        if (PlayerLevelSystem.instance == null)
+        {
+            return false;
+        }
+
+        return _levels[(int)track] >= PlayerLevelSystem.instance.Level;
+    }
+
+    // 골드가 충분하면 트랙을 1레벨 올리고 true 부족하거나 설정이 없거나 레벨 상한에 걸리면 false
     public bool TryUpgrade(UpgradeTrack track)
     {
         if (config == null)
         {
             DebugLogger<UpgradeSystem>.LogWarning("GameConfig 가 지정되지 않음 - 강화 불가");
+            return false;
+        }
+
+        if (IsAtLevelCap(track))
+        {
+            DebugLogger<UpgradeSystem>.LogWarning($"{track} 트랙은 이미 플레이어 레벨({PlayerLevelSystem.instance.Level})만큼 강화됨 - 레벨을 더 올려야 함");
             return false;
         }
 

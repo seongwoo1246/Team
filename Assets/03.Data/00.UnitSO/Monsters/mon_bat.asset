@@ -17,7 +17,5 @@ MonoBehaviour:
   kind: 0
   baseHp: 35
   baseAttack: 7
-  baseGold: 12
   moveSpeed: 2.5
   hpGrowthPerLevel: 1.2
-  goldGrowthPerLevel: 1.1

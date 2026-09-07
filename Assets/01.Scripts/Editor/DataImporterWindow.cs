@@ -9,7 +9,7 @@
   2) 프로젝트의  Assets/03.Data/02.CSV/  폴더에 넣는다
         Characters.csv  (또는 3_Characters.csv)
         Monsters.csv    (또는 5_Monsters.csv)
-        Equipment.csv   (또는 6_Equipment.csv)
+        Equipment.csv   (또는 8_Equipment.csv)
   3) 상단 메뉴  Tools → 데이터 임포터  에서 창을 열고 버튼을 누름
   4) 결과 SO는  Assets/03.Data/00.UnitSO/Characters , /Monsters ,
      Assets/03.Data/01.InventorySO/Equipment  에 생성됨
@@ -41,7 +41,7 @@ public class DataImporterWindow : EditorWindow
     private static readonly string[] CharacterCsvNames = { "Characters.csv", "3_Characters.csv" };
     private static readonly string[] MonsterCsvNames = { "Monsters.csv", "5_Monsters.csv" };
     private static readonly string[] ConfigCsvNames = { "Config.csv", "_Config.csv", "1_Config.csv" };
-    private static readonly string[] EquipmentCsvNames = { "Equipment.csv", "6_Equipment.csv" };
+    private static readonly string[] EquipmentCsvNames = { "Equipment.csv", "8_Equipment.csv" };
 
     [MenuItem("Tools/데이터 임포터")]
     private static void Open()

@@ -1,0 +1,9 @@
+id,name_kr,slot,allowed_attack_type
+1,전사의 검,Weapon,Physical
+2,메이지의 지팡이,Weapon,Magic
+3,힐러의 지팡이,Weapon,Heal
+4,갑옷,Armor,Physical
+5,바지,Pants,Physical
+6,장갑,Gloves,Physical
+7,반지,Ring,Physical
+8,신발,Shoes,Physical
