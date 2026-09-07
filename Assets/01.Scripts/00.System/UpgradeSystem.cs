@@ -92,11 +92,20 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
     // 현재 GoldGain 트랙 레벨 기준 골드 획득 배율. (1.0 = 기본, 1.2 = +20%)
     public double GetGoldMultiplier()
     {
+        return GetGoldMultiplierAtLevel(_levels[(int)UpgradeTrack.GoldGain]);
+    }
+
+    /// <summary>
+    /// 지정한 레벨 기준 골드 획득 배율을 미리 계산. 강화 UI에서 "강화하면 이렇게 됨" 미리보기용
+    /// </summary>
+    /// <param name="level">기준으로 삼을 GoldGain 트랙 레벨 (꼭 현재 레벨일 필요는 없음)</param>
+    public double GetGoldMultiplierAtLevel(int level)
+    {
         if (config == null)
         {
             return 1d;
         }
-        return 1d + (config.GoldGainPerLevel * _levels[(int)UpgradeTrack.GoldGain]);
+        return 1d + (config.GoldGainPerLevel * level);
     }
 
     /// <summary>
@@ -105,10 +114,19 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
     /// </summary>
     public float GetAttackSpeedFactor()
     {
+        return GetAttackSpeedFactorAtLevel(_levels[(int)UpgradeTrack.AttackSpeed]);
+    }
+
+    /// <summary>
+    /// 지정한 레벨 기준 공격 속도 계수를 미리 계산. 강화 UI에서 "강화하면 이렇게 됨" 미리보기용
+    /// </summary>
+    /// <param name="level">기준으로 삼을 AttackSpeed 트랙 레벨 (꼭 현재 레벨일 필요는 없음)</param>
+    public float GetAttackSpeedFactorAtLevel(int level)
+    {
         if (config == null)
         {
             return 1f;
         }
-        return 1f + (config.AttackSpeedPerLevel * _levels[(int)UpgradeTrack.AttackSpeed]);
+        return 1f + (config.AttackSpeedPerLevel * level);
     }
 }

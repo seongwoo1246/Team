@@ -40,6 +40,11 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
     // 지금까지 쌓인 시간(초). secondsPerMaterial을 채우면 1개 지급하고 0으로 리셋됨
     private float _accumulatedSeconds;
 
+    // Start에서 구독할 때 캐싱해두고 OnDestroy에서 구독 해제할 때 이 캐시로만 접근한다.
+    // StageManager.instance를 OnDestroy에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
+    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
+    private StageManager _stageManager;
+
     // 보유 재료 개수
     public int MaterialCount => _materialCount;
 
@@ -57,9 +62,10 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
     {
         ApplyOfflineTime();
 
-        if (StageManager.instance != null)
+        _stageManager = StageManager.instance;
+        if (_stageManager != null)
         {
-            StageManager.instance.StageCleared += OnStageCleared;
+            _stageManager.StageCleared += OnStageCleared;
         }
 
         RunPassiveTimeLoop(this.GetCancellationTokenOnDestroy()).Forget();
@@ -69,9 +75,9 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
     {
         base.OnDestroy();
 
-        if (StageManager.instance != null)
+        if (_stageManager != null)
         {
-            StageManager.instance.StageCleared -= OnStageCleared;
+            _stageManager.StageCleared -= OnStageCleared;
         }
 
         Save();
@@ -177,6 +183,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
     private void ApplyOfflineTime()
     {
         string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
+        int materialCountBeforeOffline = _materialCount;
 
         if (!string.IsNullOrEmpty(savedText)
             && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
@@ -189,6 +196,16 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
         }
 
         SaveLastSeenNow();
+
+        // AccumulateSeconds가 한 번 호출로 최대 1개까지만 지급하므로, 여기서 늘어난 만큼(0 또는 1)이 오프라인 지급분
+        int grantedByOffline = _materialCount - materialCountBeforeOffline;
+
+        // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
+        // instance/필드 둘 다 null 체크하고 지나감 (없어도 재료 지급 자체는 이미 끝난 뒤라 안전함)
+        if (grantedByOffline > 0 && RewardManager.instance != null && RewardManager.instance.GetUpgardMaterial != null)
+        {
+            RewardManager.instance.GetUpgardMaterial.text = grantedByOffline.ToString();
+        }
     }
 
     private void SaveLastSeenNow()
