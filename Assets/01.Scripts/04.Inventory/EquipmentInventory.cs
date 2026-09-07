@@ -7,6 +7,22 @@ public class EquipmentInventory : MonoBehaviour
 
     public List<EquippedItem> Items => items;
 
+
+    // 인벤토리에 장비 들어가는지 테스트용 임시 코드
+    [SerializeField] private EquipmentData testEquipment;
+
+    private void Start()
+    {
+        if (testEquipment == null)
+            return;
+
+        EquippedItem testItem = new EquippedItem(testEquipment, 25f);
+
+        AddItem(testItem);
+    }
+    // 인벤토리에 장비 들어가는지 테스트용 임시 코드
+
+
     // 장비 추가
     public void AddItem(EquippedItem item)
     {
