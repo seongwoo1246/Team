@@ -17,6 +17,10 @@ _maxClearedStage는 PlayerPrefs에 저장해서 앱을 다시 켜도 배율/오�
 
 몬스터가 장비를 드랍하면(낮은 확률) EquipmentDropped 이벤트로 던져준다 - 인벤토리 시스템은
 몬스터 풀링/파밍·웨이브·보스 구분을 몰라도 되게, 이 매니저 하나만 구독하면됨
+
+파밍 중엔 아주 낮은 확률로 황금 고블린도 추가로 스폰됨 (TrySpawnGoldenGoblin) - 얘를 잡으면
+특별 강화재료를 확정 지급함(GoldenGoblin.OnDied). 챌린지 보스 클리어 시 재료 지급은 MaterialWallet이
+여기(StageCleared)를 직접 구독해서 처리하므로 이 클래스는 그쪽은 몰라도됨
 */
 
 using System;
@@ -45,6 +49,13 @@ public sealed class StageManager : Singleton<StageManager>
 
     [Tooltip("파밍 몬스터가 동시에 존재할 수 있는 최대 마리 수")]
     [SerializeField] private int maxFarmingMonsterCount = 5;
+
+    [Header("황금 고블린 (특별 강화재료)")]
+    [Tooltip("황금 고블린 프리팹. 파밍 중 아주 낮은 확률로 일반 몬스터랑 별개로 추가 스폰됨 (마릿수 상한과 무관)")]
+    [SerializeField] private Monster goldenGoblinPrefab;
+
+    [Tooltip("파밍 소환 틱마다 황금 고블린이 스폰될 확률 (0~1). 아주 낮게 잡을 것 (예: 0.001 = 0.1%)")]
+    [SerializeField] private float goldenGoblinSpawnChance = 0.001f;
 
     [Header("챌린지 스테이지")]
     [Tooltip("스테이지 번호별 웨이브 구성/등장 몬스터/보스를 계산해주는 로스터")]
@@ -279,8 +290,31 @@ public sealed class StageManager : Singleton<StageManager>
                 }
             }
 
+            TrySpawnGoldenGoblin();
+
             await UniTask.Delay(TimeSpan.FromSeconds(farmingSpawnInterval), cancellationToken: token);
         }
+    }
+
+    /// <summary>
+    /// 아주 낮은 확률로 황금 고블린을 추가 스폰 일반 파밍 몬스터 마릿수 상한(maxFarmingMonsterCount)이랑은
+    /// 무관하게 별도로 판정됨 - 항상 걸린 프리팹이 없으면 아무일도 안함
+    /// </summary>
+    private void TrySpawnGoldenGoblin()
+    {
+        if (goldenGoblinPrefab == null)
+        {
+            return;
+        }
+
+        if (UnityEngine.Random.value > goldenGoblinSpawnChance)
+        {
+            return;
+        }
+
+        int level = Mathf.Max(farmingMonsterLevel, _maxClearedStage);
+        // 황금 고블린도 파밍 중이므로 harmless: true (실제 피해는 안 줌)
+        spawner.Spawn(goldenGoblinPrefab, level, harmless: true);
     }
 
     /// <summary>

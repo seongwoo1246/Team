@@ -264,6 +264,10 @@ PrefabInstance:
       propertyPath: attackInterval
       value: 1.2
       objectReference: {fileID: 0}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: possibleDrops.Array.size
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8802484857713202068, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.8
