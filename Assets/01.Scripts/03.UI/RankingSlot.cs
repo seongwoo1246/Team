@@ -6,8 +6,8 @@ using UnityEngine.UI;
 public enum RankColor
 {
     Gold,
-   Silver,
-   Bronze
+    Silver,
+    Bronze
 }
 
 /// <summary>
@@ -15,41 +15,24 @@ public enum RankColor
 /// </summary>
 public class RankingSlot : MonoBehaviour
 {
-   
-    // 랭킹을 나타낸 텍스트
     [SerializeField] private TextMeshProUGUI RankText;
-    // 뒤에 색상이 바뀔 이미지
     [SerializeField] private Image BackGround;
-
-    //랭킹표 1,2,3위에 따라서 이미지 색상 변경
-    double[] DamageRank = new double[2];
-
-    double[] PlayTimeRank = new double[2];
-
-    int[] ClearTimeRank = new int[2];
-
-    public void SetupSlot(int rank,double score, RankColor color)
+   
+    public void SetUpSlot(int rank, double Score, RankColor color)
     {
-
+        RankText.text = $"{rank}위 : {Score}";
+        RankColorChange(color);
     }
 
     public void RankColorChange(RankColor color)
     {
         switch(color)
         {
-            case RankColor.Gold: BackGround.color = Color.gold; break;
-
-            case RankColor.Silver: BackGround.color = Color.silver; break;
-
-            case RankColor.Bronze: BackGround.color = Color.brown; break;
-
-
+            case RankColor.Gold:BackGround.color = Color.gold;  break;
+            case RankColor.Silver:BackGround.color = Color.silver; break;
+            case RankColor.Bronze:BackGround.color = Color.brown; break;
         }
     }
-
-
-
-
 
 
 
