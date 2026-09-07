@@ -18,12 +18,18 @@ public sealed class StageFailPanel : MonoBehaviour
     // 방금 실패한 스테이지 번호 (다시 하기 버튼 누를 때 씀)
     private int _failedStageNumber;
 
+    // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
+    // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
+    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
+    private StageManager _stageManager;
+
     private void OnEnable()
     {
-        if (StageManager.instance != null)
+        _stageManager = StageManager.instance;
+        if (_stageManager != null)
         {
-            StageManager.instance.StageFailed += OnStageFailed;
-            StageManager.instance.ChallengeStarted += OnChallengeStarted;
+            _stageManager.StageFailed += OnStageFailed;
+            _stageManager.ChallengeStarted += OnChallengeStarted;
         }
 
         SetPanelActive(false);
@@ -31,10 +37,10 @@ public sealed class StageFailPanel : MonoBehaviour
 
     private void OnDisable()
     {
-        if (StageManager.instance != null)
+        if (_stageManager != null)
         {
-            StageManager.instance.StageFailed -= OnStageFailed;
-            StageManager.instance.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.StageFailed -= OnStageFailed;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
         }
     }
 
