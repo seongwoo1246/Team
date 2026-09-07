@@ -15,9 +15,9 @@ MonoBehaviour:
   m_DefaultGroup: 2d94eeee82208164198ebf2ca66aae62
   m_currentHash:
     serializedVersion: 2
-    Hash: d0a0c307d3e8a85c4bcfaf6ae7686322
+    Hash: 00000000000000000000000000000000
   m_OptimizeCatalogSize: 0
-  m_BuildRemoteCatalog: 0
+  m_BuildRemoteCatalog: 1
   m_CatalogRequestsTimeout: 0
   m_DisableCatalogUpdateOnStart: 0
   m_InternalIdNamingMode: 0
@@ -61,6 +61,7 @@ MonoBehaviour:
   m_BuildAddressablesWithPlayerBuild: 0
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
+  - {fileID: 11400000, guid: a0ed0bea2b6a0f540848fa999332bbe3, type: 2}
   - {fileID: 11400000, guid: 88fe735aff14ce0458e282fc00e67915, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1
@@ -73,6 +74,20 @@ MonoBehaviour:
       m_Values:
       - m_Id: 063018c7aab83264e98516b40ccf45e0
         m_Value: <undefined>
+      - m_Id: 89cc4aaf0a7ae1a46bf4240555fd9a24
+        m_Value: 'ServerData/[BuildTarget]'
+      - m_Id: ad12d06b8bf17dd4cbab37400727da97
+        m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
+      - m_Id: b985502a060827346a75d13238353a8d
+        m_Value: '{UnityEngine.AddressableAssets.Addressables.RuntimePath}/[BuildTarget]'
+      - m_Id: eed95a3ffc1c73640b03943e81d98588
+        m_Value: '[UnityEngine.AddressableAssets.Addressables.BuildPath]/[BuildTarget]'
+    - m_InheritedParent: 
+      m_Id: fec7e63bc711f2948a4b94843080c683
+      m_ProfileName: PvsC
+      m_Values:
+      - m_Id: 063018c7aab83264e98516b40ccf45e0
+        m_Value: 'https://pub-ed947feabb5647ad94c05b06dd2a3f58.r2.dev/[BuildTarget]'
       - m_Id: 89cc4aaf0a7ae1a46bf4240555fd9a24
         m_Value: 'ServerData/[BuildTarget]'
       - m_Id: ad12d06b8bf17dd4cbab37400727da97
@@ -113,4 +128,4 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cfad1f7200effbb46b3116cd645297ba, type: 2}
   - {fileID: 11400000, guid: e1e3cc483c9426949bc058445ac4f488, type: 2}
   - {fileID: 11400000, guid: 83262af4f4e0c124e88a00cb158de136, type: 2}
-  m_ActiveProfileId: a438da39c187fa44b98cca4d395b4823
+  m_ActiveProfileId: fec7e63bc711f2948a4b94843080c683

@@ -2857,7 +2857,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 885972729285244161, guid: 5505c3e83b8b29344b8b83fbd0ee4e4e, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2100761224548731354, guid: 5505c3e83b8b29344b8b83fbd0ee4e4e, type: 3}
       propertyPath: m_IsActive
@@ -3379,7 +3379,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -5965,7 +5965,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -6651,23 +6651,23 @@ PrefabInstance:
       objectReference: {fileID: 5934326432074303028}
     - target: {fileID: 4212885558384914361, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4212885558384914361, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4212885558384914361, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 556
       objectReference: {fileID: 0}
     - target: {fileID: 4212885558384914361, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 278
       objectReference: {fileID: 0}
     - target: {fileID: 4212885558384914361, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -169.35501
       objectReference: {fileID: 0}
     - target: {fileID: 5448635158167136611, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_Name
@@ -6675,7 +6675,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5448635158167136611, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7794951812373125495, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_Pivot.x
@@ -6771,23 +6771,23 @@ PrefabInstance:
       objectReference: {fileID: 1307599567}
     - target: {fileID: 8707128914021784575, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8707128914021784575, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8707128914021784575, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: 556
       objectReference: {fileID: 0}
     - target: {fileID: 8707128914021784575, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 0
+      value: 278
       objectReference: {fileID: 0}
     - target: {fileID: 8707128914021784575, guid: a087295b1984c314d9e3635707477d32, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0
+      value: -53
       objectReference: {fileID: 0}
     m_RemovedComponents:
     - {fileID: 8677880485769722376, guid: a087295b1984c314d9e3635707477d32, type: 3}
@@ -8156,7 +8156,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
@@ -9302,7 +9302,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!222 &8716302066660537485
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -9411,7 +9411,7 @@ MonoBehaviour:
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
-  m_ActiveFontFeatures: 00000000
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
