@@ -11,43 +11,39 @@ public class EquipmentInventoryController : MonoBehaviour
 
     public void OpenWeapon()
     {
-        OpenInventory("무기");
+        OpenInventory(EquipmentSlot.Weapon);
     }
 
     public void OpenArmor()
     {
-        OpenInventory("상의");
+        OpenInventory(EquipmentSlot.Armor);
     }
 
     public void OpenPants()
     {
-        OpenInventory("하의");
-    }
-
-    public void OpenHelmet()
-    {
-        OpenInventory("투구");
+        OpenInventory(EquipmentSlot.Pants);
     }
 
     public void OpenGloves()
     {
-        OpenInventory("장갑");
+        OpenInventory(EquipmentSlot.Gloves);
     }
 
-    public void OpenBoots()
+    public void OpenShoes()
     {
-        OpenInventory("신발");
+        OpenInventory(EquipmentSlot.Shoes);
     }
 
-    public void Open7()
+    public void OpenRing()
     {
-        OpenInventory("7");
+        OpenInventory(EquipmentSlot.Ring);
     }
 
-    private void OpenInventory(string equipmentType)
+    private void OpenInventory(EquipmentSlot equipmentSlot)
     {
         statsPanel.SetActive(false);
         inventoryPanel.SetActive(true);
+        Debug.Log(equipmentSlot + " 인벤토리 열림");
     }
 
     public void CloseInventory()
