@@ -16,17 +16,29 @@ public class RewardManager : Singleton<RewardManager>
     private Button CloseRewardInfo;
 
 
+    // null 체크만 추가
+    // RewardInfo/CloseRewardInfo가 아직 Inspector에 연결 안 된 상태라 Start()가 계속 죽어서 널오류뜸..
+    // 죽지만 않게 null 체크만 둘렀음
     private void Start()
     {
-        RewardInfo.SetActive(true);
+        if (RewardInfo != null)
+        {
+            RewardInfo.SetActive(true);
+        }
 
-        CloseRewardInfo.onClick.AddListener(CloseInfo);
+        if (CloseRewardInfo != null)
+        {
+            CloseRewardInfo.onClick.AddListener(CloseInfo);
+        }
     }
 
 
     public void CloseInfo()
     {
-        RewardInfo.SetActive(false);
+        if (RewardInfo != null)
+        {
+            RewardInfo.SetActive(false);
+        }
     }
 
 

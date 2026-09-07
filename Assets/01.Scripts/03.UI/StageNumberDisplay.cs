@@ -23,19 +23,25 @@ public sealed class StageNumberDisplay : MonoBehaviour
 
     private bool _wasChallengeMode;
 
+    // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
+    // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
+    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
+    private StageManager _stageManager;
+
     private void OnEnable()
     {
-        if (StageManager.instance != null)
+        _stageManager = StageManager.instance;
+        if (_stageManager != null)
         {
-            StageManager.instance.ChallengeStarted += OnChallengeStarted;
+            _stageManager.ChallengeStarted += OnChallengeStarted;
         }
     }
 
     private void OnDisable()
     {
-        if (StageManager.instance != null)
+        if (_stageManager != null)
         {
-            StageManager.instance.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
         }
     }
 
@@ -52,7 +58,7 @@ public sealed class StageNumberDisplay : MonoBehaviour
             return;
         }
 
-        bool isChallengeMode = StageManager.instance != null && StageManager.instance.CurrentMode == StageMode.Challenge;
+        bool isChallengeMode = _stageManager != null && _stageManager.CurrentMode == StageMode.Challenge;
 
         if (isChallengeMode != _wasChallengeMode)
         {

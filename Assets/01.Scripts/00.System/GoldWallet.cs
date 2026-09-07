@@ -53,6 +53,12 @@ public class GoldWallet : Singleton<GoldWallet>
 
     private double _balance;
 
+    // Start에서 구독할 때 캐싱해두고 OnDestroy에서 구독 해제할 때 이 캐시로만 접근한다.
+    // StageManager.instance를 OnDestroy에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
+    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
+    // (Unity가 "Some objects were not cleaned up when closing the scene" 경고를 띄우는 원인)
+    private StageManager _stageManager;
+
     // 현재 보유 골드
     public double Balance => _balance;
 
@@ -70,9 +76,10 @@ public class GoldWallet : Singleton<GoldWallet>
         // StageManager의 _maxClearedStage 로드(Awake)가 전부 끝난 뒤에 계산해야 정확하므로 Start에서 처리
         ApplyOfflineGold();
 
-        if (StageManager.instance != null)
+        _stageManager = StageManager.instance;
+        if (_stageManager != null)
         {
-            StageManager.instance.StageCleared += OnStageCleared;
+            _stageManager.StageCleared += OnStageCleared;
         }
 
         RunPassiveIncomeLoop(this.GetCancellationTokenOnDestroy()).Forget();
@@ -82,9 +89,9 @@ public class GoldWallet : Singleton<GoldWallet>
     {
         base.OnDestroy();
 
-        if (StageManager.instance != null)
+        if (_stageManager != null)
         {
-            StageManager.instance.StageCleared -= OnStageCleared;
+            _stageManager.StageCleared -= OnStageCleared;
         }
 
         SaveLastSeenNow();
@@ -226,7 +233,13 @@ public class GoldWallet : Singleton<GoldWallet>
                 double reward = GetCurrentGoldPerMinute() * offlineMinutes;
                 AddPassiveGold(reward);
                 DebugLogger<GoldWallet>.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
-                RewardManager.instance.GetPlayerReward.text = reward.ToString();
+
+                // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
+                // instance/필드 둘 다 null 체크하고 지나감 (없어도 골드 지급 자체는 이미 끝난 뒤라 안전함)
+                if (RewardManager.instance != null && RewardManager.instance.GetPlayerReward != null)
+                {
+                    RewardManager.instance.GetPlayerReward.text = reward.ToString();
+                }
             }
         }
 

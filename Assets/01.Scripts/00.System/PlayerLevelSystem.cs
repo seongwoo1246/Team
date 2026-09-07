@@ -17,6 +17,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -63,9 +64,14 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
     [Tooltip("레벨/경험치를 PlayerPrefs에 몇 초마다 저장해둘지 (앱 강제종료 대비 안전장치)")]
     [SerializeField] private float saveInterval = 30f;
 
+    [Header("오프라인 보상")]
+    [Tooltip("게임이 꺼져있던 시간을 최대 몇 시간까지 인정할지 (골드/재료 오프라인 보상이랑 같은 방식)")]
+    [SerializeField] private double maxOfflineHours = 12d;
+
     // 저장 키
     private const string LEVEL_KEY = "PlayerLevelSystem_Level";
     private const string EXP_KEY = "PlayerLevelSystem_Exp";
+    private const string LAST_SEEN_UTC_KEY = "PlayerLevelSystem_LastSeenUtc";
 
     // 현재 레벨. 1부터 시작
     private int _level = 1;
@@ -99,6 +105,8 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
 
     private void Start()
     {
+        // 골드/재료랑 마찬가지로, 꺼져있던 시간만큼 경험치를 먼저 한 번에 지급한 뒤 실시간 루프 시작
+        ApplyOfflineExp();
         RunPassiveExpLoop(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
@@ -178,6 +186,46 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
     }
 
     /// <summary>
+    /// 마지막으로 저장해둔 시각과 지금 시각을 비교해서, 꺼져있던 시간만큼(최대 maxOfflineHours까지)
+    /// 분당 경험치를 한 번에 지급한다. GoldWallet.ApplyOfflineGold/MaterialWallet.ApplyOfflineTime이랑 같은 방식
+    /// </summary>
+    private void ApplyOfflineExp()
+    {
+        string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
+
+        if (!string.IsNullOrEmpty(savedText)
+            && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
+        {
+            double elapsedSeconds = (DateTime.UtcNow - lastSeen).TotalSeconds;
+            double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxOfflineHours * 3600d));
+            double offlineMinutes = cappedSeconds / 60d;
+
+            if (offlineMinutes > 0d)
+            {
+                float reward = (float)(baseExpPerMinute * offlineMinutes);
+                AddExp(reward);
+
+                // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
+                // instance/필드 둘 다 null 체크하고 지나감 (없어도 경험치 지급 자체는 이미 끝난 뒤라 안전함)
+                if (RewardManager.instance != null && RewardManager.instance.GetPlayerExp != null)
+                {
+                    RewardManager.instance.GetPlayerExp.text = reward.ToString("F0");
+                }
+            }
+        }
+
+        SaveLastSeenNow();
+    }
+
+    /// <summary>
+    /// 지금 시각(UTC)을 오프라인 보상 계산용으로 PlayerPrefs에 저장
+    /// </summary>
+    private void SaveLastSeenNow()
+    {
+        PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+    }
+
+    /// <summary>
     /// 지정한 레벨에서 레벨업 1회에 필요한 경험치를 구간 목록에서 찾아 돌려줌
     /// 구간 목록이 비어있으면 DEFAULT_EXP_PER_LEVEL을 대신씀
     /// </summary>
@@ -208,6 +256,7 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
     {
         PlayerPrefs.SetInt(LEVEL_KEY, _level);
         PlayerPrefs.SetFloat(EXP_KEY, _currentExp);
+        SaveLastSeenNow();
         PlayerPrefs.Save();
     }
 }
