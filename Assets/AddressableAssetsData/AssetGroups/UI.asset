@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: UI
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: UI
+  m_GUID: e57f6199c7e0d1442b4a66be99d3c0ff
+  m_SerializeEntries:
+  - m_GUID: 068378eda11ed65449e1ee1670fb72df
+    m_Address: Assets/ExternalAssets/FantasyIdleGameGUI/Prefabs/Toggles/Tab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Tap
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 21c65d80199e44f4faecd66dc2d27cf9
+    m_Address: Assets/ExternalAssets/FantasyIdleGameGUI/Prefabs/ProgressBars
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Bar
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4d1462410b5c0d6418b772323c2e141b
+    m_Address: Assets/ExternalAssets/FantasyIdleGameGUI/Prefabs/Buttons
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Button
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 8fbf7400cd0131d40bc9d6733f73e25b
+    m_Address: Assets/ExternalAssets/FantasyIdleGameGUI/Prefabs/Slots
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Slot
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c525c1a16196f1746982f307e5afb847
+    m_Address: Assets/ExternalAssets/FantasyIdleGameGUI/Prefabs/Popups
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Popup
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 88c41a9698dd89d46b67352e9cf8b4fd, type: 2}
+    - {fileID: 11400000, guid: 79898fa4457b9a443bff7d60c200d06d, type: 2}

@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 2d94eeee82208164198ebf2ca66aae62
   m_currentHash:
     serializedVersion: 2
-    Hash: d0a0c307d3e8a85c4bcfaf6ae7686322
+    Hash: 9c10fa741a706630fef17872a38f3fb6
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -62,6 +62,9 @@ MonoBehaviour:
   m_overridePlayerVersion: '[UnityEditor.PlayerSettings.bundleVersion]'
   m_GroupAssets:
   - {fileID: 11400000, guid: 88fe735aff14ce0458e282fc00e67915, type: 2}
+  - {fileID: 11400000, guid: 376d2a76f5d78c64d844cabaec1198d8, type: 2}
+  - {fileID: 11400000, guid: c96558333a0313f4499a9e9918715c72, type: 2}
+  - {fileID: 11400000, guid: f58c8f80fa6827b4489d031e0df35507, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1
     m_BundleBuildPath: Temp/com.unity.addressables/AssetBundles
@@ -101,6 +104,11 @@ MonoBehaviour:
   m_LabelTable:
     m_LabelNames:
     - default
+    - Button
+    - Popup
+    - Tap
+    - Bar
+    - Slot
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: c09c1e7f3ff9971429f609a953aad4b0, type: 2}
