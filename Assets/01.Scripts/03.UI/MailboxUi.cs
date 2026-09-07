@@ -39,7 +39,7 @@ public class MailboxUi : MonoBehaviour
     private void Start()
     {
         //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
-        ObjcetPoolManager.instance.RegisterPool<MailItemUi>(enumType.Item, mailItemPrefeb, 10);
+        ObjcetPoolManager.instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 10);
     }
 
     private void OnEnable()
@@ -79,7 +79,7 @@ public class MailboxUi : MonoBehaviour
         foreach (var kvp in mailDict)
         {
             //스폰) 풀에서 안전하게 활성화
-            MailItemUi item = ObjcetPoolManager.instance.Spawn<MailItemUi>(enumType.Item);
+            MailItemUi item = ObjcetPoolManager.instance.Spawn<MailItemUi>(enumType.Item_Mail);
 
             if(item != null)
             {
@@ -100,7 +100,7 @@ public class MailboxUi : MonoBehaviour
         {
             if(activeMailItems[i] != null)
             {
-                ObjPoolM.Despawn<MailItemUi>(enumType.Item, activeMailItems[i]);
+                ObjPoolM.Despawn<MailItemUi>(enumType.Item_Mail, activeMailItems[i]);
             }
         }
         activeMailItems.Clear();

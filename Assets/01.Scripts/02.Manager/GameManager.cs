@@ -103,6 +103,8 @@ public class GameManager : Singleton<GameManager>
         ChangeState(GameState.Lobby);
         Debug.Log("[GameManager] : 로비로 돌아왔습니다. (처치보상/분당보상)이 쌓이기 시작합니다.");
         //이 부분에서 게임 나가 있는 동안 쌓인 보상들 받는 함수
+
+
         ScenesManager.instance.LoadScenes(ScenesName.Lobby);
 
     }

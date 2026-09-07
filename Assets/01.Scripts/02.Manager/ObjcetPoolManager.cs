@@ -19,9 +19,11 @@ public interface IPoolable
 /// </summary>
 public enum enumType
 {
-    Cartoon,
+    Cartoon_Monster,
+    Cartoon_Boss,
     Pixel,
-    Item,
+    Item_Mail,
+    Item_Gear,
     Particle,
     UI,
 

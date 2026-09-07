@@ -71,7 +71,8 @@ public class ShopProduct
 public class ShopManager: Singleton<ShopManager>
 {
 
-   
+    [SerializeField] private GachaSlot TextPrefab; // 텍스트 프리팹
+
     private DatabaseReference dbRef;
     private string currentUserId = ""; // 나중에는 Auth UID사용
 
@@ -85,7 +86,7 @@ public class ShopManager: Singleton<ShopManager>
     {
         base.Awake();
         dbRef = FirebaseDatabase.DefaultInstance.RootReference;
-        
+        ObjcetPoolManager.instance.RegisterPool<GachaSlot>(enumType.Item_Gear, TextPrefab, 10);
     }
 
    

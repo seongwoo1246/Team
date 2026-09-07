@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 
-public class GachaSlot : MonoBehaviour 
+public class GachaSlot : MonoBehaviour, IPoolable
 {
     // 결과창 보여주는 텍스트
     [SerializeField] private TMP_Text resultText;
@@ -11,10 +11,16 @@ public class GachaSlot : MonoBehaviour
     [SerializeField] private Color NomalColor = Color.black;
     [SerializeField] private Color RareColor = Color.purple;
     [SerializeField] private Color LegendaryColor = Color.gold;
-    
-  
 
+    public void OnDespawn()
+    {
+        gameObject.SetActive(false);
+    }
 
+    public void OnSpawn()
+    {
+        gameObject.SetActive(true);
+    }
 
     public void Setup(GachaRewardItem rewardData)
     {
