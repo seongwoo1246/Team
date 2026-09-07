@@ -15,6 +15,8 @@
   - 장비는 Equip()/Unequip()이 유일한 진입점. 부위(EquipmentSlot)마다 담당 스탯이 고정되있고
     장착/해제할 때마다 RecalculateStats()가 자동으로 다시 불림 (인벤토리 UI는 저장/보관만 맡고,
     실제 장착 반영은 항상 이 함수를 거쳐감)
+  - 장비 강화는 TryEnhanceEquipped()가 유일한 진입점. MaterialWallet 재료 1개 소모 + 1~3% 랜덤
+    보너스 굴림 + 스탯 재계산까지 한 번에 처리함 (+10까지)
 */
 
 using System;
@@ -55,10 +57,12 @@ public class CharacterBase : MonoBehaviour, IEntity
     [SerializeField] private LayerMask allyLayer;
 
     [Header("스킬 설정")]
-    [Tooltip("스킬1 재사용 대기시간(초). 평소 공격보다 조금 더 센 즉발 스킬용 (0 이하면 스킬1 없음)")]
+    [Tooltip("스킬1 재사용 대기시간(초, 기본값 기준). 평소 공격보다 조금 더 센 즉발 스킬용 (0 이하면 스킬1 없음) " +
+        "공격속도(강화 트랙+신발 장비)만큼 실제로 짧아짐")]
     [SerializeField] private float skill1Cooldown = 8f;
 
-    [Tooltip("스킬2 재사용 대기시간(초). 쿨다운이 긴 대신 강력한 필살기용 (0 이하면 스킬2 없음)")]
+    [Tooltip("스킬2 재사용 대기시간(초, 기본값 기준). 쿨다운이 긴 대신 강력한 필살기용 (0 이하면 스킬2 없음) " +
+        "공격속도(강화 트랙+신발 장비)만큼 실제로 짧아짐")]
     [SerializeField] private float skill2Cooldown = 20f;
 
     // 씬에 존재하는 모든 캐릭터 목록. 죽으면 SetActive(false)로 꺼져서 물리 탐지(OverlapCircle)에 안 잡히기 때문에,
@@ -82,6 +86,10 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     // AttackSpeed 트랙이 반영된 실제 공격 간격 (attackInterval 을 속도 계수로 나눈 값)
     private float _currentAttackInterval;
+
+    // AttackSpeed 강화 트랙 + 신발 장비 보너스를 합친 배율. 평타 간격뿐 아니라 스킬 쿨다운에도 그대로 씀
+    // (RecalculateStats에서 한 번만 계산해두고 재사용 - 스킬 쿨다운 조회는 매 프레임 UI에서 불리므로)
+    private float _currentAttackSpeedMultiplier = 1f;
 
     // 부위별 장착 장비. 인덱스 = (int)EquipmentSlot. 비어있는 부위는 null
     private readonly EquippedItem[] _equippedItems = new EquippedItem[System.Enum.GetValues(typeof(EquipmentSlot)).Length];
@@ -129,11 +137,17 @@ public class CharacterBase : MonoBehaviour, IEntity
         set => _autoSkillEnabled = value;
     }
 
+    // 공격속도(강화 트랙 + 신발 장비)가 반영된 실제 스킬1 쿨다운(초). 평타 간격과 같은 배율을 공유함
+    private float EffectiveSkill1Cooldown => skill1Cooldown / _currentAttackSpeedMultiplier;
+
+    // 공격속도가 반영된 실제 스킬2 쿨다운(초)
+    private float EffectiveSkill2Cooldown => skill2Cooldown / _currentAttackSpeedMultiplier;
+
     // 스킬1 쿨다운 진행률. 0 = 바로 사용 가능, 1 = 방금 사용해서 꽉 참 (버튼의 원형 게이지가 이 값을 읽음)
-    public float Skill1CooldownRatio => skill1Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill1LastUsedTime) / skill1Cooldown) : 0f;
+    public float Skill1CooldownRatio => skill1Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill1LastUsedTime) / EffectiveSkill1Cooldown) : 0f;
 
     // 스킬2 쿨다운 진행률. 0 = 바로 사용 가능, 1 = 방금 사용해서 꽉 참
-    public float Skill2CooldownRatio => skill2Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill2LastUsedTime) / skill2Cooldown) : 0f;
+    public float Skill2CooldownRatio => skill2Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill2LastUsedTime) / EffectiveSkill2Cooldown) : 0f;
 
     // 스킬1을 지금 바로 쓸 수 있는지 (쿨다운만 기준)
     public bool IsSkill1Ready => Skill1CooldownRatio <= 0f;
@@ -224,7 +238,8 @@ public class CharacterBase : MonoBehaviour, IEntity
 
         float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;
         float equipmentSpeedFactor = 1f + GetEquippedBonusRatio(EquipmentSlot.Shoes);
-        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / Mathf.Max(0.01f, speedFactor * equipmentSpeedFactor));
+        _currentAttackSpeedMultiplier = Mathf.Max(0.01f, speedFactor * equipmentSpeedFactor);
+        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / _currentAttackSpeedMultiplier);
     }
 
     /// <summary>
@@ -300,6 +315,7 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     /// <summary>
     /// 지정한 부위에 장착된 장비의 보너스 비율을 돌려준다 (7% 장비면 0.07). 비어있으면 0
+    /// 드랍될 때 뜬 원래 % + 강화로 쌓인 %까지 전부 합친 값(TotalRollPercent)을 씀
     /// RecalculateStats 내부에서 쓰이고, Pants(골드획득)처럼 캐릭터 개인 스탯이 아니라
     /// 파티 전체에 적용되는 보너스는 StageManager 같은 외부에서 이 함수로 직접 조회해서 씀
     /// </summary>
@@ -307,7 +323,39 @@ public class CharacterBase : MonoBehaviour, IEntity
     public float GetEquippedBonusRatio(EquipmentSlot slot)
     {
         EquippedItem item = _equippedItems[(int)slot];
-        return item != null ? item.RollPercent / 100f : 0f;
+        return item != null ? item.TotalRollPercent / 100f : 0f;
+    }
+
+    /// <summary>
+    /// 지정한 부위에 장착 중인 장비를 1강 강화한다. 재료 1개를 소모해서 강화하고,
+    /// 성공하면 체력 비율은 유지한 채로 스탯을 즉시 다시 계산한다 (Equip/Unequip과 동일한 처리)
+    /// 이미 +10이거나, 장착된 장비가 없거나, 재료가 부족하면 아무 것도 안 하고 false
+    /// </summary>
+    /// <param name="slot">강화할 장비가 장착된 부위</param>
+    /// 강화 성공 여부
+    public bool TryEnhanceEquipped(EquipmentSlot slot)
+    {
+        EquippedItem item = _equippedItems[(int)slot];
+        if (item == null || !item.CanEnhance)
+        {
+            return false;
+        }
+
+        if (MaterialWallet.instance == null || !MaterialWallet.instance.TrySpend(1))
+        {
+            return false;
+        }
+
+        if (!item.TryEnhance(out _))
+        {
+            return false;
+        }
+
+        float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
+        RecalculateStats();
+        _currentHP = _currentMaxHP * hpRatio;
+
+        return true;
     }
 
     /// <summary>
