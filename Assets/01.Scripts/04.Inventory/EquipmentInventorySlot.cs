@@ -1,6 +1,6 @@
-using UnityEngine;
-using TMPro;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class EquipmentInventorySlot : MonoBehaviour
 {
@@ -9,9 +9,7 @@ public class EquipmentInventorySlot : MonoBehaviour
     private EquippedItem equippedItem;
     private EquipmentInventoryController controller;
 
-    public void SetItem(
-        EquippedItem item,
-        EquipmentInventoryController inventoryController)
+    public void SetItem(EquippedItem item, EquipmentInventoryController inventoryController)
     {
         equippedItem = item;
         controller = inventoryController;
@@ -27,6 +25,26 @@ public class EquipmentInventorySlot : MonoBehaviour
         {
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(OnSlotClicked);
+        }
+    }
+
+    // 장착된 장비를 표시할 때 사용
+    public void SetEquippedItem(EquippedItem item)
+    {
+        equippedItem = item;
+
+        if (equippedItem == null || equippedItem.Data == null)
+        {
+            nameText.text = "";
+            return;
+        }
+
+        nameText.text = equippedItem.Data.NameKr;
+        Button button = GetComponent<Button>();
+
+        if (button != null)
+        {
+            button.onClick.RemoveAllListeners();
         }
     }
 

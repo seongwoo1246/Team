@@ -1,12 +1,12 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using TMPro;
 
 public class SelectedEquipmentInfo : MonoBehaviour
 {
-    [Header("ÇöÀç Àåºñ")]
+    [Header("í˜„ì¬ ì¥ë¹„")]
     [SerializeField] private TextMeshProUGUI currentEquipmentText;
 
-    [Header("¼±ÅÃ Àåºñ")]
+    [Header("ì„ íƒ ì¥ë¹„")]
     [SerializeField] private TextMeshProUGUI selectedEquipmentText;
 
 
@@ -21,12 +21,12 @@ public class SelectedEquipmentInfo : MonoBehaviour
     {
         if (item == null || item.Data == null)
         {
-            currentEquipmentText.text = "ÇöÀç ÀåÂø ¾øÀ½";
+            currentEquipmentText.text = "í˜„ì¬ ì¥ì°© ì—†ìŒ";
             return;
         }
 
-        currentEquipmentText.text = "ÇöÀç ÀåÂø\n\n" + item.Data.NameKr + "\n" + "¿É¼Ç +" 
-            + item.TotalRollPercent.ToString("F1") + "%\n" + "°­È­ +" + item.EnhanceLevel;
+        currentEquipmentText.text = "í˜„ì¬ ì¥ì°©\n\n" + item.Data.NameKr + "\n" + "ì˜µì…˜ +" 
+            + item.TotalRollPercent.ToString("F1") + "%\n" + "ê°•í™” +" + item.EnhanceLevel;
     }
 
 
@@ -34,19 +34,19 @@ public class SelectedEquipmentInfo : MonoBehaviour
     {
         if (item == null || item.Data == null)
         {
-            selectedEquipmentText.text = "¼±ÅÃ Àåºñ ¾øÀ½";
+            selectedEquipmentText.text = "ì„ íƒ ì¥ë¹„ ì—†ìŒ";
             return;
         }
 
         selectedEquipmentText.text =
-            "¼±ÅÃ Àåºñ\n\n" + item.Data.NameKr + "\n" + "¿É¼Ç +" 
-            + item.TotalRollPercent.ToString("F1") + "%\n" + "°­È­ +" + item.EnhanceLevel;
+            "ì„ íƒ ì¥ë¹„\n\n" + item.Data.NameKr + "\n" + "ì˜µì…˜ +" 
+            + item.TotalRollPercent.ToString("F1") + "%\n" + "ê°•í™” +" + item.EnhanceLevel;
     }
 
 
     public void Clear()
     {
-        currentEquipmentText.text = "ÇöÀç ÀåÂø ¾øÀ½";
-        selectedEquipmentText.text = "¼±ÅÃ Àåºñ ¾øÀ½";
+        currentEquipmentText.text = "í˜„ì¬ ì¥ì°© ì—†ìŒ";
+        selectedEquipmentText.text = "ì„ íƒ ì¥ë¹„ ì—†ìŒ";
     }
 }

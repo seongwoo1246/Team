@@ -1,16 +1,30 @@
-using UnityEngine;
+Ôªøusing UnityEngine;
 
 public class CharacterEquipment : MonoBehaviour
 {
-    //ƒ≥∏Ø≈Õ ¬¯øÎ ¿Â∫Ò ¿˙¿ÂøÎ Ω∫≈©∏≥∆Æ
+    // Ï∫êÎ¶≠ÌÑ∞ Ï∞©Ïö© Ïû•ÎπÑ Ï†ÄÏû•Ïö© Ïä§ÌÅ¨Î¶ΩÌä∏
 
-    [Header("«ˆ¿Á ¿Â¬¯ ¿Â∫Ò")]
+    [Header("ÌòÑÏû¨ Ïû•Ï∞© Ïû•ÎπÑ")]
     [SerializeField] private EquippedItem weapon;
     [SerializeField] private EquippedItem armor;
     [SerializeField] private EquippedItem pants;
     [SerializeField] private EquippedItem gloves;
     [SerializeField] private EquippedItem ring;
     [SerializeField] private EquippedItem shoes;
+
+    [Header("Ïû•Ï∞© Ïä¨Î°Ø")]
+    [SerializeField] private EquipmentInventorySlot weaponSlot;
+    [SerializeField] private EquipmentInventorySlot armorSlot;
+    [SerializeField] private EquipmentInventorySlot pantsSlot;
+    [SerializeField] private EquipmentInventorySlot glovesSlot;
+    [SerializeField] private EquipmentInventorySlot ringSlot;
+    [SerializeField] private EquipmentInventorySlot shoesSlot;
+
+
+    private void Start()
+    {
+        RefreshEquipmentSlots();
+    }
 
 
     public EquippedItem GetEquippedItem(EquipmentSlot slot)
@@ -49,27 +63,44 @@ public class CharacterEquipment : MonoBehaviour
         {
             case EquipmentSlot.Weapon:
                 weapon = item;
+                weaponSlot.SetEquippedItem(item);
                 break;
 
             case EquipmentSlot.Armor:
                 armor = item;
+                armorSlot.SetEquippedItem(item);
                 break;
 
             case EquipmentSlot.Pants:
                 pants = item;
+                pantsSlot.SetEquippedItem(item);
                 break;
 
             case EquipmentSlot.Gloves:
                 gloves = item;
+                glovesSlot.SetEquippedItem(item);
                 break;
 
             case EquipmentSlot.Ring:
                 ring = item;
+                ringSlot.SetEquippedItem(item);
                 break;
 
             case EquipmentSlot.Shoes:
                 shoes = item;
+                shoesSlot.SetEquippedItem(item);
                 break;
         }
+    }
+
+
+    private void RefreshEquipmentSlots()
+    {
+        weaponSlot.SetEquippedItem(weapon);
+        armorSlot.SetEquippedItem(armor);
+        pantsSlot.SetEquippedItem(pants);
+        glovesSlot.SetEquippedItem(gloves);
+        ringSlot.SetEquippedItem(ring);
+        shoesSlot.SetEquippedItem(shoes);
     }
 }

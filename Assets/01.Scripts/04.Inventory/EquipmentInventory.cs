@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+ï»¿using System.Collections.Generic;
 using UnityEngine;
 
 public class EquipmentInventory : MonoBehaviour
@@ -8,22 +8,14 @@ public class EquipmentInventory : MonoBehaviour
     public List<EquippedItem> Items => items;
 
 
-    // ÀÎº¥Åä¸®¿¡ Àåºñ µé¾î°¡´ÂÁö Å×½ºÆ®¿ë ÀÓ½Ã ÄÚµå
-    [SerializeField] private EquipmentData testEquipment;
 
     private void Start()
     {
-        if (testEquipment == null)
-            return;
-
-        EquippedItem testItem = new EquippedItem(testEquipment, 25f);
-
-        AddItem(testItem);
+        
     }
-    // ÀÎº¥Åä¸®¿¡ Àåºñ µé¾î°¡´ÂÁö Å×½ºÆ®¿ë ÀÓ½Ã ÄÚµå
 
 
-    // Àåºñ Ãß°¡
+    // ì¥ë¹„ ì¶”ê°€
     public void AddItem(EquippedItem item)
     {
         if (item == null)
@@ -32,7 +24,7 @@ public class EquipmentInventory : MonoBehaviour
         items.Add(item);
     }
 
-    // Àåºñ¸¦ ÀÎº¥Åä¸®¿¡¼­ Á¦°Å
+    // ì¥ë¹„ë¥¼ ì¸ë²¤í† ë¦¬ì—ì„œ ì œê±°
     public void RemoveItem(EquippedItem item)
     {
         if (item == null)
@@ -41,7 +33,7 @@ public class EquipmentInventory : MonoBehaviour
         items.Remove(item);
     }
 
-    // Àåºñ¸¦ Á¾·ù º°·Î ºÒ·¯¿È
+    // ì¥ë¹„ë¥¼ ì¢…ë¥˜ ë³„ë¡œ ë¶ˆëŸ¬ì˜´
     public List<EquippedItem> GetItemsBySlot(EquipmentSlot slot)
     {
         List<EquippedItem> result = new List<EquippedItem>();

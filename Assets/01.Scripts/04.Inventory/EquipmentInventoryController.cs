@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class EquipmentInventoryController : MonoBehaviour
 {
@@ -52,7 +52,7 @@ public class EquipmentInventoryController : MonoBehaviour
 
     private void OpenInventory(EquipmentSlot equipmentSlot)
     {
-        // Àåºñ Á¾·ù º°·Î ÀÎº¥Åä¸® ¿­±â
+        // ì¥ë¹„ ì¢…ë¥˜ ë³„ë¡œ ì¸ë²¤í† ë¦¬ ì—´ê¸°
         currentSlot = equipmentSlot;
 
         statsPanel.SetActive(false);
@@ -60,24 +60,24 @@ public class EquipmentInventoryController : MonoBehaviour
 
         RefreshInventory(equipmentSlot);
 
-        selectedEquipmentInfo.Clear();
+        selectedEquipmentInfo.ShowEquipment(characterEquipment.GetEquippedItem(equipmentSlot),null);
 
-        //È®ÀÎ¿ë ÀÓ½Ã ·Î±×, È®ÀÎ ÈÄ »èÁ¦¹Ù¶÷
-        Debug.Log(equipmentSlot + " ÀÎº¥Åä¸® ¿­¸²");
+        //í™•ì¸ìš© ì„ì‹œ ë¡œê·¸, í™•ì¸ í›„ ì‚­ì œë°”ëŒ
+        Debug.Log(equipmentSlot + " ì¸ë²¤í† ë¦¬ ì—´ë¦¼");
     }
 
     private void RefreshInventory(EquipmentSlot slot)
     {
-        // ±âÁ¸ ½½·Ô »èÁ¦
+        // ê¸°ì¡´ ìŠ¬ë¡¯ ì‚­ì œ
         for (int i = inventoryGridPanel.transform.childCount - 1; i >= 0; i--)
         {
             Destroy(inventoryGridPanel.transform.GetChild(i).gameObject);
         }
 
-        // ÇØ´ç ºÎÀ§ÀÇ Àåºñ °¡Á®¿À±â
+        // í•´ë‹¹ ë¶€ìœ„ì˜ ì¥ë¹„ ê°€ì ¸ì˜¤ê¸°
         var items = equipmentInventory.GetItemsBySlot(slot);
 
-        // Àåºñ ½½·Ô »ı¼º
+        // ì¥ë¹„ ìŠ¬ë¡¯ ìƒì„±
         for (int i = 0; i < items.Count; i++)
         {
             GameObject slotObject = Instantiate(inventorySlotPrefab, inventoryGridPanel.transform);
@@ -86,7 +86,7 @@ public class EquipmentInventoryController : MonoBehaviour
         }
     }
 
-    // Grid¿¡¼­ Àåºñ¸¦ Å¬¸¯ÇßÀ» ¶§ È£Ãâ
+    // Gridì—ì„œ ì¥ë¹„ë¥¼ í´ë¦­í–ˆì„ ë•Œ í˜¸ì¶œ
     public void SelectEquipment(EquippedItem item)
     {
         if (item == null)
@@ -105,7 +105,7 @@ public class EquipmentInventoryController : MonoBehaviour
         statsPanel.SetActive(true);
     }
 
-    // Àåºñ ÀåÂø(Àåºñ ±³Ã¼) ¹öÆ° 
+    // ì¥ë¹„ ì¥ì°©(ì¥ë¹„ êµì²´) ë²„íŠ¼ 
     public void EquipSelectedEquipment()
     {
         if (selectedEquipment == null)

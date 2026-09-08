@@ -1,8 +1,8 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class UI_Navigator : MonoBehaviour
 {
-    // ¸Ç ¾Æ·¡ ¸Ş´º ¹öÆ°µé °¢°¢ ÆĞ³Î ÀÌµ¿
+    // ë§¨ ì•„ë˜ ë©”ë‰´ ë²„íŠ¼ë“¤ ê°ê° íŒ¨ë„ ì´ë™
 
     [SerializeField] private GameObject mainPanel;
     [SerializeField] private GameObject characterPanel;
