@@ -11,7 +11,7 @@ using Debug = DebugLogger<AccountDeletionHandler>;
 
 public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 {
-    private const string LOGIN_SCENE = "LoginScene";
+    private const string BOOTSTRAP_SCENE = "BootstrapScene";
 
     public async UniTask<bool> ProcessAccountDeletionAsync(CancellationToken ct = default)
     {
@@ -38,12 +38,11 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
             return false;
         }
 
-        //
+        // 3. 로컬 캐시 메모리 제거
         UserDataManager.instance.ClearLocalData();
 
         // 로그인 기능과 전체적인 틀을 만들면 해제
-        //Debug.Log("계정 삭제가 성공적으로 완료되었습니다. 로그인 화면으로 이동합니다.");
-        //UnityEngine.SceneManagement.SceneManager.LoadScene(LOGIN_SCENE);
+        await SceneLoaderManager.instance.LoadSceneFlowAsync(BOOTSTRAP_SCENE);
         return true;
     }
 }

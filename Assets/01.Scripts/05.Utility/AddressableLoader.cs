@@ -6,12 +6,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Debug = DebugLogger<AddressableLoader>;
 
-
-
-
-
-
-
 /// <summary>
 /// 리소스를 번들로 받아와 찾아서 꺼내 쓸때 사용할 클래스
 /// </summary>
@@ -37,7 +31,7 @@ public class AddressableLoader : Singleton<AddressableLoader>
     {
         // 카탈로그 업데이크 체크
         var checkHandle = Addressables.CheckForCatalogUpdates(false);
-        var catalogsToUpdate = await checkHandle.ToUniTask();
+        List<string> catalogsToUpdate = await checkHandle.ToUniTask();
         Addressables.Release(checkHandle);
 
         if(catalogsToUpdate == null|| catalogsToUpdate.Count == 0)

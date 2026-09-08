@@ -15,6 +15,8 @@ public class BootstrapView : MonoBehaviour
     [SerializeField] private DownloadPopupUI downloadPopupUI;
     [SerializeField] private ErrorPopupUI ErrorPopupUI;
 
+    [SerializeField] private CanvasGroup loadingCanvasGroup;
+
     private void Awake()
     {
         if (loadingPanel != null) loadingPanel.SetActive(true);
@@ -36,5 +38,14 @@ public class BootstrapView : MonoBehaviour
     public UniTask ShowErrorPopupAsync(string message, CancellationToken ct = default)
     {
         return ErrorPopupUI.ShowAndReTryAsync(message, ct);
+    }
+
+    public void SetLoadingVisible(bool visible)
+    {
+        if (loadingCanvasGroup == null) return;
+
+        loadingCanvasGroup.alpha = visible ? 1f : 0f;
+        loadingCanvasGroup.blocksRaycasts = visible;
+        loadingCanvasGroup.interactable = visible;
     }
 }

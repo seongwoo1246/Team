@@ -34,11 +34,11 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
         if (dependencyStatus == DependencyStatus.Available)
         {
             auth = FirebaseAuth.DefaultInstance;
-            // static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서
-            if (auth.CurrentUser != null)
-            {
-                SignOut();
-            }
+            //// static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서
+            //if (auth.CurrentUser != null)
+            //{
+            //    SignOut();
+            //}
             auth.StateChanged += HandleAuthStateChanged;
         }
         else

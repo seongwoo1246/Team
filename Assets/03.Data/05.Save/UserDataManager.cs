@@ -6,7 +6,6 @@ using Firebase.Database;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Unity.VisualScripting;
 using UtilDebug = DebugLogger<UserDataManager>;
 
 public class UserDataManager : NonMonoSingleton<UserDataManager>

@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class EquipmentInventoryController : MonoBehaviour
 {
@@ -11,32 +11,32 @@ public class EquipmentInventoryController : MonoBehaviour
 
     public void OpenWeapon()
     {
-        OpenInventory("¹«±â");
+        OpenInventory("ï¿½ï¿½ï¿½ï¿½");
     }
 
     public void OpenArmor()
     {
-        OpenInventory("»óÀÇ");
+        OpenInventory("ï¿½ï¿½ï¿½ï¿½");
     }
 
     public void OpenPants()
     {
-        OpenInventory("ÇÏÀÇ");
+        OpenInventory("ï¿½ï¿½ï¿½ï¿½");
     }
 
     public void OpenHelmet()
     {
-        OpenInventory("Åõ±¸");
+        OpenInventory("ï¿½ï¿½ï¿½ï¿½");
     }
 
     public void OpenGloves()
     {
-        OpenInventory("Àå°©");
+        OpenInventory("ï¿½å°©");
     }
 
     public void OpenBoots()
     {
-        OpenInventory("½Å¹ß");
+        OpenInventory("ï¿½Å¹ï¿½");
     }
 
     public void Open7()
