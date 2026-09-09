@@ -50,4 +50,29 @@ public class EquipmentInventory : MonoBehaviour
 
         return result;
     }
+
+
+    // 무기도 직업별로 분류하기
+    public List<EquippedItem> GetItemsBySlotAndAttackType(EquipmentSlot slot, AttackType attackType)
+    {
+        List<EquippedItem> result = new List<EquippedItem>();
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            EquippedItem item = items[i];
+
+            if (item == null || item.Data == null)
+                continue;
+
+            if (item.Data.Slot != slot)
+                continue;
+
+            if (item.Data.AllowedAttackType != attackType)
+                continue;
+
+            result.Add(item);
+        }
+
+        return result;
+    }
 }

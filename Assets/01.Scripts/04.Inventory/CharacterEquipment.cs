@@ -1,17 +1,13 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class CharacterEquipment : MonoBehaviour
 {
-    // 캐릭터 착용 장비 저장용 스크립트
+    // 캐릭터별 장비 구분용
+    private Dictionary<AttackType, Dictionary<EquipmentSlot, EquippedItem>> characterEquipments
+        = new Dictionary<AttackType, Dictionary<EquipmentSlot, EquippedItem>>();
 
-    [Header("현재 장착 장비")]
-    [SerializeField] private EquippedItem weapon;
-    [SerializeField] private EquippedItem armor;
-    [SerializeField] private EquippedItem pants;
-    [SerializeField] private EquippedItem gloves;
-    [SerializeField] private EquippedItem ring;
-    [SerializeField] private EquippedItem shoes;
-
+    // 캐릭터별 장착 장비
     [Header("장착 슬롯")]
     [SerializeField] private EquipmentInventorySlot weaponSlot;
     [SerializeField] private EquipmentInventorySlot armorSlot;
@@ -21,86 +17,81 @@ public class CharacterEquipment : MonoBehaviour
     [SerializeField] private EquipmentInventorySlot shoesSlot;
 
 
-    private void Start()
+    private void Awake()
     {
-        RefreshEquipmentSlots();
+        // 각 캐릭터의 장비 저장 공간 생성
+        CreateCharacterEquipment(AttackType.Physical);
+        CreateCharacterEquipment(AttackType.Magic);
+        CreateCharacterEquipment(AttackType.Heal);
     }
 
 
-    public EquippedItem GetEquippedItem(EquipmentSlot slot)
+    private void CreateCharacterEquipment(AttackType attackType)
     {
-        switch (slot)
+        if (!characterEquipments.ContainsKey(attackType))
         {
-            case EquipmentSlot.Weapon:
-                return weapon;
+            characterEquipments.Add(
+                attackType,
+                new Dictionary<EquipmentSlot, EquippedItem>()
+            );
+        }
+    }
 
-            case EquipmentSlot.Armor:
-                return armor;
 
-            case EquipmentSlot.Pants:
-                return pants;
+    // 현재 캐릭터의 장착 장비 가져오기
+    public EquippedItem GetEquippedItem(
+        AttackType attackType,
+        EquipmentSlot slot)
+    {
+        CreateCharacterEquipment(attackType);
 
-            case EquipmentSlot.Gloves:
-                return gloves;
-
-            case EquipmentSlot.Ring:
-                return ring;
-
-            case EquipmentSlot.Shoes:
-                return shoes;
+        if (characterEquipments[attackType].ContainsKey(slot))
+        {
+            return characterEquipments[attackType][slot];
         }
 
         return null;
     }
 
 
-    public void EquipItem(EquipmentSlot slot, EquippedItem item)
+    // 현재 캐릭터에게 장비 장착
+    public void EquipItem(AttackType attackType, EquipmentSlot slot, EquippedItem item)
     {
         if (item == null)
             return;
 
-        switch (slot)
-        {
-            case EquipmentSlot.Weapon:
-                weapon = item;
-                weaponSlot.SetEquippedItem(item);
-                break;
-
-            case EquipmentSlot.Armor:
-                armor = item;
-                armorSlot.SetEquippedItem(item);
-                break;
-
-            case EquipmentSlot.Pants:
-                pants = item;
-                pantsSlot.SetEquippedItem(item);
-                break;
-
-            case EquipmentSlot.Gloves:
-                gloves = item;
-                glovesSlot.SetEquippedItem(item);
-                break;
-
-            case EquipmentSlot.Ring:
-                ring = item;
-                ringSlot.SetEquippedItem(item);
-                break;
-
-            case EquipmentSlot.Shoes:
-                shoes = item;
-                shoesSlot.SetEquippedItem(item);
-                break;
-        }
+        CreateCharacterEquipment(attackType);
+        characterEquipments[attackType][slot] = item;
+        RefreshEquipmentSlots(attackType);
     }
 
 
-    private void RefreshEquipmentSlots()
+    // 현재 캐릭터의 장비 UI 갱신
+    public void RefreshEquipmentSlots(AttackType attackType)
     {
-        weaponSlot.SetEquippedItem(weapon);
-        armorSlot.SetEquippedItem(armor);
-        pantsSlot.SetEquippedItem(pants);
-        glovesSlot.SetEquippedItem(gloves);
-        ringSlot.SetEquippedItem(ring);
-        shoesSlot.SetEquippedItem(shoes);
+        weaponSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Weapon));
+        armorSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Armor));
+        pantsSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Pants));
+        glovesSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Gloves));
+        ringSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Ring));
+        shoesSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Shoes));
+    }
+
+    // 장비 변경 확정창 NO 버튼에 쓸거 (장비 변경 복구)
+    public void RestoreEquipment(AttackType attackType, Dictionary<EquipmentSlot, EquippedItem> equipments)
+    {
+        foreach (var pair in equipments)
+        {
+            SetEquipment(attackType, pair.Key, pair.Value);
+        }
+
+        RefreshEquipmentSlots(attackType);
+    }
+
+    // 바로 위 RestoreEquipment 실행하는데 null값 있을수도있으니까
+    private void SetEquipment(AttackType attackType, EquipmentSlot slot, EquippedItem item)
+    {
+        CreateCharacterEquipment(attackType);
+        characterEquipments[attackType][slot] = item;
     }
 }

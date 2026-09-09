@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using System.Collections.Generic;
 
 public class EquipmentInventoryController : MonoBehaviour
 {
@@ -11,14 +12,23 @@ public class EquipmentInventoryController : MonoBehaviour
     [SerializeField] private EquipmentInventory equipmentInventory;
     [SerializeField] private GameObject inventorySlotPrefab;
 
-    [Header("Selected Equipment")]
+    [Header("장비 정보 비교 패널")]
     [SerializeField] private SelectedEquipmentInfo selectedEquipmentInfo;
 
-    [Header("Character Equipment")]
+    [Header("캐릭터 장비")]
     [SerializeField] private CharacterEquipment characterEquipment;
+
+    [Header("캐릭터 선택")]
+    [SerializeField] private CharacterSelectController characterSelectController;
+
+    [Header("장비 변경 확인창")]
+    [SerializeField] private GameObject confirmPanel;
 
     private EquippedItem selectedEquipment;
     private EquipmentSlot currentSlot;
+
+    // 인벤토리 입장 전 장비 상태 저장
+    private Dictionary<EquipmentSlot, EquippedItem> originalEquipments = new Dictionary<EquipmentSlot, EquippedItem>();
 
     public void OpenWeapon()
     {
@@ -55,15 +65,13 @@ public class EquipmentInventoryController : MonoBehaviour
         // 장비 종류 별로 인벤토리 열기
         currentSlot = equipmentSlot;
 
+        // 인벤토리 열때 원래 장비 저장
+        SaveOriginalEquipment();
+
         statsPanel.SetActive(false);
         inventoryPanel.SetActive(true);
-
         RefreshInventory(equipmentSlot);
-
-        selectedEquipmentInfo.ShowEquipment(characterEquipment.GetEquippedItem(equipmentSlot),null);
-
-        //확인용 임시 로그, 확인 후 삭제바람
-        Debug.Log(equipmentSlot + " 인벤토리 열림");
+        selectedEquipmentInfo.ShowEquipment(characterEquipment.GetEquippedItem(characterSelectController.CurrentAttackType,equipmentSlot),null);
     }
 
     private void RefreshInventory(EquipmentSlot slot)
@@ -74,8 +82,18 @@ public class EquipmentInventoryController : MonoBehaviour
             Destroy(inventoryGridPanel.transform.GetChild(i).gameObject);
         }
 
-        // 해당 부위의 장비 가져오기
-        var items = equipmentInventory.GetItemsBySlot(slot);
+        // 장비를 캐릭터에 따라 다르게 가져옴
+        List<EquippedItem> items;
+
+        if (slot == EquipmentSlot.Weapon)
+        {
+            AttackType attackType = characterSelectController.CurrentAttackType;
+            items = equipmentInventory.GetItemsBySlotAndAttackType(slot, attackType);
+        }
+        else
+        {
+            items = equipmentInventory.GetItemsBySlot(slot);
+        }
 
         // 장비 슬롯 생성
         for (int i = 0; i < items.Count; i++)
@@ -93,16 +111,19 @@ public class EquipmentInventoryController : MonoBehaviour
             return;
 
         selectedEquipment = item;
-
-        EquippedItem currentEquipment = characterEquipment.GetEquippedItem(currentSlot);
-
+        EquippedItem currentEquipment = characterEquipment.GetEquippedItem(characterSelectController.CurrentAttackType,currentSlot);
         selectedEquipmentInfo.ShowEquipment(currentEquipment, selectedEquipment);
     }
 
     public void CloseInventory()
     {
-        inventoryPanel.SetActive(false);
-        statsPanel.SetActive(true);
+        //inventoryPanel.SetActive(false);
+        //statsPanel.SetActive(true);
+        //// 인벤토리창 닫을때 직업별 장비 저장용
+        //characterEquipment.RefreshEquipmentSlots(characterSelectController.CurrentAttackType);
+
+        // 장비 변경 확정창 띄우기
+        confirmPanel.SetActive(true);
     }
 
     // 장비 장착(장비 교체) 버튼 
@@ -111,7 +132,42 @@ public class EquipmentInventoryController : MonoBehaviour
         if (selectedEquipment == null)
             return;
 
-        characterEquipment.EquipItem(currentSlot, selectedEquipment);
+        characterEquipment.EquipItem(characterSelectController.CurrentAttackType, currentSlot, selectedEquipment);
         selectedEquipmentInfo.ShowEquipment(selectedEquipment, selectedEquipment);
+    }
+
+    // 인벤토리 열기 전에 현재 장착 장비 저장용
+    private void SaveOriginalEquipment()
+    {
+        AttackType attackType = characterSelectController.CurrentAttackType;
+
+        originalEquipments.Clear();
+        originalEquipments[EquipmentSlot.Weapon] = characterEquipment.GetEquippedItem(attackType, EquipmentSlot.Weapon);
+        originalEquipments[EquipmentSlot.Armor] = characterEquipment.GetEquippedItem(attackType, EquipmentSlot.Armor);
+        originalEquipments[EquipmentSlot.Pants] = characterEquipment.GetEquippedItem(attackType, EquipmentSlot.Pants);
+        originalEquipments[EquipmentSlot.Gloves] = characterEquipment.GetEquippedItem(attackType, EquipmentSlot.Gloves);
+        originalEquipments[EquipmentSlot.Ring] = characterEquipment.GetEquippedItem(attackType, EquipmentSlot.Ring);
+        originalEquipments[EquipmentSlot.Shoes] = characterEquipment.GetEquippedItem(attackType, EquipmentSlot.Shoes);
+    }
+
+    // 장비변경 확정창 Yes 버튼 (장비가 변경됌)
+    public void ConfirmEquipmentChange()
+    {
+        confirmPanel.SetActive(false);
+        inventoryPanel.SetActive(false);
+        statsPanel.SetActive(true);
+        characterEquipment.RefreshEquipmentSlots(characterSelectController.CurrentAttackType);
+        selectedEquipment = null;
+    }
+
+    // 장비변경 확정창 NO 버튼 (변경사항을 캔슬하고 원래 장비로 돌아감)
+    public void CancelEquipmentChange()
+    {
+        AttackType attackType =characterSelectController.CurrentAttackType;
+        characterEquipment.RestoreEquipment(attackType, originalEquipments);
+        confirmPanel.SetActive(false);
+        inventoryPanel.SetActive(false);
+        statsPanel.SetActive(true);
+        selectedEquipment = null;
     }
 }
