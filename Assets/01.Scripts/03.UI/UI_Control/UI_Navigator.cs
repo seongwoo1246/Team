@@ -2,7 +2,7 @@
 
 public class UI_Navigator : MonoBehaviour
 {
-    // �� �Ʒ� �޴� ��ư�� ���� �г� �̵�
+    // 맨 아래 메뉴 버튼들 각각 패널 이동
 
     [SerializeField] private GameObject mainPanel;
     [SerializeField] private GameObject characterPanel;
