@@ -6,20 +6,20 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Debug = DebugLogger<AddressableLoader>;
 
-
-
-
-
-
-
 /// <summary>
 /// 리소스를 번들로 받아와 찾아서 꺼내 쓸때 사용할 클래스
 /// </summary>
-public class AddressableLoader : MonoBehaviour
+public class AddressableLoader : Singleton<AddressableLoader>
 {
     //로드된 에셋 과 인스턴스 핸들 관리
     private readonly Dictionary<string, AsyncOperationHandle> _assetHandles = new();
     private readonly Dictionary<GameObject, AsyncOperationHandle> _instanceHandles = new();
+
+    protected override void Awake()
+    {
+        isDDOL = true;
+        base.Awake();
+    }
 
     #region 1. 원격 서버 패치 및 카탈로그 업데이트
 
@@ -31,7 +31,7 @@ public class AddressableLoader : MonoBehaviour
     {
         // 카탈로그 업데이크 체크
         var checkHandle = Addressables.CheckForCatalogUpdates(false);
-        var catalogsToUpdate = await checkHandle.ToUniTask();
+        List<string> catalogsToUpdate = await checkHandle.ToUniTask();
         Addressables.Release(checkHandle);
 
         if(catalogsToUpdate == null|| catalogsToUpdate.Count == 0)

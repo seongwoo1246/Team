@@ -85,7 +85,7 @@ public class EmailLogin : MonoBehaviour
         {
             Debug.LogWarning("로그인 실패: 이메일 또는 비밀번호 확인");
             OnStatusChanged?.Invoke("로그인 실패: 이메일 또는 비밀번호 확인");
-            OnError?.Invoke("이메일/비밀번호를 입력해주세요.");
+            OnError?.Invoke("이메일 또는 비밀번호 확인");
         }
     }
 
