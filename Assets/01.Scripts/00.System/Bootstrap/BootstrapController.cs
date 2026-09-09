@@ -100,7 +100,7 @@ public class BootstrapController : MonoBehaviour
         _ = AddressableManager.instance;
         _ = SceneLoaderManager.instance;
 
-        UserDataManager.instance.Init();
+        UserManager.instance.Init();
         AuthLoginSystem.instance.Init();
 
         await UniTask.Yield(PlayerLoopTiming.Update, ct);

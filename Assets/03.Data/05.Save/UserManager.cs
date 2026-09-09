@@ -6,12 +6,12 @@ using Firebase.Database;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using UtilDebug = DebugLogger<UserDataManager>;
+using UtilDebug = DebugLogger<UserManager>;
 
-public class UserDataManager : NonMonoSingleton<UserDataManager>
+public class UserManager : NonMonoSingleton<UserManager>
 {
     private DatabaseReference rootRef;
-    public UserData CurrentData { get; private set; }
+    public UserInfo CurrentData { get; private set; }
     private const string LastLoginTimestamp = "lastLoginTimestamp";
 
 
@@ -27,7 +27,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
     /// <summary>
     /// RTDB에서 유저 데이터를 비동기적으로 로드합니다.
     /// </summary>
-    public async UniTask<(bool exists, UserData data)> LoadUserDataAsync(string uid, CancellationToken ct = default)
+    public async UniTask<(bool exists, UserInfo data)> LoadUserDataAsync(string uid, CancellationToken ct = default)
     {
         try
         {
@@ -35,7 +35,7 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
             if (snapshot.Exists && snapshot.Value != null)
             {
                 string json = snapshot.GetRawJsonValue();
-                UserData data = UnityEngine.JsonUtility.FromJson<UserData>(json);
+                UserInfo data = UnityEngine.JsonUtility.FromJson<UserInfo>(json);
                 CurrentData = data;
                 return (true, CurrentData);
             }
@@ -57,17 +57,16 @@ public class UserDataManager : NonMonoSingleton<UserDataManager>
 
     #region [Create]
     /// <summary>
-    /// 첫 로그인 시 신규 유저 데이터를 생성하고 RTDB에 저장합니다.
+    /// (회원가입) 신규 유저 데이터를 생성하고 RTDB에 저장합니다.
     /// </summary>
     public async UniTask<bool> CreateUserDataAsync(string uid, string nickname, CancellationToken ct = default)
     {
         try
         {
-            UserData newUserData = UserData.CreateNewUser(uid, nickname);
+            UserInfo newUserData = UserInfo.CreateNewUser(uid, nickname);
 
             var updates = new Dictionary<string, object>()
             {
-                { $"users/{uid}", newUserData.ToDictionary() },
                 { $"nicknames/{nickname}", uid }
             };
 

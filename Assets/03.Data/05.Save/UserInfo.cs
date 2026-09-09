@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 
 [Serializable]
-public class UserData
+public class UserInfo
 {
     public string uid;  // 고유 id. 이 값을 통해 UserData를 구분
     public string nickname;
@@ -21,11 +21,11 @@ public class UserData
 
     // 인벤토리 관련 추후 추가 (무기, 장비, 성장 재료 등등)
 
-    public UserData() { }
+    public UserInfo() { }
 
-    public static UserData CreateNewUser(string uid, string nickname)
+    public static UserInfo CreateNewUser(string uid, string nickname)
     {
-        return new UserData
+        return new UserInfo
         {
             uid = uid,
             nickname = nickname,

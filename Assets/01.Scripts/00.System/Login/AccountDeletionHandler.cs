@@ -23,7 +23,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         }
 
         // 1. RTDB 데이터 먼저 제거 
-        bool dbDeleted = await UserDataManager.instance.DeleteUserDataAsync(uid, ct);
+        bool dbDeleted = await UserManager.instance.DeleteUserDataAsync(uid, ct);
         if(!dbDeleted)
         {
             Debug.LogError("사용자 데이터를 삭제하는 데 실패했습니다.");
@@ -39,7 +39,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         }
 
         // 3. 로컬 캐시 메모리 제거
-        UserDataManager.instance.ClearLocalData();
+        UserManager.instance.ClearLocalData();
 
         // 로그인 기능과 전체적인 틀을 만들면 해제
         await SceneLoaderManager.instance.LoadSceneFlowAsync(BOOTSTRAP_SCENE);
