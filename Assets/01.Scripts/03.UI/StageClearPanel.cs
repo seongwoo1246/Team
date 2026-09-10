@@ -80,9 +80,18 @@ public sealed class StageClearPanel : MonoBehaviour
 
     private void SetPanelActive(bool active)
     {
-        if (panelRoot != null)
+        if (panelRoot == null)
         {
-            panelRoot.SetActive(active);
+            return;
+        }
+
+        panelRoot.SetActive(active);
+
+        // MainUI가 같은 Canvas_Stage 밑에 있고 나중 순서라 그 위로 그려짐 - 클리어 패널을 띄울 때마다
+        // 맨 위(맨 마지막 자식)로 올려서, MainUI에 클릭이 가로채여 버튼이 안 눌리는 문제를 막는다
+        if (active)
+        {
+            panelRoot.transform.SetAsLastSibling();
         }
     }
 }

@@ -4,14 +4,17 @@ EquipmentData(SO)는 여러 개체가 공유하는 고정 정보고, 실제로 �
 그 값(rollPercent)만 따로 들고 다님
 
 인벤토리 시스템에서 세이브/전달할 땐 이 클래스를 통째로 쓰지 말고
-Data.Id(문자열) + RollPercent + EnhanceRolls 정도만 저장했다가, 불러올 때 id로 EquipmentData를 다시 찾아 재구성할 것
+Data.Id(문자열) + RollPercent + EnhanceLevel + EnhanceBonusTotal 정도만 저장했다가, 불러올 때 id로 EquipmentData를 다시 찾아 재구성할 것
 
 장비 강화(+10까지)도 이 인스턴스 단위로 적용됨. 강화 1회 = 1~3% 랜덤 보너스가 하나 더 쌓이는 것뿐이라
 드랍될 때 뜬 원래 rollPercent랑 계산 방식이 똑같음(그냥 최종 합산에 더 들어감) - TotalRollPercent가 이 둘을 합쳐서 돌려줌
+
+강화 이력은 몇 번째 강화 때 몇 %가 떴는지 개별로 쓰는 곳이 없어서, 리스트로 안 쌓고
+enhanceLevel(몇 강인지) + enhanceBonusTotal(누적 % 합) 두값으로만 관리함
+(세이브이슈)
 */
 
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
@@ -33,8 +36,11 @@ public sealed class EquippedItem
     [Tooltip("드랍될 때 굴린 랜덤 보너스 (1~10 사이, %). Data.Slot이 담당하는 스탯에 이 값만큼 % 로 적용됨")]
     [SerializeField] private float rollPercent;
 
-    [Tooltip("강화로 쌓인 보너스% 목록. 강화 1회당 하나씩 추가됨 (최대 10개 = +10)")]
-    [SerializeField] private List<float> enhanceRolls = new List<float>();
+    [Tooltip("현재 강화 단계 (+0 ~ +10)")]
+    [SerializeField] private int enhanceLevel;
+
+    [Tooltip("강화로 쌓인 보너스% 합계. 강화 1회마다 이번에 뜬 % 만큼 누적됨")]
+    [SerializeField] private float enhanceBonusTotal;
 
     /// <summary>
     /// 장비 인스턴스를 만든다. 보통 몬스터 드랍 시 랜덤 롤로 생성함 (강화 0회 상태로 시작)
@@ -54,24 +60,13 @@ public sealed class EquippedItem
     public float RollPercent => rollPercent;
 
     // 현재 강화 단계 (+0 ~ +10)
-    public int EnhanceLevel => enhanceRolls.Count;
+    public int EnhanceLevel => enhanceLevel;
 
     // 더 강화할 수 있는지 (+10 미만이어야 함)
     public bool CanEnhance => EnhanceLevel < MAX_ENHANCE_LEVEL;
 
-    // 원래 드랍 보너스% + 강화로 쌓인 보너스% 전부 합친 최종 값. 스탯 계산은 전부 이 값을 씀
-    public float TotalRollPercent
-    {
-        get
-        {
-            float total = rollPercent;
-            for (int i = 0; i < enhanceRolls.Count; i++)
-            {
-                total += enhanceRolls[i];
-            }
-            return total;
-        }
-    }
+    // 원래 드랍 보너스% + 강화로 쌓인 보너스% 전부 합친 최종 값. 스탯 계산은 전부 이값을씀
+    public float TotalRollPercent => rollPercent + enhanceBonusTotal;
 
     /// <summary>
     /// 이 장비를 1강 강화한다. 재료 소모/성공 여부 판정은 호출하는 쪽(CharacterBase.TryEnhanceEquipped)이
@@ -89,7 +84,8 @@ public sealed class EquippedItem
         }
 
         addedRollPercent = UnityEngine.Random.Range(ENHANCE_ROLL_MIN, ENHANCE_ROLL_MAX);
-        enhanceRolls.Add(addedRollPercent);
+        enhanceLevel++;
+        enhanceBonusTotal += addedRollPercent;
         return true;
     }
 }
