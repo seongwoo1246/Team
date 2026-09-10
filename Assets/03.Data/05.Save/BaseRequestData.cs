@@ -3,14 +3,11 @@ using Firebase.Database;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
-using UnityEngine;
-//using UnityEngine;
+using static StringConsts.UserConstants;
+using UtilDebug = DebugLogger;
 
-public enum DataSyncAction
-{
-    Get, Set
-}
 
 /// <summary>
 /// 서버 RTDB와 통신하는 모든 유저 데이터의 최상위 추상 베이스 클래스
@@ -32,15 +29,56 @@ abstract public class BaseRequestData
     public abstract UniTask<bool> ExcuteGetAsync(CancellationToken ct = default);
     public abstract UniTask<bool> ExcuteSetAsync(CancellationToken ct = default);
 
-    public UniTask<bool> SyncAsync(DataSyncAction action, CancellationToken ct = default)
+    #region 공통 로깅 및 실행 래퍼(Wrapper)
+    protected async UniTask<bool> ExecuteLogOperationAsync(Func<UniTask> action, Func<string> detailInfoGetter = null, [CallerMemberName] string callerMethod = "")
     {
-        return action switch
+        return await ExecuteLogOperationCoreAsync(async () =>
         {
-            DataSyncAction.Get => ExcuteGetAsync(ct),
-            DataSyncAction.Set => ExcuteSetAsync(ct),
-            _ => UniTask.FromResult(false)
-        };
+            await action.Invoke();
+            return true;
+        }, detailInfoGetter, callerMethod);
     }
+
+    protected async UniTask<bool> ExecuteLogOperationCoreAsync(Func<UniTask<bool>> action, Func<string> detailInfoGetter = null, [CallerMemberName] string callerMethod = "")
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        string tag = GetType().Name;
+        string prefix = $"[{RootDomain}] {callerMethod}";
+        string detail = detailInfoGetter != null ? detailInfoGetter?.Invoke() : string.Empty;
+        string startMsg = string.IsNullOrEmpty(detail) ? $"{prefix} 요청 시작" : $"{prefix} 요청 시작 -> {detail}";
+
+        UtilDebug.LogWithTag(tag, startMsg);
+
+        try
+        {
+            bool isSuccess = await action.Invoke();
+            if (isSuccess)
+            {
+                UtilDebug.LogWithTag(tag, $"{prefix} 완료 (성공)");
+            }
+            else
+            {
+                UtilDebug.LogWarningWithTag(tag, $"{prefix} 완료 (데이터 없음)");
+            }
+            return isSuccess;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogErrorWithTag(tag, $"{prefix} 실패 {ex.Message}");
+            return false;
+        }
+#else
+        try
+        {
+            return await action.Invoke();
+        }
+        catch(Exception)
+        {
+            return false;
+        }
+#endif  
+    }
+    #endregion
 }
 #region 유저 DB
 /// <summary>
@@ -50,7 +88,7 @@ abstract public class BaseRequestData
 [Serializable]
 public class UserProfileRequest : BaseRequestData
 {
-    protected override string RootDomain => "users";
+    protected override string RootDomain => Users;
 
     public string nickname;
     public int accountLevel;
@@ -72,50 +110,65 @@ public class UserProfileRequest : BaseRequestData
         this.gold = 0;
         this.dia = 0;
 
-        foreach(UpgradeTrack track in Enum.GetValues(typeof(UpgradeTrack)))
+        foreach (UpgradeTrack track in Enum.GetValues(typeof(UpgradeTrack)))
         {
             upgradeTrackLevels[track.ToString()] = 0;
         }
     }
 
+    #region 유저 프롭필 전체 동기화 API
     /// <summary>
-    /// 서버에서 UserProfile 가져오기
+    /// 서버에서 UserProfile 로드 API
     /// </summary>
     public override async UniTask<bool> ExcuteGetAsync(CancellationToken ct = default)
     {
-        DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
-        if (snapshot.Exists && snapshot.Value != null)
+        return await ExecuteLogOperationCoreAsync(async () =>
         {
-            string json = snapshot.GetRawJsonValue();
-            UnityEngine.JsonUtility.FromJsonOverwrite(json, this);
-            return true;
-        }
-        return false;
+            DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            if (snapshot.Exists && snapshot.Value != null)
+            {
+                string json = snapshot.GetRawJsonValue();
+                UnityEngine.JsonUtility.FromJsonOverwrite(json, this);
+                return true;
+            }
+            return false;
+        }, () => $"Uid: {uid} 로드"
+        );
     }
     /// <summary>
-    /// 서버에 UserProfile 갱신
+    /// 서버에 UserProfile 갱신  API
     /// </summary>
 
     public override async UniTask<bool> ExcuteSetAsync(CancellationToken ct = default)
     {
-        string json = UnityEngine.JsonUtility.ToJson(this);
-        await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            string json = UnityEngine.JsonUtility.ToJson(this);
+            await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"Nick: {nickname}, Lv: {accountLevel}, Stage: {curreStage} 저장"
+        );
     }
+    #endregion
 
+    #region 유저 프로필 단일 동기화 API
     /// <summary>
-    /// 서버에 UserProfile 중 단일 API 갱신
+    /// 서버에 UserProfile 중 단일 갱신 API
     /// </summary>
     /// <param name="fieldName">변경할 API(필드)</param>
     /// <param name="value">변경할 값</param>
     public async UniTask<bool> UpdateSingleFieldAsync(string fieldName, object value, CancellationToken ct = default)
     {
-        await GetTargetRef().Child(fieldName).SetValueAsync(value).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            await GetTargetRef().Child(fieldName).SetValueAsync(value).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"Field: {fieldName}, Value: {value} 갱신"
+        );
     }
 
     /// <summary>
-    /// 파티 강화 시 해당 트랙 레벨 단일 노드 갱신
+    /// 파티 강화 시 해당 트랙 레벨 단일 노드 갱신 API
     /// </summary>
     /// <param name="track">트랙 노드</param>
     /// <param name="newLevel">갱신 레벨</param>
@@ -124,9 +177,13 @@ public class UserProfileRequest : BaseRequestData
         string trackKey = track.ToString();
         upgradeTrackLevels[trackKey] = newLevel;
 
-        await GetTargetRef().Child("upgradeTrackLevels").Child(trackKey).SetValueAsync(newLevel).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            await GetTargetRef().Child(UpgradeTrackLevels).Child(trackKey).SetValueAsync(newLevel).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"Track: {trackKey}, Lv: {newLevel} 갱신");
     }
+    #endregion
 }
 #endregion
 
@@ -152,38 +209,45 @@ public class CharacterSaveData
 [Serializable]
 public class CharacterRequest : BaseRequestData
 {
-    protected override string RootDomain => "characters";
-    private const string EquippedSlotMap = "equippedSlotMap";
-    private const string PartySlot = "partySlot";
+    protected override string RootDomain => Characters;
 
     // Key : characterId ( char_warrior / char_mage / char_healer )
     public Dictionary<string, CharacterSaveData> characterDictionary = new();
     public CharacterRequest(string uid) : base(uid) { }
 
-    #region 캐릭터 API 전체 동기화
+    #region 캐릭터 전체 동기화 API
     public override async UniTask<bool> ExcuteGetAsync(CancellationToken ct = default)
     {
-        DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
-        if (snapshot.Exists && snapshot.Value != null)
-        {
-            string json = snapshot.GetRawJsonValue();
-            characterDictionary = JsonConvert.DeserializeObject<Dictionary<string, CharacterSaveData>>(json) ?? new();
-            return true;
-        }
-        return false;
+        return await ExecuteLogOperationCoreAsync(
+            async () =>
+            {
+                DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+                if (snapshot.Exists && snapshot.Value != null)
+                {
+                    string json = snapshot.GetRawJsonValue();
+                    characterDictionary = JsonConvert.DeserializeObject<Dictionary<string, CharacterSaveData>>(json) ?? new();
+                    return true;
+                }
+                return false;
+            }, () => $"Uid: {uid} 로드"
+            );
     }
 
     public override async UniTask<bool> ExcuteSetAsync(CancellationToken ct = default)
     {
-        string json = JsonConvert.SerializeObject(characterDictionary);
-        await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            string json = JsonConvert.SerializeObject(characterDictionary);
+            await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"CharCount: {characterDictionary.Count} 저장"
+        );
     }
     #endregion
 
-    #region 캐릭터 API 개별 갱신
+    #region 캐릭터 개별 갱신 API
     /// <summary>
-    /// 단일 캐릭터의 장착 장비 변경 시 해당 캐릭터의 장비 슬롯만 부분 저장
+    /// 단일 캐릭터의 장착 장비 변경 시 해당 캐릭터의 장비 슬롯만 부분 저장 API
     /// root/characters/{uid}/{charId}/equippedSlotMap/{slot}
     /// </summary>
     public async UniTask<bool> SetEquippedSlotAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
@@ -191,22 +255,27 @@ public class CharacterRequest : BaseRequestData
         if (!characterDictionary.TryGetValue(charId, out var charData)) return false;
 
         string slotkey = slot.ToString();
-        if (string.IsNullOrEmpty(instanceId))
-        {
-            charData.equippedItems.Remove(slotkey);
-            await GetTargetRef().Child(charId).Child(EquippedSlotMap).Child(slotkey).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
-        }
-        else
-        {
-            charData.equippedItems[slotkey] = instanceId;
-            await GetTargetRef().Child(charId).Child(EquippedSlotMap).Child(slotkey).SetValueAsync(instanceId).AsUniTask().AttachExternalCancellation(ct);
-        }
 
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            if (string.IsNullOrEmpty(instanceId))
+            {
+                charData.equippedItems.Remove(slotkey);
+                await GetTargetRef().Child(charId).Child(EquippedSlotMap).Child(slotkey).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            }
+            else
+            {
+                charData.equippedItems[slotkey] = instanceId;
+                await GetTargetRef().Child(charId).Child(EquippedSlotMap).Child(slotkey).SetValueAsync(instanceId).AsUniTask().AttachExternalCancellation(ct);
+            }
+
+            return true;
+        }, () => $"Char: {charId}, Slot: {slot}, InstId: {instanceId} 변경"
+        );
     }
 
     /// <summary>
-    /// Account level에 따른 캐릭터 해금
+    /// Account level에 따른 캐릭터 해금 API
     /// 또는 새로운 게임 캐릭터 제작 시 사용 가능
     /// </summary>
     /// <param name="newChar">새로운 캐릭터 DB</param>
@@ -215,15 +284,20 @@ public class CharacterRequest : BaseRequestData
         if (newChar == null || string.IsNullOrEmpty(newChar.characterId))
             return false;
 
-        characterDictionary[newChar.characterId] = newChar;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            characterDictionary[newChar.characterId] = newChar;
 
-        string charJson = JsonConvert.SerializeObject(newChar);
-        await GetTargetRef().Child(newChar.characterId).SetRawJsonValueAsync(charJson).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+            string charJson = JsonConvert.SerializeObject(newChar);
+            await GetTargetRef().Child(newChar.characterId).SetRawJsonValueAsync(charJson).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        , () => $"Char: {newChar.characterId}, PartySlot: {newChar.partySlot} 해금"
+        );
     }
 
     /// <summary>
-    /// 파티 배치 변경 시 partSlot 필드만 단톡 갱신
+    /// 파티 배치 변경 시 partSlot 필드만 단톡 갱신 API
     /// </summary>
     /// <param name="charId">캐릭터 고유 ID</param>
     /// <param name="slotIndex">슬롯 Index</param>
@@ -232,9 +306,13 @@ public class CharacterRequest : BaseRequestData
         if (!characterDictionary.TryGetValue(charId, out var charData))
             return false;
 
-        charData.partySlot = slotIndex;
-        await GetTargetRef().Child(charId).Child(PartySlot).SetValueAsync(slotIndex).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            charData.partySlot = slotIndex;
+            await GetTargetRef().Child(charId).Child(PartySlot).SetValueAsync(slotIndex).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"Char: {charId}, Slot: {slotIndex} 갱신"
+        );
     }
     #endregion
 
@@ -249,7 +327,7 @@ public class EquipmentSaveDTO
     public string dataId;           // 장비 SO 고유 ID
     public float rollPercent;       // 드랍 시 제공되는 기본 Roll %
     public int enhanceLevel;        // 장비 강화 단계
-    public float totalEnhanceBonud; // 강화 누적 보너스 합계 %
+    public float totalEnhanceBonus; // 강화 누적 보너스 합계 %
 }
 
 /// <summary>
@@ -260,7 +338,7 @@ public class InventorySaveData
 {
     // Key : 고유 식별자 instanceID (GUID)
     public Dictionary<string, EquipmentSaveDTO> equipments = new();
-    
+
     // Key : SO 내 고유 ID / Vaule : 수량
     public Dictionary<string, int> consumables = new();
 }
@@ -268,37 +346,44 @@ public class InventorySaveData
 [Serializable]
 public class InventoryRequest : BaseRequestData
 {
-    protected override string RootDomain => "inventories";
-    private const string Equipments = "equipments";
+    protected override string RootDomain => Inventories;
 
     public InventorySaveData Data { get; private set; } = new();
     public InventoryRequest(string uid) : base(uid) { }
 
-    #region 인벤토리 API 전체 동기화
+    #region 인벤토리 전체 동기화 API
     public override async UniTask<bool> ExcuteGetAsync(CancellationToken ct = default)
     {
-        DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
-        if(snapshot.Exists && snapshot.Value !=  null)
+        return await ExecuteLogOperationCoreAsync(async () =>
         {
-            string json = snapshot.GetRawJsonValue();
-            Data = JsonConvert.DeserializeObject<InventorySaveData>(json) ?? new();
-            return true;
-        }
-        return false;
+            DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            if (snapshot.Exists && snapshot.Value != null)
+            {
+                string json = snapshot.GetRawJsonValue();
+                Data = JsonConvert.DeserializeObject<InventorySaveData>(json) ?? new();
+                return true;
+            }
+            return false;
+        }, () => $"Uid: {uid} 로드"
+        );
     }
 
     public override async UniTask<bool> ExcuteSetAsync(CancellationToken ct = default)
     {
-        string json = JsonConvert.SerializeObject(Data);
-        await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            string json = JsonConvert.SerializeObject(Data);
+            await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"EquipCount: {Data.equipments.Count}, ConsumableCount: {Data.consumables.Count} 저장"
+        );
     }
     #endregion
 
-    #region 장비 API 개별 갱신
+    #region 장비 개별 갱신 API
 
     /// <summary>
-    /// 장비 획득 시 추가 Key : instanceID
+    /// 장비 획득 시 추가 API / Key : instanceID
     /// root/inventories/{uid}/equipments/{instanceId}
     /// </summary>
     /// <param name="instanceId"> 장비 식별 ID ( GUID )</param>
@@ -308,34 +393,46 @@ public class InventoryRequest : BaseRequestData
         if (string.IsNullOrEmpty(instanceId) || newEquip == null)
             return false;
 
-        Data.equipments[instanceId] = newEquip;
-        string json = JsonConvert.SerializeObject(newEquip);
-        await GetTargetRef().Child(Equipments).Child(instanceId).SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            Data.equipments[instanceId] = newEquip;
+            string json = JsonConvert.SerializeObject(newEquip);
+            await GetTargetRef().Child(Equipments).Child(instanceId).SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"InstId: {instanceId}, DataId: {newEquip.dataId} 추가");
     }
 
     /// <summary>
-    /// 장비 버리기 ( 단일 노드 삭제 ) - 판매에 넣는 것도 가능.
+    /// 장비 버리기 API ( 단일 노드 삭제 ) - 판매에 넣는 것도 가능.
     /// </summary>
     /// <param name="instanceId"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    public async UniTask<bool> RemoveEquipmentAsynce(string instanceId, CancellationToken ct = default)
+    public async UniTask<bool> RemoveEquipmentAsync(string instanceId, CancellationToken ct = default)
     {
         if (!Data.equipments.ContainsKey(instanceId))
             return false;
 
-        Data.equipments.Remove(instanceId);
-        await GetTargetRef().Child(Equipments).Child(instanceId).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
-        return true;
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            Data.equipments.Remove(instanceId);
+            await GetTargetRef().Child(Equipments).Child(instanceId).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"InstId: {instanceId} 삭제");
     }
 
+    /// <summary>
+    /// 장비 강화 성공 시 강화 단계 및 누적 보너스만 부분 동기화 API
+    /// </summary>
+    /// <param name="instanceId"> 강화한 장비 식별 ID ( GUID )</param>
+    /// <param name="newLevel"> 갱신된 강화 단계 </param>
+    /// <param name="newBonus"> 갱신된 누적 보너스 </param>
     public async UniTask<bool> UpdateEquipmentEnhanceAsync(string instanceId, int newLevel, float newBonus, CancellationToken ct = default)
     {
-        if(!Data.equipments.TryGetValue(instanceId, out var item))
+        if (!Data.equipments.TryGetValue(instanceId, out var item))
             return false;
         item.enhanceLevel = newLevel;
-        item.totalEnhanceBonud = newBonus;
+        item.totalEnhanceBonus = newBonus;
 
         var updates = new Dictionary<string, object>
         {
@@ -343,13 +440,38 @@ public class InventoryRequest : BaseRequestData
             { $"equipments/{instanceId}/enhanceBonus", newBonus }
         };
 
-        await GetTargetRef().UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
-        return true;
-        
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            await GetTargetRef().UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"InstId: {instanceId}, Lv: +{newLevel}, Bonus: {newBonus:F1}% 강화 갱신");
+
     }
     #endregion
 
+    #region 소모품 / 재료 개별 조작 API
+    /// <summary>
+    /// 소모품 / 재료 수량 변경 ( 사용 / 획득 ) API
+    /// root/inventories/{uid}/consumables/{itemId}
+    /// </summary>
+    public async UniTask<bool> UpdateConsumableCountAsync(string itemId, int newCount, CancellationToken ct = default)
+    {
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            if (newCount <= 0)
+            {
+                Data.consumables.Remove(itemId);
+                await GetTargetRef().Child(Consumables).Child(itemId).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            }
+            else
+            {
+                Data.consumables[itemId] = newCount;
+                await GetTargetRef().Child(Consumables).Child(itemId).SetValueAsync(newCount).AsUniTask().AttachExternalCancellation(ct);
+            }
+            return true;
+        }, () => $"ItemId: {itemId}, Count: {newCount}");
+
+        #endregion
+    }
 }
-
-
 #endregion

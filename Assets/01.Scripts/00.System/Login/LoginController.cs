@@ -117,7 +117,7 @@ public class LoginController : MonoBehaviour
     {
         loadingPopupUI?.ShowLoading("유저 계정 정보 확인 중...");
 
-        var (exists, data) = await UserManager.instance.LoadUserDataAsync(uid, ct);
+        var (exists, data) = await UserManager.instance.LoadUserInfoAsync(uid, ct);
         if (exists)
         {
             loadingPopupUI?.ForceHide();
@@ -150,7 +150,7 @@ public class LoginController : MonoBehaviour
             return;
         }
 
-        bool success = await UserManager.instance.CreateUserDataAsync(uid, nickname, ct);
+        bool success = await UserManager.instance.CreateUserInfoAsync(uid, nickname, ct);
         if (success)
         {
             nicknamePopupUI.Close();

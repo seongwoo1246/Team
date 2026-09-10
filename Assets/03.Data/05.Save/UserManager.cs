@@ -3,17 +3,17 @@
  */
 using Cysharp.Threading.Tasks;
 using Firebase.Database;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using static StringConsts.UserConstants;
 using UtilDebug = DebugLogger<UserManager>;
 
 public class UserManager : NonMonoSingleton<UserManager>
 {
     private DatabaseReference rootRef;
-    public UserInfo CurrentData { get; private set; }
-    private const string LastLoginTimestamp = "lastLoginTimestamp";
-
+    public UserInfo CurrentUser { get; private set; }
 
     public override void Init()
     {
@@ -21,27 +21,34 @@ public class UserManager : NonMonoSingleton<UserManager>
         rootRef = FirebaseDatabase.DefaultInstance.RootReference;
     }
 
-    private DatabaseReference GetUserRef(string uid) => rootRef.Child("users").Child(uid);
+    private DatabaseReference GetUserRef(string uid) => rootRef.Child(Users).Child(uid);
 
-    #region [Read & Load]
+    #region [Read & Load] 전체 로드
     /// <summary>
-    /// RTDB에서 유저 데이터를 비동기적으로 로드합니다.
+    /// RTDB에서 유저 데이터(프로필, 캐릭터, 인벤토리 전체 도메인을 비동기 병렬 로드)
     /// </summary>
-    public async UniTask<(bool exists, UserInfo data)> LoadUserDataAsync(string uid, CancellationToken ct = default)
+    public async UniTask<(bool exists, UserInfo data)> LoadUserInfoAsync(string uid, CancellationToken ct = default)
     {
         try
         {
-            DataSnapshot snapshot = await GetUserRef(uid).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
-            if (snapshot.Exists && snapshot.Value != null)
+            UserInfo tempUser = new UserInfo(uid, string.Empty);
+
+            var (profileOk, charOk, invOk) = await UniTask.WhenAll(
+                tempUser.Profile.ExcuteGetAsync(ct),
+                tempUser.Characters.ExcuteGetAsync(ct),
+                tempUser.Inventory.ExcuteGetAsync(ct)
+            );
+
+            // 유저 프로필이 없으면 신규 유저로 판정
+            if (!profileOk)
             {
-                string json = snapshot.GetRawJsonValue();
-                UserInfo data = UnityEngine.JsonUtility.FromJson<UserInfo>(json);
-                CurrentData = data;
-                return (true, CurrentData);
+                CurrentUser = null;
+                return (false, null);
             }
 
-            CurrentData = null;
-            return (false, null);
+            CurrentUser = tempUser;
+            UtilDebug.Log($"전체 유저 데이터 로드 성공 (UID: {uid}");
+            return (true, CurrentUser);
         }
         catch (OperationCanceledException)
         {
@@ -55,26 +62,32 @@ public class UserManager : NonMonoSingleton<UserManager>
     }
     #endregion
 
-    #region [Create]
+    #region [Create] 회원 가입
     /// <summary>
-    /// (회원가입) 신규 유저 데이터를 생성하고 RTDB에 저장합니다.
+    /// 회원가입. 닉네임 중복 인덱스와 초기 데이터를 단일 트랜잭션으로 생성
     /// </summary>
-    public async UniTask<bool> CreateUserDataAsync(string uid, string nickname, CancellationToken ct = default)
+    public async UniTask<bool> CreateUserInfoAsync(string uid, string nickname, CancellationToken ct = default)
     {
         try
         {
-            UserInfo newUserData = UserInfo.CreateNewUser(uid, nickname);
+            UserInfo newUserData = new UserInfo(uid, nickname);
+
+            string profileJson = UnityEngine.JsonUtility.ToJson(newUserData.Profile);
+            string charJson = JsonConvert.SerializeObject(newUserData.Characters.characterDictionary);
+            string inventoryJson = JsonConvert.SerializeObject(newUserData.Inventory.Data);
 
             var updates = new Dictionary<string, object>()
             {
-                { $"nicknames/{nickname}", uid }
+                { $"{Nicknames}/{nickname}", uid },
+                { $"{Users}/{uid}",  JsonConvert.DeserializeObject(profileJson) },
+                { $"{Characters}/{uid}", JsonConvert.DeserializeObject (charJson) },
+                { $"{Inventories}/{uid}", JsonConvert.DeserializeObject(inventoryJson) }
             };
 
             await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
 
-            CurrentData = newUserData;
-            UtilDebug.Log($"신규 유저 데이터 및 닉네임 등록 완료: {nickname} (UID: {uid})");
-
+            CurrentUser = newUserData;
+            UtilDebug.Log($"신규 유저 생성 및 닉네임 등록 완료: {nickname} (UID: {uid})");
             return true;
         }
         catch (OperationCanceledException)
@@ -83,34 +96,31 @@ public class UserManager : NonMonoSingleton<UserManager>
         }
         catch (Exception ex)
         {
-            UtilDebug.LogError($"유저 생성 실패 {ex.Message}");
+            UtilDebug.LogError($"신규 유저 생성 실패 {ex.Message}");
             return false;
         }
     }
     #endregion
 
-    #region [Sync / Update]
+    #region [Save & Sync]
     /// <summary>
-    /// 메모리에 올라온 CurrentData의 전체 데이터를 서버(RTOB)와 동기화(덮어쓰기)
+    /// 전체 도메인 상태를 RTDB에 일괄 저장
     /// </summary>
-    public async UniTask<bool> SaveAllDataAsync(CancellationToken ct = default)
+    public async UniTask<bool> SaveAllInfoAsync(CancellationToken ct = default)
     {
-        if (CurrentData == null)
+        if (CurrentUser == null)
         {
-            UtilDebug.LogError("SaveAllDataAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
+            UtilDebug.LogError("SaveAllInfoAsync : 저장할 유저 데이터가 없습니다.");
             return false;
         }
-        try
-        {
-            string json = UnityEngine.JsonUtility.ToJson(CurrentData);
-            await GetUserRef(CurrentData.uid).SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            UtilDebug.LogError($"데이터 전체 동기화 실패 {ex.Message}");
-            return false;
-        }
+
+        var (profileOk, charOk, invOk) = await UniTask.WhenAll(
+            CurrentUser.Profile.ExcuteSetAsync(ct),
+            CurrentUser.Characters.ExcuteSetAsync(ct),
+            CurrentUser.Inventory.ExcuteSetAsync(ct)
+        );
+
+        return profileOk && charOk && invOk;
     }
 
     /// <summary>
@@ -118,52 +128,67 @@ public class UserManager : NonMonoSingleton<UserManager>
     /// </summary>
     public async UniTask UpdateLastLoginTimeAsync(CancellationToken ct = default)
     {
-        if (CurrentData == null)
+        if (CurrentUser == null)
         {
-            UtilDebug.LogError("UpdateLastLoginTimeAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
+            UtilDebug.LogError("UpdateLastLoginTimeAsync : 저장할 유저 데이터가 없습니다.");
             return;
         }
 
         long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        CurrentData.lastLoginTimestamp = now;
-
-        try
-        {
-            await GetUserRef(CurrentData.uid).Child(LastLoginTimestamp).SetValueAsync(now).AsUniTask().AttachExternalCancellation(ct);
-        }
-        catch (Exception ex)
-        {
-            UtilDebug.LogError($"접속 시간 갱신 실패 {ex.Message}");
-        }
+        CurrentUser.Profile.lastLoginTimestamp = now;
+        await CurrentUser.Profile.UpdateSingleFieldAsync(LastLoginTimestamp, now, ct);
     }
-
-    // 특정 필요한 필드만 선택적으로 부분 갱신 메서드 추가 가능
-    /*
-         public async UniTask UpdateCurrentAsync(long gold, CancellationToken ct =default)
-    {
-        if (CurrentData == null)
-        {
-            Debug.LogError("UpdateCurrentAsync에서 CurrentData가 null입니다. 저장할 데이터가 없습니다.");
-            return;
-        }
-        //CurrentData.gold  // 동기화해야하는 부분 데이터 추가
-        var updates = new Dictionary<string, object>
-        {
-            {"gold", gold },
-        };
-
-        await GetUserRef(CurrentData.uid).UpdateChildrenAsync(update).AsUniTask().AttachExternalCancellation(ct);
-    }
-
-     */
     #endregion
 
-    #region Check
+    #region [Facade API : 단일 도메인]
+    /// <summary>
+    /// 
+    /// </summary>
+    public async UniTask<bool> EquipItemAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
+    {
+        if(CurrentUser == null) return false;
+        return await CurrentUser.Characters.SetEquippedSlotAsync(charId, slot, instanceId, ct);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public async UniTask<bool> EnhanceEquipmentAsync(string instanceId, int newLevel, float newBonus, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        return await CurrentUser.Inventory.UpdateEquipmentEnhanceAsync(instanceId, newLevel, newBonus, ct);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public async UniTask<bool> UpdateConsumableCountAsync(string itemId, int count, CancellationToken ct = default)
+    {
+        if(CurrentUser == null) return false;
+        return await CurrentUser.Inventory.UpdateConsumableCountAsync(itemId, count, ct);
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public async UniTask<bool> UpgradeTrackLevelAsync(UpgradeTrack track, int newLevel, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        return await CurrentUser.Profile.UpdateUpgradeTrackAsync(track, newLevel, ct);
+    }
+    #endregion
+
+    #region [Facade API : 복합 도메인 트랜잭션]
+    // ex) 장비 판매 트랜잭션 : 착용 해제 + 인벤토리 제거 + 골드 증가
+    // 이러한 트랜잭션 가능
+    #endregion
+
+    #region [Check API : 닉네임 중복 검사]
     public async UniTask<bool> IsNicknameDuplicateAsync(string nickname, CancellationToken ct = default)
     {
         try
         {
-            var snapshot = await rootRef.Child("nickname").Child(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            var snapshot = await rootRef.Child(Nicknames).Child(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
             return snapshot != null && snapshot.Exists;
         }
         catch (OperationCanceledException)
@@ -179,7 +204,7 @@ public class UserManager : NonMonoSingleton<UserManager>
     #endregion
 
 
-    #region [Delete]
+    #region [Delete : 계정 탈퇴(삭제) API]
     /// <summary>
     /// 서버 RTDB 상의 유저 데이터를 영구 삭제
     /// </summary>
@@ -187,21 +212,23 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         try
         {
-            string nickname = CurrentData?.nickname;
+            string nickname = CurrentUser?.Profile?.nickname;
 
             var updates = new Dictionary<string, object>
             {
-                { $"users/{uid}", null }
+                { $"{Users}/{uid}", null },
+                { $"{Characters}/{uid}", null },
+                { $"{Inventories}/{uid}", null }
             };
 
             if (!string.IsNullOrEmpty(nickname))
             {
-                updates.Add($"nicknames/{nickname}", null);
+                updates.Add($"{Nicknames}/{nickname}", null);
             }
             await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
 
             ClearLocalData();
-            UtilDebug.Log($"유저 데이터 및 닉네임 인덱스 삭제 완료 (UID: {uid})");
+            UtilDebug.Log($"전체 도메인 데이터 및 닉네임 삭제 완료 (UID: {uid})");
             return true;
         }
         catch (OperationCanceledException)
@@ -210,11 +237,11 @@ public class UserManager : NonMonoSingleton<UserManager>
         }
         catch (Exception ex)
         {
-            UtilDebug.LogError($"DB 유저 데이터 삭제 실패 {ex.Message}");
+            UtilDebug.LogError($"유저 데이터 삭제 실패 {ex.Message}");
             return false;
         }
     }
     #endregion
 
-    public void ClearLocalData() => CurrentData = null;
+    public void ClearLocalData() => CurrentUser = null;
 }

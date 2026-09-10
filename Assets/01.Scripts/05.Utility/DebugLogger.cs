@@ -6,6 +6,7 @@ using System.Diagnostics;
 
 public static class DebugLogger<T>
 {
+    #region 제네릭 클래스 Dubug
     [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
     public static void Log(object message)
     {
@@ -14,7 +15,6 @@ public static class DebugLogger<T>
         UnityEngine.Debug.Log($"[{typeof(T).Name}] {message}");
 #endif
     }
-
     [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
     public static void LogWarning(object message)
     {
@@ -32,4 +32,31 @@ public static class DebugLogger<T>
         UnityEngine.Debug.LogError($"[{typeof(T).Name}] {message}");
 #endif
     }
+    #endregion
+}
+public static class DebugLogger
+{
+    #region 일반 클래스 Debug
+    [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+    public static void LogWithTag(string tag, object message)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        UnityEngine.Debug.Log($"[{tag}] {message}");
+#endif
+    }
+    [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+    public static void LogWarningWithTag(string tag, object message)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        UnityEngine.Debug.LogWarning($"[{tag}] {message}");
+#endif
+    }
+    [Conditional("UNITY_EDITOR"), Conditional("DEVELOPMENT_BUILD")]
+    public static void LogErrorWithTag(string tag, object message)
+    {
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        UnityEngine.Debug.LogError($"[{tag}] {message}");
+#endif
+    }
+    #endregion
 }
