@@ -19,6 +19,8 @@ MonoBehaviour:
     unlockStage: 1
   - monsterPrefab: {fileID: 774649218372171895, guid: a9b5d42cbfce3cf469010d774f65a660, type: 3}
     unlockStage: 10
+  - monsterPrefab: {fileID: 2186987795510444607, guid: 7fc55a6b13935134984b8039363ed6af, type: 3}
+    unlockStage: 1
   bossMonsters:
   - monsterPrefab: {fileID: 2162109254367515413, guid: bf069e7077b7b3442b8883e22ee8543b, type: 3}
     unlockStage: 1
