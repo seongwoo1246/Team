@@ -89,6 +89,10 @@ public sealed class StageManager : Singleton<StageManager>
     // 챌린지 진행 중, 현재 웨이브에 살아있는 몬스터 수
     private int _aliveInWave;
 
+    // 챌린지 진행 중, 지금 몇 번째 웨이브인지 (1부터 시작). 파밍 중이거나 보스전이면 0
+    // UI(WaveNumberDisplay)가 이 값을 읽어서 "n 웨이브"로 보여줌
+    private int _currentWaveNumber;
+
     // 파밍 진행 중, 현재 필드에 살아있는 파밍 몬스터 수
     private int _aliveInFarming;
 
@@ -118,6 +122,19 @@ public sealed class StageManager : Singleton<StageManager>
 
     // 지금까지 클리어한 최대 스테이지 번호
     public int MaxClearedStage => _maxClearedStage;
+
+    // 챌린지 진행 중 지금 몇 번째 웨이브인지 (1부터 시작). 파밍 중이거나 보스전이면 0
+    public int CurrentWaveNumber => _currentWaveNumber;
+
+    /// <summary>
+    /// 지정한 스테이지의 총 웨이브 수를 돌려준다 (보스 제외). roster가 없으면 0
+    /// 웨이브 진행 표시 UI(WaveProgressDisplay)가 점을 몇 개 그릴지 정할때씀
+    /// </summary>
+    /// <param name="stageNumber">확인할 스테이지 번호</param>
+    public int GetWaveCountForStage(int stageNumber)
+    {
+        return roster != null ? roster.GetWaveCount(stageNumber) : 0;
+    }
 
     // 클리어한 최대 스테이지에 비례한 영구 골드 배율 (복리). 1.0 = 기본(아직 클리어한 스테이지 없음)
     // 파밍 몬스터 레벨도 maxClearedStage로 지수 성장하기 때문에, 이 배율도 선형이 아니라 복리로 둬야
@@ -256,6 +273,7 @@ public sealed class StageManager : Singleton<StageManager>
         _flowCts?.Cancel();
         _flowCts?.Dispose();
         _flowCts = new CancellationTokenSource();
+        _currentWaveNumber = 0;
 
         spawner.DespawnAll();
     }
@@ -327,6 +345,8 @@ public sealed class StageManager : Singleton<StageManager>
         int waveCount = roster.GetWaveCount(stageNumber);
         for (int waveIndex = 0; waveIndex < waveCount; waveIndex++)
         {
+            _currentWaveNumber = waveIndex + 1;
+
             bool waveCleared = await RunWaveAsync(stageNumber, token);
             if (!waveCleared)
             {
@@ -334,6 +354,9 @@ public sealed class StageManager : Singleton<StageManager>
                 return;
             }
         }
+
+        // 웨이브가 다 끝나고 보스전으로 넘어가면 웨이브 표시는 그만 (UI가 0이면 숨김)
+        _currentWaveNumber = 0;
 
         bool bossDefeated = await RunBossAsync(stageNumber, token);
         if (bossDefeated)

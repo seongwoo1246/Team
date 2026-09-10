@@ -28,6 +28,9 @@ public class BaseStatData : ScriptableObject
     // 공격 대상. 시트: target_type (Single / Multi)
     [SerializeField] private TargetType targetType = TargetType.Single;
 
+    [Tooltip("전열/후열 위치. 몬스터 AI가 타겟 우선순위 정할 때 씀(예: 후열 우선 타겟팅). 시트: row")]
+    [SerializeField] private CharacterRow row = CharacterRow.Front;
+
     [Header("기본 능력치 (레벨 0 기준)")]
     // 무기 공격력. 힐러는 힐량으로 사용
     [SerializeField] private float basePower = 20f;
@@ -64,6 +67,9 @@ public class BaseStatData : ScriptableObject
 
     /// <summary>공격 대상 범위 (시트: target_type)</summary>
     public TargetType TargetType => targetType;
+
+    /// <summary>전열/후열 위치 (시트: row)</summary>
+    public CharacterRow Row => row;
 
     public float BasePower => basePower;
 
