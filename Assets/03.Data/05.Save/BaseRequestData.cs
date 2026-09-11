@@ -154,7 +154,7 @@ public class UserProfileRequest : BaseRequestData
     }
     #endregion
 
-    #region 유저 프로필 단일 동기화 API
+    #region 유저 프로필 개별 동기화 API
     /// <summary>
     /// 서버에 UserProfile 중 단일 갱신 API
     /// </summary>
