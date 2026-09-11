@@ -1,4 +1,4 @@
-﻿/*
+﻿/*담담자 - 송태훈
  LoginSystemTest에 내장된 Firebase 메서드를 통해 이메일로 회원가입 및 로그인 기능을 테스트하는 스크립트.
  */
 using Cysharp.Threading.Tasks;

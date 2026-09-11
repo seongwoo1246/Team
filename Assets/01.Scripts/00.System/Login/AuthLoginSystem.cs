@@ -1,4 +1,4 @@
-﻿/*
+﻿/*담담자 - 송태훈
 Firebase를 이용한 로그인 시스템 테스트용 클래스입니다.
 Email / Password 로그인, Google 로그인, 계정 삭제 기능을 포함하고 있으며, 인증 상태 변경 이벤트를 통해 UI 업데이트를 지원합니다.
  */
@@ -13,37 +13,50 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
 {
     private FirebaseAuth auth;
     private FirebaseUser user;
+    private bool isInitialized = false;
 
     public FirebaseUser CurrentUser => user;
     public string UserId => user != null ? user.UserId : string.Empty;
 
     public event Action<bool, string> OnAuthStateChanged;
 
-    public override void Init()
-    {
-        base.Init();
-        InitializeFirebaseAsync().Forget();
-    }
-
     /// <summary>
-    /// Firebase 초기화 및 종속성 확인 후 FirebaseAuth 인스턴스를 가져옵니다.
+    /// Firebase 의존성 확인 및 FirebaseAuth 초기화를 비동기로 완료 보장
     /// </summary>
-    private async UniTaskVoid InitializeFirebaseAsync()
+    public async UniTask<bool> InitializeFirebaseAsync(CancellationToken ct = default)
     {
-        var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
-        if (dependencyStatus == DependencyStatus.Available)
+        if (isInitialized) return true;
+
+        try
         {
-            auth = FirebaseAuth.DefaultInstance;
-            //// static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서
-            //if (auth.CurrentUser != null)
-            //{
-            //    SignOut();
-            //}
-            auth.StateChanged += HandleAuthStateChanged;
+            var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask().AttachExternalCancellation(ct);
+            if (dependencyStatus == DependencyStatus.Available)
+            {
+                auth = FirebaseAuth.DefaultInstance;
+                // static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서. Build 시 삭제
+                if (auth.CurrentUser != null)
+                {
+                    SignOut();
+                }
+                user = auth.CurrentUser;    // 로그인 된 세션이 있는지 캐싱
+                auth.StateChanged += HandleAuthStateChanged;
+                isInitialized = true;
+                return true;
+            }
+            else
+            {
+                UtilDebug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
+                return false;
+            }
         }
-        else
+        catch (OperationCanceledException)
         {
-            UtilDebug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"Auth 초기화 예외 발생: {ex.Message}");
+            return false;
         }
     }
 
@@ -72,6 +85,12 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     /// </summary>
     public async UniTask<bool> SignInWithEmailAsync(string email, string password, CancellationToken ct = default)
     {
+        if(!isInitialized || auth == null)
+        {
+            UtilDebug.LogError("Auth 인스턴스가 초기화 x");
+            return false;
+        }
+
         try
         {
             AuthResult authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
@@ -93,6 +112,12 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     /// </summary>
     public async UniTask<bool> CreateWithEmailAsync(string email, string password, CancellationToken ct = default)
     {
+        if (!isInitialized || auth == null)
+        {
+            UtilDebug.LogError("Auth 인스턴스가 초기화 x");
+            return false;
+        }
+
         try
         {
             AuthResult authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
@@ -114,6 +139,12 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     /// </summary>
     public async UniTask<bool> SignInWithGoogleTokenAsync(string idToken, CancellationToken ct = default)
     {
+        if (!isInitialized || auth == null)
+        {
+            UtilDebug.LogError("Auth 인스턴스가 초기화 x");
+            return false;
+        }
+
         try
         {
             Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
@@ -159,7 +190,6 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
             return (false, ex.Message);
         }
     }
-
 
     public void SignOut()
     {
