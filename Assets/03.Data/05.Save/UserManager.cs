@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 담담자 - 송태훈
 
  */
 using Cysharp.Threading.Tasks;
@@ -21,7 +21,10 @@ public class UserManager : NonMonoSingleton<UserManager>
         rootRef = FirebaseDatabase.DefaultInstance.RootReference;
     }
 
-    private DatabaseReference GetUserRef(string uid) => rootRef.Child(Users).Child(uid);
+    private DatabaseReference GetUserRef(string uid) => rootRef?.Child(Users).Child(uid);
+    private DatabaseReference GetCharacterRef(string uid) => rootRef?.Child(Characters).Child(uid);
+    private DatabaseReference GetInventoryRef(string uid) => rootRef?.Child(Inventories).Child(uid);
+    private DatabaseReference GetNicknameRef(string nickname) => rootRef?.Child(Nicknames).Child(nickname);
 
     #region [Read & Load] 전체 로드
     /// <summary>
@@ -72,19 +75,19 @@ public class UserManager : NonMonoSingleton<UserManager>
         {
             UserInfo newUserData = new UserInfo(uid, nickname);
 
-            string profileJson = UnityEngine.JsonUtility.ToJson(newUserData.Profile);
+            // 1. 순수 JSON 문자열 직렬화
+            string profileJson = JsonConvert.SerializeObject(newUserData.Profile);
             string charJson = JsonConvert.SerializeObject(newUserData.Characters.characterDictionary);
             string inventoryJson = JsonConvert.SerializeObject(newUserData.Inventory.Data);
 
-            var updates = new Dictionary<string, object>()
-            {
-                { $"{Nicknames}/{nickname}", uid },
-                { $"{Users}/{uid}",  JsonConvert.DeserializeObject(profileJson) },
-                { $"{Characters}/{uid}", JsonConvert.DeserializeObject (charJson) },
-                { $"{Inventories}/{uid}", JsonConvert.DeserializeObject(inventoryJson) }
-            };
-
-            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            // 2. SetVauleAsync를 병렬로 실행
+            // => JsonConvert.DeserializeObject()를 사용했으나 Firebase SDK 내부 파서에서 Newtonsoft.Json의 내부 JObject나 JArray 타입을 이해하지 못해 병렬 호출로 변경
+            await UniTask.WhenAll(
+                GetNicknameRef(nickname).SetValueAsync(uid).AsUniTask().AttachExternalCancellation(ct),
+                GetUserRef(uid).SetRawJsonValueAsync(profileJson).AsUniTask().AttachExternalCancellation(ct),
+                GetCharacterRef(uid).SetRawJsonValueAsync(charJson).AsUniTask().AttachExternalCancellation(ct),
+                GetInventoryRef(uid).SetRawJsonValueAsync(inventoryJson).AsUniTask().AttachExternalCancellation(ct)
+            );
 
             CurrentUser = newUserData;
             UtilDebug.Log($"신규 유저 생성 및 닉네임 등록 완료: {nickname} (UID: {uid})");
@@ -142,16 +145,25 @@ public class UserManager : NonMonoSingleton<UserManager>
 
     #region [Facade API : 단일 도메인]
     /// <summary>
-    /// 
+    /// 캐릭터 장비 장착(스왑)
     /// </summary>
     public async UniTask<bool> EquipItemAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
     {
-        if(CurrentUser == null) return false;
+        if (CurrentUser == null) return false;
         return await CurrentUser.Characters.SetEquippedSlotAsync(charId, slot, instanceId, ct);
     }
 
     /// <summary>
-    /// 
+    /// 캐릭터 장비 해제
+    /// </summary>
+    public async UniTask<bool> UnequipItemAsync(string charId, EquipmentSlot slot, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        return await CurrentUser.Characters.UnequipSlotAsync(charId, slot, ct);
+    }
+
+    /// <summary>
+    /// 장비 강화
     /// </summary>
     public async UniTask<bool> EnhanceEquipmentAsync(string instanceId, int newLevel, float newBonus, CancellationToken ct = default)
     {
@@ -160,16 +172,16 @@ public class UserManager : NonMonoSingleton<UserManager>
     }
 
     /// <summary>
-    /// 
+    /// 재료 소모
     /// </summary>
     public async UniTask<bool> UpdateConsumableCountAsync(string itemId, int count, CancellationToken ct = default)
     {
-        if(CurrentUser == null) return false;
+        if (CurrentUser == null) return false;
         return await CurrentUser.Inventory.UpdateConsumableCountAsync(itemId, count, ct);
     }
 
     /// <summary>
-    /// 
+    /// 파티 공동 능력치 강화
     /// </summary>
     public async UniTask<bool> UpgradeTrackLevelAsync(UpgradeTrack track, int newLevel, CancellationToken ct = default)
     {
@@ -188,7 +200,7 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         try
         {
-            var snapshot = await rootRef.Child(Nicknames).Child(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            var snapshot = await GetNicknameRef(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
             return snapshot != null && snapshot.Exists;
         }
         catch (OperationCanceledException)

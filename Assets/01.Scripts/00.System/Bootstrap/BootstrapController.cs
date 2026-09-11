@@ -1,4 +1,5 @@
 ﻿/*
+담담자 - 송태훈
  게임 실행 시 가장 먼저 해야하는 일들을 순서대로 진행할 수 있도록 하는 컨트롤러
 1. Firebase 서버 확인 및 Manager Init
 2. 계정 로그인 및 없을 시 생성
@@ -9,7 +10,6 @@
  */
 
 using Cysharp.Threading.Tasks;
-using Firebase;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -83,25 +83,27 @@ public class BootstrapController : MonoBehaviour
 
     #region STEP 1. 인프로 초기화
     /// <summary>
-    /// Firebase의 의존성을 검사하는 비동기 메서드
+    /// Firebase의 의존성 검사 및 Auth 초기화를 보장하는 비동기 메서드
     /// </summary>
     private async UniTask<bool> StepInitFirebaseAsync(CancellationToken ct = default)
     {
         view.UpdateState("서버 확인 중...", 0.1f);
-        var status = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
-        return status == DependencyStatus.Available;
+        bool authReady = await AuthLoginSystem.instance.InitializeFirebaseAsync(ct);
+        return authReady;
     }
 
     private async UniTask StepInitManagerAsync(CancellationToken ct)
     {
         view.UpdateState("시스템 초기화 중...", 0.2f);
 
-        // 싱글톤 or 논싱글톤 매니저 초기화 보장
-        _ = AddressableManager.instance;
-        _ = SceneLoaderManager.instance;
+        // 매니저 초기화 순서 추후에 지정해야함
 
+        // 싱글톤 매니저 초기화 보장
+        AddressableManager.instance.Init();
+        SceneLoaderManager.instance.Init();
+
+        // 논싱글톤 매니저 초기화 보장
         UserManager.instance.Init();
-        AuthLoginSystem.instance.Init();
 
         await UniTask.Yield(PlayerLoopTiming.Update, ct);
     }

@@ -1,9 +1,12 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/* 담담자 - 송태훈
+ 
+ */
+
+using Cysharp.Threading.Tasks;
 using Firebase.Database;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using System.Threading;
 using static StringConsts.UserConstants;
 using UtilDebug = DebugLogger;
@@ -30,7 +33,7 @@ abstract public class BaseRequestData
     public abstract UniTask<bool> ExcuteSetAsync(CancellationToken ct = default);
 
     #region 공통 로깅 및 실행 래퍼(Wrapper)
-    protected async UniTask<bool> ExecuteLogOperationAsync(Func<UniTask> action, Func<string> detailInfoGetter = null, [CallerMemberName] string callerMethod = "")
+    protected async UniTask<bool> ExecuteLogOperationAsync(Func<UniTask> action, Func<string> detailInfoGetter = null, [System.Runtime.CompilerServices.CallerMemberName] string callerMethod = "")
     {
         return await ExecuteLogOperationCoreAsync(async () =>
         {
@@ -39,7 +42,7 @@ abstract public class BaseRequestData
         }, detailInfoGetter, callerMethod);
     }
 
-    protected async UniTask<bool> ExecuteLogOperationCoreAsync(Func<UniTask<bool>> action, Func<string> detailInfoGetter = null, [CallerMemberName] string callerMethod = "")
+    protected async UniTask<bool> ExecuteLogOperationCoreAsync(Func<UniTask<bool>> action, Func<string> detailInfoGetter = null, [System.Runtime.CompilerServices.CallerMemberName] string callerMethod = "")
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         string tag = GetType().Name;
@@ -93,7 +96,7 @@ public class UserProfileRequest : BaseRequestData
     public string nickname;
     public int accountLevel;
     public float currentExp;
-    public int curreStage;
+    public int currentStage;
     public long lastLoginTimestamp;
     public long gold;
     public long dia;
@@ -105,7 +108,7 @@ public class UserProfileRequest : BaseRequestData
     {
         this.nickname = nickname;
         this.accountLevel = 1;
-        this.curreStage = 1;
+        this.currentStage = 1;
         this.lastLoginTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         this.gold = 0;
         this.dia = 0;
@@ -128,7 +131,7 @@ public class UserProfileRequest : BaseRequestData
             if (snapshot.Exists && snapshot.Value != null)
             {
                 string json = snapshot.GetRawJsonValue();
-                UnityEngine.JsonUtility.FromJsonOverwrite(json, this);
+                JsonConvert.PopulateObject(json, this);
                 return true;
             }
             return false;
@@ -146,7 +149,7 @@ public class UserProfileRequest : BaseRequestData
             string json = UnityEngine.JsonUtility.ToJson(this);
             await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
             return true;
-        }, () => $"Nick: {nickname}, Lv: {accountLevel}, Stage: {curreStage} 저장"
+        }, () => $"Nick: {nickname}, Lv: {accountLevel}, Stage: {currentStage} 저장"
         );
     }
     #endregion
@@ -247,7 +250,7 @@ public class CharacterRequest : BaseRequestData
 
     #region 캐릭터 개별 갱신 API
     /// <summary>
-    /// 단일 캐릭터의 장착 장비 변경 시 해당 캐릭터의 장비 슬롯만 부분 저장 API
+    /// 단일 캐릭터의 장비 장착 API
     /// root/characters/{uid}/{charId}/equippedSlotMap/{slot}
     /// </summary>
     public async UniTask<bool> SetEquippedSlotAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
@@ -273,7 +276,31 @@ public class CharacterRequest : BaseRequestData
         }, () => $"Char: {charId}, Slot: {slot}, InstId: {instanceId} 변경"
         );
     }
+    /// <summary>
+    /// 단일 캐릭터의 장비 해제 API
+    /// </summary>
+    /// <param name="charId"></param>
+    /// <param name="slot"></param>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async UniTask<bool> UnequipSlotAsync(string charId, EquipmentSlot slot, CancellationToken ct = default)
+    {
+        if(!characterDictionary.TryGetValue(charId,out var charData)) return false;
 
+        string slotkey = slot.ToString();
+
+        // 이미 비어 있으면 서버 요청 x
+        if (!charData.equippedItems.ContainsKey(slotkey)) return true;
+
+        return await ExecuteLogOperationCoreAsync(async () =>
+        {
+            charData.equippedItems.Remove(slotkey);
+
+            await GetTargetRef().Child(charId).Child(EquippedSlotMap).Child(slotkey).RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }, () => $"Char: {charId}, Slot: {slot} 해제"
+        );
+    }
     /// <summary>
     /// Account level에 따른 캐릭터 해금 API
     /// 또는 새로운 게임 캐릭터 제작 시 사용 가능
@@ -445,7 +472,6 @@ public class InventoryRequest : BaseRequestData
             await GetTargetRef().UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
             return true;
         }, () => $"InstId: {instanceId}, Lv: +{newLevel}, Bonus: {newBonus:F1}% 강화 갱신");
-
     }
     #endregion
 

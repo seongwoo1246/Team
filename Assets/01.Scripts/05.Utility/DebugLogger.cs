@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 담담자 - 송태훈
 유니티 에디터에서만 콘솔 Debug를 출력하는 static class 
 사용 방법 : using Debug = Debugger<Generic Class>;
  */

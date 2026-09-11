@@ -1,4 +1,8 @@
-﻿using System;
+﻿/*담담자 - 송태훈
+ 
+ */
+
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;

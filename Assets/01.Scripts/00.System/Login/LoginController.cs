@@ -1,4 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/* 담담자 - 송태훈
+ 
+ */
+
+using Cysharp.Threading.Tasks;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +26,7 @@ public class LoginController : MonoBehaviour
     [SerializeField] private GoogleLogin googleLogin;
 
     private UniTaskCompletionSource<bool> loginCompletionSource;
+    private bool isFlowActive = false;
 
     private void Awake()
     {
@@ -59,56 +64,60 @@ public class LoginController : MonoBehaviour
 
         if (emailLoginPopupUI != null)
             emailLoginPopupUI.OnStatusChanged -= OnAuthStatusChanged;
-
-        if (AuthLoginSystem.instance != null)
-            AuthLoginSystem.instance.OnAuthStateChanged -= HandleAuthStateChanged;
     }
 
     /// <summary>
     /// BootstrapController에서 초훌. 로그인 완료(인증 및 유저 데이터 검증)까지 대기
     /// </summary>
-    /// <param name="ct"></param>
-    /// <returns></returns>
     public async UniTask<bool> LoginFlowAsync(CancellationToken ct)
     {
         loginCompletionSource = new UniTaskCompletionSource<bool>();
+        isFlowActive = true;
+
+        // LoginFlow가 실행되는 동안에만 인증 상태 변화 이벤트 구독
         AuthLoginSystem.instance.OnAuthStateChanged += HandleAuthStateChanged;
 
-        // 1. 기존 로그인 세션이 남아있는지 확인 ( 자동 로그인 검사 )
-        if(AuthLoginSystem.instance.CurrentUser != null)
-        {
-            UtilDebug.Log("기존 세션 감지 : 자동 로그인 진행");
-            ProcessUserVerificationAsync(AuthLoginSystem.instance.UserId, ct).Forget();
-        }
-        else
-        {
-            // 로그인 세션이 없으면 로그인 버튼 활성화
-            if (loginPanel != null) loginPanel.SetActive(true);
-        }
-
-        bool result = false;
         try
         {
-            result = await loginCompletionSource.Task.AttachExternalCancellation(ct);
+            // 1. 기존 로그인 세션이 남아있는지 확인 ( 자동 로그인 검사 )
+            if (AuthLoginSystem.instance.CurrentUser != null)
+            {
+                UtilDebug.Log("기존 세션 감지 : 자동 로그인 진행");
+                ProcessUserVerificationAsync(AuthLoginSystem.instance.UserId, ct).Forget();
+            }
+            else
+            {
+                // 로그인 세션이 없으면 로그인 버튼 활성화
+                if (loginPanel != null) loginPanel.SetActive(true);
+            }
+
+            bool result = await loginCompletionSource.Task.AttachExternalCancellation(ct);
+            return result;
         }
         finally
         {
-            AuthLoginSystem.instance.OnAuthStateChanged -= HandleAuthStateChanged;
+            isFlowActive = false;
+            if (AuthLoginSystem.instance != null)
+            {
+                AuthLoginSystem.instance.OnAuthStateChanged -= HandleAuthStateChanged;
+            }
             SetAllUIActive(false);
         }
-
-        return result;
     }
     #region Auth 이벤트 처리
     private void HandleAuthStateChanged(bool isLoggedIn, string message)
     {
+        if (!isFlowActive) return;
+
         if(!isLoggedIn)
         {
             UserManager.instance.ClearLocalData();
             loadingPopupUI?.ForceHide();
             if(loginPanel !=null) loginPanel.SetActive(true);
+            return;
         }
-
+        
+        // 로그인 상태로 바뀌었을 때 검증 비동기 시ㅣㄹ행
         ProcessUserVerificationAsync(AuthLoginSystem.instance.UserId, this.GetCancellationTokenOnDestroy()).Forget();
     }
 
