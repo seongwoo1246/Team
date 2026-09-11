@@ -40,6 +40,7 @@ public class EquipmentInventorySlot : MonoBehaviour
         }
 
         nameText.text = equippedItem.Data.NameKr;
+
         Button button = GetComponent<Button>();
 
         if (button != null)
