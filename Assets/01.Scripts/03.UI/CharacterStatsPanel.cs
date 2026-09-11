@@ -21,22 +21,14 @@ public class CharacterStatsPanel : MonoBehaviour
 
     public void RefreshStats()
     {
-        Debug.Log("RefreshStats 실행됨");
         if (characterSelectController == null)
-        {
-            Debug.LogError("CharacterSelectController가 연결되지 않았습니다.");
             return;
-        }
 
         CharacterBase character = characterSelectController.CurrentCharacter;
 
         if (character == null)
-        {
-            Debug.LogError("현재 선택된 CharacterBase가 없습니다.");
             return;
-        }
-
-        Debug.Log("현재 캐릭터: " + character.name);
+    
         // 실제 캐릭터의 현재 HP, 공격력
         hpText.text = "HP: " + character.MaxHP.ToString("F0");
         atkText.text = "ATK: " + character.Power.ToString("F1");
