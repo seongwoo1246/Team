@@ -24,25 +24,57 @@ public class CharacterStatsPanel : MonoBehaviour
         if (characterSelectController == null)
             return;
 
-        CharacterBase character = characterSelectController.CurrentCharacter;
+        CharacterBase character =
+            characterSelectController.CurrentCharacter;
 
         if (character == null)
             return;
-    
-        // 실제 캐릭터의 현재 HP, 공격력
+
+        if (UpgradeSystem.instance == null)
+            return;
+
+        // 현재 캐릭터의 실제 HP와 공격력
         hpText.text = "HP: " + character.MaxHP.ToString("F0");
         atkText.text = "ATK: " + character.Power.ToString("F1");
 
-        // 현재 장착 장비의 부위별 보너스
-        // 스탯창에서 10단위로 보여주려고
-        float attackSpeedBonus = character.GetEquippedBonusRatio(EquipmentSlot.Shoes) * 100f;
-        float goldGainBonus = character.GetEquippedBonusRatio(EquipmentSlot.Pants) * 100f;
-        float critChanceBonus = character.GetEquippedBonusRatio(EquipmentSlot.Gloves) * 100f;
-        float critDamageBonus = character.GetEquippedBonusRatio(EquipmentSlot.Ring) * 100f;
+        // 로비 공용 강화 레벨
+        int critLevel = UpgradeSystem.instance.GetLevel(UpgradeTrack.Crit);
+        int critDamageLevel = UpgradeSystem.instance.GetLevel(UpgradeTrack.CritDamage);
 
-        attackSpeedText.text = "A.S: " + attackSpeedBonus.ToString("F1") + "%";
-        goldGainText.text = "G.G: " + goldGainBonus.ToString("F1") + "%";
-        critChanceText.text = "C.C: " + critChanceBonus.ToString("F1") + "%";
-        critDamageText.text = "C.D: " + critDamageBonus.ToString("F1") + "%";
+        // 기준 캐릭터 데이터
+        BaseStatData characterStats = character.StatData;
+
+        if (characterStats == null)
+        {
+            // 연결 확인용, 확인 후 삭제
+            Debug.LogWarning("캐릭터의 StatData가 연결되지 않았습니다.");
+            return;
+        }
+
+        // 로비 강화로 계산되는 기본 치명타 수치
+        float baseCritChance = StatCalculator.GetCritChance(characterStats, critLevel) * 100f;
+        float baseCritDamage = StatCalculator.GetCritBonus(characterStats,critDamageLevel) * 100f;
+
+        // 장비 옵션 보너스
+        float attackSpeedEquipmentBonus = character.GetEquippedBonusRatio(EquipmentSlot.Shoes) * 100f;
+        float goldGainEquipmentBonus = character.GetEquippedBonusRatio(EquipmentSlot.Pants) * 100f;
+        float critChanceEquipmentBonus = character.GetEquippedBonusRatio(EquipmentSlot.Gloves) * 100f;
+        float critDamageEquipmentBonus = character.GetEquippedBonusRatio(EquipmentSlot.Ring) * 100f;
+
+        // 로비 공용 강화 배율
+        float attackSpeedUpgradeBonus = (UpgradeSystem.instance.GetAttackSpeedFactor() - 1f) * 100f;
+        float goldGainUpgradeBonus = (float)((UpgradeSystem.instance.GetGoldMultiplier() - 1d) * 100d);
+
+        // 최종 표시 수치
+        float finalAttackSpeed = attackSpeedUpgradeBonus + attackSpeedEquipmentBonus;
+        float finalGoldGain = goldGainUpgradeBonus + goldGainEquipmentBonus;
+        float finalCritChance = baseCritChance + critChanceEquipmentBonus;
+        float finalCritDamage = baseCritDamage + critDamageEquipmentBonus;
+
+        // UI 출력
+        attackSpeedText.text = "A.S: " + finalAttackSpeed.ToString("F1") + "%";
+        goldGainText.text = "G.G: " + finalGoldGain.ToString("F1") + "%";
+        critChanceText.text = "C.C: " + finalCritChance.ToString("F1") + "%";
+        critDamageText.text = "C.D: " + finalCritDamage.ToString("F1") + "%";
     }
 }
