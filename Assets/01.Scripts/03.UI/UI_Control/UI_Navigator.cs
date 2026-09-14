@@ -18,6 +18,12 @@ public class UI_Navigator : MonoBehaviour
 
     public void OpenCharacter()
     {
+        if (characterPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         characterPanel.SetActive(true);
     }

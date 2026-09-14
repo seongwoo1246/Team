@@ -29,12 +29,19 @@ public class EquipmentInventoryController : MonoBehaviour
     [SerializeField] private EquipmentInventorySlot ringSlot;
     [SerializeField] private EquipmentInventorySlot shoesSlot;
 
+    [Header("장비 강화")]
+    [Tooltip("탭을 바꿀 때 이전 부위의 '+N%' 강화 결과 표시를 같이 지워주기 위한 참조")]
+    [SerializeField] private EquipmentEnhanceButton enhanceButton;
+
     private EquippedItem selectedEquipment;
     private EquipmentSlot currentSlot;
+
+    public EquipmentSlot CurrentSlot => currentSlot;
 
     private void OnEnable()
     {
         RefreshEquippedSlots();
+        CloseInventory();
     }
 
     public void OpenWeapon()
@@ -72,10 +79,19 @@ public class EquipmentInventoryController : MonoBehaviour
         // 장비 종류 별로 인벤토리 열기
         currentSlot = equipmentSlot;
 
+        // 이전 부위에서 고른 selectedEquipment가 남아있으면, 새로 아무것도 안 고르고
+        // 장비 변경을 눌렀을 때 부위가 안 맞는 엉뚱한 장비로 장착 시도하게 되므로 초기화
+        selectedEquipment = null;
+
         statsPanel.SetActive(false);
         inventoryPanel.SetActive(true);
         RefreshInventory(equipmentSlot);
         selectedEquipmentInfo.ShowEquipment(characterSelectController.CurrentCharacter.GetEquipped(equipmentSlot), null);
+
+        if (enhanceButton != null)
+        {
+            enhanceButton.ClearResult();
+        }
     }
 
     public void RefreshEquippedSlots()
@@ -130,6 +146,12 @@ public class EquipmentInventoryController : MonoBehaviour
             return;
 
         selectedEquipment = item;
+        EquippedItem currentEquipment = characterSelectController.CurrentCharacter.GetEquipped(currentSlot);
+        selectedEquipmentInfo.ShowEquipment(currentEquipment, selectedEquipment);
+    }
+
+    public void RefreshCurrentEquipmentDisplay()
+    {
         EquippedItem currentEquipment = characterSelectController.CurrentCharacter.GetEquipped(currentSlot);
         selectedEquipmentInfo.ShowEquipment(currentEquipment, selectedEquipment);
     }

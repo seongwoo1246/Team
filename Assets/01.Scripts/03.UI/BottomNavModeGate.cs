@@ -1,15 +1,16 @@
 /*
 MainUI 하단 네비게이션의 Challenge / Lobby 버튼이, 이미 그 모드에 들어가있을 때는
 다시 눌러도 의미 없으니(챌린지 재시작/파밍 재시작 낭비) 눌리지 않게 막아주는 스크립트
-StageManager에 "파밍 시작" 이벤트가 따로 없어서, ChallengeTimerDisplay/StageNumberDisplay랑
-같은 방식으로 Update에서 CurrentMode를 직접 확인함
+
+StageManager.ModeChanged를 구독해서 모드가 바뀔 때만 두 버튼의 interactable을 맞춘다
+(예전엔 파밍 시작 이벤트가 없어서 매 프레임 Update에서 CurrentMode를 폴링했었음)
 */
 
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// StageManager.CurrentMode를 봐서 Challenge/Lobby 버튼의 interactable을 매 프레임 맞춰준다
+/// StageManager.CurrentMode를 봐서 Challenge/Lobby 버튼의 interactable을 맞춰준다
 /// 챌린지 모드 중엔 ChallengeButton을, 파밍 모드 중엔 LobbyButton을 비활성화
 /// </summary>
 public sealed class BottomNavModeGate : MonoBehaviour
@@ -27,9 +28,28 @@ public sealed class BottomNavModeGate : MonoBehaviour
     private void OnEnable()
     {
         _stageManager = StageManager.instance;
+        if (_stageManager != null)
+        {
+            _stageManager.ModeChanged += OnModeChanged;
+        }
+
+        ApplyCurrentMode();
     }
 
-    private void Update()
+    private void OnDisable()
+    {
+        if (_stageManager != null)
+        {
+            _stageManager.ModeChanged -= OnModeChanged;
+        }
+    }
+
+    private void OnModeChanged(StageMode mode)
+    {
+        ApplyCurrentMode();
+    }
+
+    private void ApplyCurrentMode()
     {
         if (_stageManager == null)
         {

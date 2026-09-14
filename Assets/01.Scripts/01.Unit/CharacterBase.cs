@@ -91,6 +91,11 @@ public class CharacterBase : MonoBehaviour, IEntity
     // (RecalculateStats에서 한 번만 계산해두고 재사용 - 스킬 쿨다운 조회는 매 프레임 UI에서 불리므로)
     private float _currentAttackSpeedMultiplier = 1f;
 
+    // 치명타 확률/피해(장갑·반지 장비 보너스까지 합친 최종값). 스탯 정보 UI가 조회하는 용도로
+    // RecalculateStats에서 저장해둠
+    private float _currentCritChance;
+    private float _currentCritBonus;
+
     // 부위별 장착 장비. 인덱스 = (int)EquipmentSlot. 비어있는 부위는 null
     private readonly EquippedItem[] _equippedItems = new EquippedItem[System.Enum.GetValues(typeof(EquipmentSlot)).Length];
 
@@ -111,6 +116,15 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     // 치명타 기대값이 반영된 현재 공격력(힐러는 힐량)
     public float Power => _currentPower;
+
+    // 현재 치명타 확률 (0~1, 장갑 장비 보너스 포함). 0.15 = 15%
+    public float CritChance => _currentCritChance;
+
+    // 현재 치명타 피해 배수 (반지 장비 보너스 포함). 1.0 = 치명타 시 평타의 2배
+    public float CritBonus => _currentCritBonus;
+
+    // 현재 공격속도 배율 (강화 트랙 + 신발 장비 보너스 포함). 1.0 = 기본
+    public float AttackSpeedMultiplier => _currentAttackSpeedMultiplier;
 
     // 이 캐릭터의 기본 스탯 SO
     public BaseStatData StatData => statData;
@@ -232,9 +246,9 @@ public class CharacterBase : MonoBehaviour, IEntity
 
         // 치명타 확률/피해는 장갑(Gloves)/반지(Ring) 장비 보너스를 트랙 계산값에 더한 뒤 최종 데미지를 뽑음
         float rawPower = StatCalculator.GetStatValue(statData, powerLevel);
-        float critChance = StatCalculator.GetCritChance(statData, critChanceLevel) + GetEquippedBonusRatio(EquipmentSlot.Gloves);
-        float critBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
-        float effectivePower = StatCalculator.GetCritDamage(rawPower, Mathf.Clamp01(critChance), critBonus);
+        _currentCritChance = Mathf.Clamp01(StatCalculator.GetCritChance(statData, critChanceLevel) + GetEquippedBonusRatio(EquipmentSlot.Gloves));
+        _currentCritBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
+        float effectivePower = StatCalculator.GetCritDamage(rawPower, _currentCritChance, _currentCritBonus);
 
         _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
         _currentPower = effectivePower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
@@ -634,6 +648,11 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     public void Revive()
     {
+        if (!IsDead && gameObject.activeSelf)
+        {
+            return;
+        }
+
         RecalculateStats();
         _currentHP = _currentMaxHP;
         ResetSkillCooldowns();

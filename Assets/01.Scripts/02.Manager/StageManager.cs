@@ -113,6 +113,9 @@ public sealed class StageManager : Singleton<StageManager>
     // 클리어/실패 화면(타이머 정지, 선택 패널)을 원래대로 되돌리는 용도로 UI가 구독해서 쓴다
     public event Action<int> ChallengeStarted;
 
+    // 같은 모드로 다시 들어가도(챌린지 재시작 등) 호출
+    public event Action<StageMode> ModeChanged;
+
     // 파밍/웨이브/보스 몬스터 상관없이, 누구든 장비를 드랍하면 발생. 인자 = 드랍된 장비 인스턴스
     // 인벤토리 시스템은 몬스터 풀링을 몰라도 되게, 이 이벤트 하나만 구독하면 됨
     public event Action<EquippedItem> EquipmentDropped;
@@ -212,6 +215,7 @@ public sealed class StageManager : Singleton<StageManager>
     {
         RestartFlow();
         _currentMode = StageMode.Farming;
+        ModeChanged?.Invoke(_currentMode);
         RevivePartyIfNeeded();
         ResetPartySkillCooldowns();
         RunFarmingLoopAsync(_flowCts.Token).Forget();
@@ -258,6 +262,7 @@ public sealed class StageManager : Singleton<StageManager>
 
         RestartFlow();
         _currentMode = StageMode.Challenge;
+        ModeChanged?.Invoke(_currentMode);
         _challengeStartTime = Time.time;
         ResetPartySkillCooldowns();
         ChallengeStarted?.Invoke(stageNumber);
