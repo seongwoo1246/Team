@@ -76,7 +76,7 @@ public class EmailLogin : MonoBehaviour
 
         OnStatusChanged?.Invoke("이메일 로그인 중..");
 
-        bool success = await AuthLoginSystem.instance.SignInWithEmailAsync(email, pw, this.GetCancellationTokenOnDestroy());
+        bool success = await AuthLoginSystem.Instance.SignInWithEmailAsync(email, pw, this.GetCancellationTokenOnDestroy());
         if (success)
         {
             ClosePopup();
@@ -105,7 +105,7 @@ public class EmailLogin : MonoBehaviour
             return;
         }
 
-        bool success = await AuthLoginSystem.instance.CreateWithEmailAsync(email, pw, this.GetCancellationTokenOnDestroy());
+        bool success = await AuthLoginSystem.Instance.CreateWithEmailAsync(email, pw, this.GetCancellationTokenOnDestroy());
         if (success)
         {
             ClosePopup();

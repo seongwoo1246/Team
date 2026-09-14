@@ -108,7 +108,7 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
             await loadingView.UpdateSliderSmoothAsync(0.3f, 0.2f, ct);
 
             // 4. Addressables를 통한 새 씬 비동기 로드
-            await AddressableManager.instance.LoadSceneAsync(nextScene.ToString());
+            await AddressableManager.Instance.LoadSceneAsync(nextScene.ToString());
             await loadingView.UpdateSliderSmoothAsync(0.5f, 0.2f, ct);
 
             // 5. 새 씬 매니저 순차 초기화 ( 오름차순 )

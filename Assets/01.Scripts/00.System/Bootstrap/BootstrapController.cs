@@ -86,7 +86,7 @@ public class BootstrapController : MonoBehaviour
     private async UniTask<bool> StepInitFirebaseAsync(CancellationToken ct = default)
     {
         view.UpdateState("서버 확인 중...", 0.1f);
-        return await AuthLoginSystem.instance.InitializeFirebaseAsync(ct);
+        return await AuthLoginSystem.Instance.InitializeFirebaseAsync(ct);
     }
 
     private async UniTask StepInitManagerAsync(CancellationToken ct)
@@ -96,11 +96,11 @@ public class BootstrapController : MonoBehaviour
         // 매니저 초기화 순서 추후에 지정해야함
 
         // 싱글톤 매니저 초기화 보장
-        AddressableManager.instance.Init();
-        SceneLoadManager.instance.Init();
+        AddressableManager.Instance.Init();
+        SceneLoadManager.Instance.Init();
 
         // 논싱글톤 매니저 초기화 보장
-        UserManager.instance.Init();
+        UserManager.Instance.Init();
 
         await UniTask.Yield(PlayerLoopTiming.Update, ct);
     }
@@ -114,7 +114,7 @@ public class BootstrapController : MonoBehaviour
     {
         view.UpdateState("패치 데이터 확인 중...", 0.35f);
         // 에셋 용량 합산 검사
-        long downlaodSize = await AddressableManager.instance.CheckDownladSizeAsync(REMOTE_LABEL, ct);
+        long downlaodSize = await AddressableManager.Instance.CheckDownladSizeAsync(REMOTE_LABEL, ct);
 
         if (downlaodSize > 0)
         {
@@ -128,7 +128,7 @@ public class BootstrapController : MonoBehaviour
 
             // 번들 다운로드 진행률 매핑 (0.3 ~ 0.95)
             view.UpdateState("리소스 패치 다운로드 중...", 0.4f);
-            return await AddressableManager.instance.DownloadDependenciesAsync(
+            return await AddressableManager.Instance.DownloadDependenciesAsync(
                 REMOTE_LABEL, progress =>
                 {
                     float mapped = Mathf.Lerp(0.4f, 0.95f, progress);

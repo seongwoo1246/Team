@@ -1,4 +1,4 @@
-/*
+﻿/*
 파밍 중 아주 낮은 확률로 나타나는 특수 몬스터. 잡으면 특별 강화재료를 확정으로 지급함
 베이스(Monster)는 안 건드리고 OnDied() 훅만 override - 팀 규칙(virtual/override 유도) 그대로 따름
 */
@@ -19,9 +19,9 @@ public sealed class GoldenGoblin : Monster
     /// </summary>
     protected override void OnDied()
     {
-        if (MaterialWallet.instance != null)
+        if (MaterialWallet.Instance != null)
         {
-            MaterialWallet.instance.Add(materialReward);
+            MaterialWallet.Instance.Add(materialReward);
         }
     }
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
 스테이지 실패 시 뜨는 선택 화면. 다시 하기 / 파밍으로 버튼을 눌러 진행 방향을 고름
 StageManager는 실패해도 클리어와 마찬가지로 자동으로 아무 데도 안 가고 대기만 하므로,
 이 패널이 그 대기 상태의 UI
@@ -25,7 +25,7 @@ public sealed class StageFailPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
         if (_stageManager != null)
         {
             _stageManager.StageFailed += OnStageFailed;
@@ -62,9 +62,9 @@ public sealed class StageFailPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.instance != null)
+        if (StageManager.Instance != null)
         {
-            StageManager.instance.RetryStage(_failedStageNumber);
+            StageManager.Instance.RetryStage(_failedStageNumber);
         }
     }
 
@@ -73,9 +73,9 @@ public sealed class StageFailPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.instance != null)
+        if (StageManager.Instance != null)
         {
-            StageManager.instance.EnterFarming();
+            StageManager.Instance.EnterFarming();
         }
     }
 

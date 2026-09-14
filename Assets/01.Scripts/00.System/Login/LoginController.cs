@@ -81,15 +81,15 @@ public class LoginController : MonoBehaviour
         isFlowActive = true;
 
         // LoginFlow가 실행되는 동안에만 인증 상태 변화 이벤트 구독
-        AuthLoginSystem.instance.OnAuthStateChanged += HandleAuthStateChanged;
+        AuthLoginSystem.Instance.OnAuthStateChanged += HandleAuthStateChanged;
 
         try
         {
             // 1. 기존 로그인 세션이 남아있는지 확인 ( 자동 로그인 검사 )
-            if (AuthLoginSystem.instance.CurrentUser != null)
+            if (AuthLoginSystem.Instance.CurrentUser != null)
             {
                 UtilDebug.Log("기존 세션 감지 : 자동 로그인 진행");
-                ProcessUserVerificationAsync(AuthLoginSystem.instance.UserId, ct).Forget();
+                ProcessUserVerificationAsync(AuthLoginSystem.Instance.UserId, ct).Forget();
             }
             else
             {
@@ -102,9 +102,9 @@ public class LoginController : MonoBehaviour
         finally
         {
             isFlowActive = false;
-            if (AuthLoginSystem.instance != null)
+            if (AuthLoginSystem.Instance != null)
             {
-                AuthLoginSystem.instance.OnAuthStateChanged -= HandleAuthStateChanged;
+                AuthLoginSystem.Instance.OnAuthStateChanged -= HandleAuthStateChanged;
             }
             SetAllUIActive(false);
         }
@@ -124,7 +124,7 @@ public class LoginController : MonoBehaviour
         }
         
         // 로그인 상태로 바뀌었을 때 검증 비동기 실행
-        ProcessUserVerificationAsync(AuthLoginSystem.instance.UserId, this.GetCancellationTokenOnDestroy()).Forget();
+        ProcessUserVerificationAsync(AuthLoginSystem.Instance.UserId, this.GetCancellationTokenOnDestroy()).Forget();
     }
 
 
@@ -154,7 +154,7 @@ public class LoginController : MonoBehaviour
     private async UniTaskVoid CreateAccountAsync(string nickname)
     {
         var ct = this.GetCancellationTokenOnDestroy();
-        string uid = AuthLoginSystem.instance.UserId;
+        string uid = AuthLoginSystem.Instance.UserId;
         var userManager = ServiceLocator.Get<UserManager>();
 
         loadingPopupUI?.ShowLoading($"계정 생성 중 {nickname}");

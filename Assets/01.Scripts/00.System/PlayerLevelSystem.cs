@@ -1,4 +1,4 @@
-/*
+﻿/*
 플레이어(계정) 레벨 + 경험치 시스템. 캐릭터 개별 스탯이랑은 완전히 별개!!
 
 경험치는 골드처럼 시간에 따라 자동으로 쌓인다 (분당 고정량, 스테이지 진행이랑 무관 - 의도적으로 안 태움)
@@ -207,9 +207,9 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
 
                 // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
                 // instance/필드 둘 다 null 체크하고 지나감 (없어도 경험치 지급 자체는 이미 끝난 뒤라 안전함)
-                if (RewardManager.instance != null && RewardManager.instance.GetPlayerExp != null)
+                if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerExp != null)
                 {
-                    RewardManager.instance.GetPlayerExp.text = reward.ToString("F0");
+                    RewardManager.Instance.GetPlayerExp.text = reward.ToString("F0");
                 }
             }
         }

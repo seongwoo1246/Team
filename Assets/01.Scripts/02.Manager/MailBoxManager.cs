@@ -216,7 +216,7 @@ public class MailBoxManager : Singleton<MailBoxManager>
             {
                 case RewardType.Gold:
                     GameEvents.TriggerOnGoldObtained(reward.amount);
-                    GoldWallet.instance.Add(reward.amount);
+                    GoldWallet.Instance.Add(reward.amount);
                     break;
 
                 case RewardType.Diamond:

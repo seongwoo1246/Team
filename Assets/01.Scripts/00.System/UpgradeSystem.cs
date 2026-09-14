@@ -71,12 +71,12 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
     /// </summary>
     public bool IsAtLevelCap(UpgradeTrack track)
     {
-        if (PlayerLevelSystem.instance == null)
+        if (PlayerLevelSystem.Instance == null)
         {
             return false;
         }
 
-        return _levels[(int)track] >= PlayerLevelSystem.instance.Level;
+        return _levels[(int)track] >= PlayerLevelSystem.Instance.Level;
     }
 
     // 골드가 충분하면 트랙을 1레벨 올리고 true 부족하거나 설정이 없거나 레벨 상한에 걸리면 false
@@ -90,12 +90,12 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
 
         if (IsAtLevelCap(track))
         {
-            DebugLogger<UpgradeSystem>.LogWarning($"{track} 트랙은 이미 플레이어 레벨({PlayerLevelSystem.instance.Level})만큼 강화됨 - 레벨을 더 올려야 함");
+            DebugLogger<UpgradeSystem>.LogWarning($"{track} 트랙은 이미 플레이어 레벨({PlayerLevelSystem.Instance.Level})만큼 강화됨 - 레벨을 더 올려야 함");
             return false;
         }
 
         double cost = GetCost(track);
-        if (GoldWallet.instance == null || !GoldWallet.instance.TrySpend(cost))
+        if (GoldWallet.Instance == null || !GoldWallet.Instance.TrySpend(cost))
         {
             return false;
         }

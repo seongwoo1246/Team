@@ -23,7 +23,7 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>, ILoadable
         isDDOL = true;
         base.Awake();
         ServiceLocator.Register<ObjectPoolManager>(this);
-        SceneLoadManager.instance.RegisterLoadable(this);
+        SceneLoadManager.Instance.RegisterLoadable(this);
 
         InitRoots();
     }
@@ -56,7 +56,7 @@ public class ObjectPoolManager : Singleton<ObjectPoolManager>, ILoadable
         if (scene == SceneId.None || scene == SceneId.BootstrapScene)
             return;
 
-        var config = DataManager.instance.GetSingle<SceneDataConfigSO>();
+        var config = DataManager.Instance.GetSingle<SceneDataConfigSO>();
         if (config == null || config.ScenePoolList == null || config.ScenePoolList.Count == 0)
         {
             UtilDebug.Log($"[{scene}] 등록할 ScenePoolList가 없습니다.");

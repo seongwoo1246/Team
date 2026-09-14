@@ -1,4 +1,4 @@
-/*
+﻿/*
 챌린지 스테이지 진입 시, 타이머 밑에 지금 몇 스테이지인지 보여주는 텍스트
 ChallengeTimerDisplay랑 표시 규칙(챌린지 모드일 때만 보임) 동일하게 맞춤
 */
@@ -28,7 +28,7 @@ public sealed class StageNumberDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
         if (_stageManager != null)
         {
             _stageManager.ChallengeStarted += OnChallengeStarted;

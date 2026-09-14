@@ -1,4 +1,4 @@
-/*
+﻿/*
 스테이지 클리어 시 뜨는 선택 화면. 다음 스테이지 / 파밍으로 버튼을 눌러 진행 방향을 고름
 StageManager는 클리어해도 자동으로 아무 데도 안 가고 대기만 하므로, 이 패널이 그 대기 상태의 UI
 */
@@ -24,7 +24,7 @@ public sealed class StageClearPanel : MonoBehaviour
 
     private void OnEnable()
     {
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
         if (_stageManager != null)
         {
             _stageManager.StageCleared += OnStageCleared;
@@ -61,9 +61,9 @@ public sealed class StageClearPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.instance != null)
+        if (StageManager.Instance != null)
         {
-            StageManager.instance.ContinueToNextStage(_clearedStageNumber);
+            StageManager.Instance.ContinueToNextStage(_clearedStageNumber);
         }
     }
 
@@ -72,9 +72,9 @@ public sealed class StageClearPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.instance != null)
+        if (StageManager.Instance != null)
         {
-            StageManager.instance.EnterFarming();
+            StageManager.Instance.EnterFarming();
         }
     }
 

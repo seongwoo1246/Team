@@ -1,4 +1,4 @@
-/*
+﻿/*
 캐릭터 머리 위에 붙는 체력바. 챌린지 모드에서만 보이고(파밍은 체력 관리를 안 하니까)
 CurrentHP/MaxHP 비율만큼 fillBar를 가로로 스케일해서 채워진 정도를 보여줌
 */
@@ -38,7 +38,7 @@ public sealed class CharacterHealthBar : MonoBehaviour
     {
         // 스크립트가 붙은 오브젝트 자체는 항상 활성 상태로 두고, 렌더러만 켜고 끈다
         // (SetActive(false)로 자기 자신을 끄면 Update가 멈춰서 다시 챌린지에 들어가도 안 켜짐)
-        bool isChallengeMode = StageManager.instance != null && StageManager.instance.CurrentMode == StageMode.Challenge;
+        bool isChallengeMode = StageManager.Instance != null && StageManager.Instance.CurrentMode == StageMode.Challenge;
 
         if (backgroundRenderer != null)
         {
