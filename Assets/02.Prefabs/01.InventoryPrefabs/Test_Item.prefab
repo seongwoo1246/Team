@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5174227699656925170}
   - component: {fileID: 6532121343498048942}
   - component: {fileID: 7451909790926202217}
+  - component: {fileID: 293213383448585985}
   m_Layer: 5
   m_Name: Test_Item
   m_TagString: Untagged
@@ -139,6 +140,22 @@ MonoBehaviour:
   nameText: {fileID: 2465340347665077315}
   enhanceText: {fileID: 1939826161848021594}
   statText: {fileID: 6442038110041293733}
+  selectedOutline: {fileID: 293213383448585985}
+--- !u!114 &293213383448585985
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268637539604367509}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 1, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 10, y: 10}
+  m_UseGraphicAlpha: 1
 --- !u!1 &1056475598710565029
 GameObject:
   m_ObjectHideFlags: 0
@@ -156,7 +173,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1455991103896577564
 RectTransform:
   m_ObjectHideFlags: 0
@@ -293,7 +310,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1978670882556293198
 RectTransform:
   m_ObjectHideFlags: 0

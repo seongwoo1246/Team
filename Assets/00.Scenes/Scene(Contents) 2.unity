@@ -12448,6 +12448,7 @@ MonoBehaviour:
   mage: {fileID: 51528715}
   healer: {fileID: 1079657885}
   equipmentInventoryController: {fileID: 951818341}
+  characterStatsPanel: {fileID: 0}
 --- !u!114 &816296450
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13776,6 +13777,7 @@ MonoBehaviour:
   mage: {fileID: 0}
   healer: {fileID: 0}
   equipmentInventoryController: {fileID: 0}
+  characterStatsPanel: {fileID: 0}
 --- !u!1 &926553797
 GameObject:
   m_ObjectHideFlags: 0

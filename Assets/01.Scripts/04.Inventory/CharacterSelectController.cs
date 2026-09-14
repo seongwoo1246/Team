@@ -44,20 +44,20 @@ public class CharacterSelectController : MonoBehaviour
     {
         currentAttackType = AttackType.Physical;
         equipmentInventoryController.RefreshEquippedSlots();
-        characterStatsPanel.RefreshStats();
+        //characterStatsPanel.RefreshStats();
     }
 
     public void SelectMage()
     {
         currentAttackType = AttackType.Magic;
         equipmentInventoryController.RefreshEquippedSlots();
-        characterStatsPanel.RefreshStats();
+        //characterStatsPanel.RefreshStats();
     }
 
     public void SelectHealer()
     {
         currentAttackType = AttackType.Heal;
         equipmentInventoryController.RefreshEquippedSlots();
-        characterStatsPanel.RefreshStats();
+        //characterStatsPanel.RefreshStats();
     }
 }
