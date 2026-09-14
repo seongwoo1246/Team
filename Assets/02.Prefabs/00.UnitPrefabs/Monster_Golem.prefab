@@ -272,6 +272,46 @@ PrefabInstance:
       propertyPath: attackInterval
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: equipmentDropChance
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: possibleDrops.Array.size
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 89cc9dc09b4f8e94593f629141bf9bd8, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 1e3f6952fa320ff4a8153c6d1c4965a0, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: e46f8c147fbbe964c98e6d89d5d9be08, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[3]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 2bb445bd34c49ee4a810d27767e09226, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[4]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 9b9270b2da3d35843ba30dd29c725669, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[5]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 057714f7580510e44a59eb73cb0d3df8, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[6]'
+      value: 
+      objectReference: {fileID: 11400000, guid: dabc59be5342eef419ff68c548e49607, type: 2}
+    - target: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
+      propertyPath: 'possibleDrops.Array.data[7]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 290985fd7d8faf442b5438eea759d4a5, type: 2}
     - target: {fileID: 8802484857713202068, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
       propertyPath: m_LocalScale.x
       value: 1.3

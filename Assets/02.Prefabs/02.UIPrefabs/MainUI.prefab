@@ -3837,7 +3837,6 @@ GameObject:
   - component: {fileID: 7200053139139780334}
   - component: {fileID: 825868127753119149}
   - component: {fileID: 7154626581244384668}
-  - component: {fileID: 2528626773034580177}
   m_Layer: 5
   m_Name: Party_Panel
   m_TagString: Untagged
@@ -3918,19 +3917,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChallengeModeBlocker
   blockerRoot: {fileID: 1176039450907116508}
---- !u!114 &2528626773034580177
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2056098314710671035}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c4aeb5c07392a99428e474d5c93dbe8a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ChallengeModeBlocker
-  blockerRoot: {fileID: 0}
 --- !u!1 &2075685473792322293
 GameObject:
   m_ObjectHideFlags: 0
