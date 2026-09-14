@@ -21,7 +21,6 @@ public class BootstrapController : MonoBehaviour
     [SerializeField] private BootstrapView view;
     [SerializeField] private LoginController loginController;
 
-    private const string LOBBY_SCENE_KEY = "LobbySceneTest(Server)";
     private const string REMOTE_LABEL = "RemoteScenes";
 
     private void Awake()
@@ -44,7 +43,7 @@ public class BootstrapController : MonoBehaviour
     {
         var ct = this.GetCancellationTokenOnDestroy();
 
-        // STEP 1. Firebase(유저 데이터 저장 서버) 의존성 검사 & 시스템 매니저 초기화
+        // STEP 1. Firebase 의존성 및 시스템 매니저 초기화
         view.SetLoadingVisible(true);
         view.UpdateState("서버 연결 확인 중...", 0.0f);
 
@@ -75,10 +74,9 @@ public class BootstrapController : MonoBehaviour
         // STEP 4. 모든 비동기 처리 완료. 로비 씬 전환
         view.UpdateState("로비로 이동 중...", 1.0f);
         await UniTask.Delay(150, cancellationToken: ct);
-        SceneLoaderManager.instance.LoadSceneFlowAsync(LOBBY_SCENE_KEY, async () =>
-        {
-            await UniTask.Yield(); 
-        }).Forget();
+       
+        var sceneLoader = ServiceLocator.Get<SceneLoadManager>();
+        sceneLoader.LoadSceneFlowAsync(SceneId.LobbyScene).Forget();
     }
 
     #region STEP 1. 인프로 초기화
@@ -88,8 +86,7 @@ public class BootstrapController : MonoBehaviour
     private async UniTask<bool> StepInitFirebaseAsync(CancellationToken ct = default)
     {
         view.UpdateState("서버 확인 중...", 0.1f);
-        bool authReady = await AuthLoginSystem.instance.InitializeFirebaseAsync(ct);
-        return authReady;
+        return await AuthLoginSystem.instance.InitializeFirebaseAsync(ct);
     }
 
     private async UniTask StepInitManagerAsync(CancellationToken ct)
@@ -100,7 +97,7 @@ public class BootstrapController : MonoBehaviour
 
         // 싱글톤 매니저 초기화 보장
         AddressableManager.instance.Init();
-        SceneLoaderManager.instance.Init();
+        SceneLoadManager.instance.Init();
 
         // 논싱글톤 매니저 초기화 보장
         UserManager.instance.Init();

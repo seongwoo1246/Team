@@ -11,8 +11,6 @@ using UtilDebug = DebugLogger<AccountDeletionHandler>;
 
 public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 {
-    private const string BOOTSTRAP_SCENE = "BootstrapScene";
-
     public async UniTask<bool> ProcessAccountDeletionAsync(CancellationToken ct = default)
     {
         string uid = AuthLoginSystem.instance.UserId;
@@ -42,7 +40,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         UserManager.instance.ClearLocalData();
 
         // 로그인 기능과 전체적인 틀을 만들면 해제
-        await SceneLoaderManager.instance.LoadSceneFlowAsync(BOOTSTRAP_SCENE);
+        await SceneLoadManager.instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
         return true;
     }
 }

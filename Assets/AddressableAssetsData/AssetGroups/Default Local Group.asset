@@ -14,7 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Default Local Group
   m_GUID: 2d94eeee82208164198ebf2ca66aae62
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 1575ba33df0062249a82ee0a07f4a179
+    m_Address: Assets/00.Scenes/BootStrapScene.unity
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
   m_SchemaSet:

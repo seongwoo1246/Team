@@ -5,22 +5,17 @@
 using Cysharp.Threading.Tasks;
 using System.Threading;
 using UnityEngine;
-using UnityEngine.UI;
 using UtilDebug = DebugLogger<LoginController>;
 
 public class LoginController : MonoBehaviour
 {
-    [Header("로그인 메인 패널")]
-    [SerializeField] private GameObject loginPanel;
+    [Header("로그인 메인 View")]
+    [SerializeField] private LoginView loginView;
 
     [Header("로그인 UI 팝업")]
     [SerializeField] private EmailLogin emailLoginPopupUI;
     [SerializeField] private NicknamePopupUI nicknamePopupUI;
     [SerializeField] private LoadingStatusPopupUI loadingPopupUI;
-
-    [Header("로그인 메인 버튼")]
-    [SerializeField] private Button googleLoginButton;
-    [SerializeField] private Button emailPopupButton;
 
     [Header("Auth Google")]
     [SerializeField] private GoogleLogin googleLogin;
@@ -30,11 +25,12 @@ public class LoginController : MonoBehaviour
 
     private void Awake()
     {
-        if(googleLoginButton != null && googleLogin != null)
-            googleLoginButton.onClick.AddListener(googleLogin.RequestGoogleLogin);
-
-        if(emailPopupButton != null && emailLoginPopupUI != null)
-            emailPopupButton.onClick.AddListener(emailLoginPopupUI.OpenPopup);
+        if(loginView != null)
+        {
+            if(googleLogin != null)
+                loginView.OnGoogleLoginClicked += () => HandleGoogleLoginClicked();
+            loginView.OnEmailLoginClicked += () => HandleEmailLoginClicked();
+        }
 
         if (nicknamePopupUI != null)
             nicknamePopupUI.OnNicknameConfirmed += OnNicknameSubmitted;
@@ -50,11 +46,12 @@ public class LoginController : MonoBehaviour
     
     private void OnDestroy()
     {
-        if (googleLoginButton != null)
-            googleLoginButton.onClick.RemoveListener(googleLogin.RequestGoogleLogin);
-
-        if (emailPopupButton != null)
-            emailPopupButton.onClick.RemoveListener(emailLoginPopupUI.OpenPopup);
+        if (loginView != null)
+        {
+            if (googleLogin != null)
+                loginView.OnGoogleLoginClicked -= () => HandleGoogleLoginClicked();
+            loginView.OnEmailLoginClicked -= () => HandleEmailLoginClicked();
+        }
 
         if (nicknamePopupUI != null)
             nicknamePopupUI.OnNicknameConfirmed -= OnNicknameSubmitted;
@@ -64,6 +61,15 @@ public class LoginController : MonoBehaviour
 
         if (emailLoginPopupUI != null)
             emailLoginPopupUI.OnStatusChanged -= OnAuthStatusChanged;
+    }
+    private void HandleGoogleLoginClicked()
+    {
+        googleLogin?.RequestGoogleLogin();
+    }
+
+    private void HandleEmailLoginClicked()
+    {
+        emailLoginPopupUI?.OpenPopup();
     }
 
     /// <summary>
@@ -87,12 +93,11 @@ public class LoginController : MonoBehaviour
             }
             else
             {
-                // 로그인 세션이 없으면 로그인 버튼 활성화
-                if (loginPanel != null) loginPanel.SetActive(true);
+                // 로그인 세션이 없으면 로그인 메인 패널 노출
+                loginView.SetPanelActive(true);
             }
 
-            bool result = await loginCompletionSource.Task.AttachExternalCancellation(ct);
-            return result;
+            return await loginCompletionSource.Task.AttachExternalCancellation(ct);
         }
         finally
         {
@@ -111,13 +116,14 @@ public class LoginController : MonoBehaviour
 
         if(!isLoggedIn)
         {
-            UserManager.instance.ClearLocalData();
+            var userManager = ServiceLocator.Get<UserManager>();
+            userManager?.ClearLocalData();
             loadingPopupUI?.ForceHide();
-            if(loginPanel !=null) loginPanel.SetActive(true);
+            loginView?.SetPanelActive(true);
             return;
         }
         
-        // 로그인 상태로 바뀌었을 때 검증 비동기 시ㅣㄹ행
+        // 로그인 상태로 바뀌었을 때 검증 비동기 실행
         ProcessUserVerificationAsync(AuthLoginSystem.instance.UserId, this.GetCancellationTokenOnDestroy()).Forget();
     }
 
@@ -125,8 +131,9 @@ public class LoginController : MonoBehaviour
     private async UniTaskVoid ProcessUserVerificationAsync(string uid, CancellationToken ct)
     {
         loadingPopupUI?.ShowLoading("유저 계정 정보 확인 중...");
+        var userManager = ServiceLocator.Get<UserManager>();
 
-        var (exists, data) = await UserManager.instance.LoadUserInfoAsync(uid, ct);
+        var (exists, data) = await userManager.LoadUserInfoAsync(uid, ct);
         if (exists)
         {
             loadingPopupUI?.ForceHide();
@@ -134,9 +141,9 @@ public class LoginController : MonoBehaviour
         }
         else
         {
-            if (loginPanel != null) loginPanel.SetActive(false);
+            loginView?.SetPanelActive(false);
             loadingPopupUI?.ForceHide();
-            nicknamePopupUI.Open();
+            nicknamePopupUI?.Open();
         }
     }
     private void OnNicknameSubmitted(string nickname)
@@ -148,10 +155,11 @@ public class LoginController : MonoBehaviour
     {
         var ct = this.GetCancellationTokenOnDestroy();
         string uid = AuthLoginSystem.instance.UserId;
+        var userManager = ServiceLocator.Get<UserManager>();
 
         loadingPopupUI?.ShowLoading($"계정 생성 중 {nickname}");
 
-        bool isDuplicate = await UserManager.instance.IsNicknameDuplicateAsync(nickname, ct);
+        bool isDuplicate = await userManager.IsNicknameDuplicateAsync(nickname, ct);
         if (isDuplicate)
         {
             await loadingPopupUI.HideAsync();
@@ -159,7 +167,7 @@ public class LoginController : MonoBehaviour
             return;
         }
 
-        bool success = await UserManager.instance.CreateUserInfoAsync(uid, nickname, ct);
+        bool success = await userManager.CreateUserInfoAsync(uid, nickname, ct);
         if (success)
         {
             nicknamePopupUI.Close();
@@ -176,7 +184,7 @@ public class LoginController : MonoBehaviour
 
     private void SetAllUIActive(bool active)
     {
-        if (loginPanel != null) loginPanel.SetActive(active);
+        loginView?.SetPanelActive(active);
         if (emailLoginPopupUI != null) emailLoginPopupUI.ClosePopup();
         if (nicknamePopupUI != null) nicknamePopupUI.Close();
         if (loadingPopupUI != null) loadingPopupUI.ForceHide();
