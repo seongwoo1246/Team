@@ -1,5 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using JetBrains.Annotations;
+using System.Collections.Generic;
 using UnityEngine;
+
+[System.Serializable]
+public struct PoolInfo
+{
+    public enumType poolType;
+    public string addressableKey;
+    public int initialCount;
+    public bool isGlobal;
+}
+
 /// <summary>
 /// 각 씬 진입 시 로드해야 할 데이터 에셋(SO, CSV 등)의 Addressable 라벨 및 키를 정의하는 SO
 /// 프로젝트 창 우클릭 -> Create -> Game/Scene Data Config 로 생성
@@ -11,13 +22,16 @@ public class SceneDataConfigSO : ScriptableObject
     [Header("씬 식별자")]
     [SerializeField] private SceneId targetScene;
 
-    [Header("라벨 단위 일괄 로드할 데이터 (Addressable Labels)")]
-    [Tooltip("예: StatData, EquipmentData 등 해당 라벨에 속한 SO들을 일괄 로드")]
+    [Header("Addressable 라벨 목록 ( 해당 라벨의 SO를 일괄 로드 )")]
+    [Tooltip("예: StatData, MonsterData, EquipmentData ")]
     [SerializeField] private List<string> dataLabels = new();
 
-    [Header("개별 키로 로드할 데이터 (선택 사항)")]
-    [Tooltip("라벨이 아닌 특정 어드레스 키로 로드해야 하는 단일 SO/TextAsset이 있을 경우")]
+    [Header("개별 Addressable 키 목록 ( 단일 Config SO 등)")]
+    [Tooltip("예: GameConfig, StageRosterData ")]
     [SerializeField] private List<string> individualAssetKeys = new();
+
+    [SerializeField] private List<PoolInfo> scenePoolList = new();
+    public IReadOnlyList<PoolInfo> ScenePoolList => scenePoolList;
 
     public SceneId TargetScene => targetScene;
     public IReadOnlyList<string> DataLabels => dataLabels;

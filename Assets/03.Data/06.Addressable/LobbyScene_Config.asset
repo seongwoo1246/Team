@@ -13,6 +13,10 @@ MonoBehaviour:
   m_Name: LobbyScene_Config
   m_EditorClassIdentifier: Assembly-CSharp::SceneDataConfigSO
   targetScene: 2
-  dataLabels:
-  - 
+  dataLabels: []
   individualAssetKeys: []
+  scenePoolList:
+  - poolType: 0
+    addressableKey: Monster_Test
+    initialCount: 5
+    isGlobal: 0

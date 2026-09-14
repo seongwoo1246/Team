@@ -16,7 +16,7 @@ public interface ILoadable
 
 public enum SceneId
 {
-    None, BootstrapScene, LobbyScene
+    None, BootstrapScene, LobbySceneTest
 }
 
 public enum ServiceLifetime

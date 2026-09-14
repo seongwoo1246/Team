@@ -112,7 +112,7 @@ public class AddressableManager : Singleton<AddressableManager>
         return null;
     }
 
-    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, Action<T> callback = null ,CancellationToken ct = default) where T : UnityEngine.Object
+    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, CancellationToken ct = default, Action<T> callback = null) where T : UnityEngine.Object
     {
         var handle = Addressables.LoadAssetsAsync<T>(label, callback);
         IList<T> result = await handle.ToUniTask(cancellationToken: ct);
