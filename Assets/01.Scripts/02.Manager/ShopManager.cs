@@ -86,7 +86,7 @@ public class ShopManager: Singleton<ShopManager>
     {
         base.Awake();
         dbRef = FirebaseDatabase.DefaultInstance.RootReference;
-        ObjcetPoolManager.instance.RegisterPool<GachaSlot>(enumType.Item_Gear, TextPrefab, 10);
+        ObjcetPoolManager.Instance.RegisterPool<GachaSlot>(enumType.Item_Gear, TextPrefab, 10);
     }
 
    
@@ -250,7 +250,7 @@ public class ShopManager: Singleton<ShopManager>
     /// <returns></returns>
     private bool CheckUserCurrency(CurrencyType type , double price)
     {
-        GoldWallet wallent = GoldWallet.instance;
+        GoldWallet wallent = GoldWallet.Instance;
         if(CurrencyType.Gold == type&& wallent.Balance>=price)
         {
             return true;
@@ -298,9 +298,9 @@ public class ShopManager: Singleton<ShopManager>
         // 클라이언트 연동) 서버가 차감 성공시만 실행해서 UI및 로컬에 저장된 수치 차감 업데이트
         if(isSuccess)
         {
-            if(type == CurrencyType.Gold && GoldWallet.instance != null )
+            if(type == CurrencyType.Gold && GoldWallet.Instance != null )
             {
-                GoldWallet.instance.TrySpend(price);
+                GoldWallet.Instance.TrySpend(price);
             }
         }
         return isSuccess;
@@ -351,7 +351,7 @@ public class ShopManager: Singleton<ShopManager>
     private void GrantItem(int itemCode, int amount ,Sprite icon)
     {
         //유저 인벤토리로 아이템을 보냄
-        UserInventory.instance.GetItem(itemCode, icon, amount);
+        UserInventory.Instance.GetItem(itemCode, icon, amount);
     }
 
     #endregion

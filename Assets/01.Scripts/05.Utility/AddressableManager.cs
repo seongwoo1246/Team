@@ -1,6 +1,5 @@
 ﻿/* 담담자 - 송태훈
- 
- 
+ Cloudflare CDN 연동 카탈로그/패치 관리 및 Addresaable 에셋 수명 주기 총괄 매니저
  */
 using Cysharp.Threading.Tasks;
 using System;
@@ -15,17 +14,21 @@ using UtilDebug = DebugLogger<AddressableManager>;
 
 public class AddressableManager : Singleton<AddressableManager>
 {
+    // 로드된 에셋 핸들 캐시 ( 프리팹 원본, 텍스처, SO 등 )
     private readonly Dictionary<string, AsyncOperationHandle> assetHandles = new();
+    // 런타임에 Instantiate된 오브젝트 핸들 캐시 ( 풀링되지 않는 1회성 오브젝트용)
     private readonly Dictionary<GameObject, AsyncOperationHandle> instanceHandles = new();
+
+    public int LoadOrder => 1;
 
     protected override void Awake()
     {
         isDDOL = true;
         base.Awake();
+        ServiceLocator.Register<AddressableManager>(this);
     }
 
-
-    #region 원격 카탈로그 및 다운로드 패치
+    #region 원격 카탈로그 및 CDN 다운로드 패치
     /// <summary>
     /// 원격 CDN(Cloudflare) 카탈로그를 확인하고 필요 시 다운로드 할 총 용량을 반환
     /// </summary>
@@ -41,12 +44,14 @@ public class AddressableManager : Singleton<AddressableManager>
 
         if (catalogToUpdate != null && catalogToUpdate.Count > 0)
         {
+            UtilDebug.Log($"Cloudflare 새 카탈로그 발견 : {catalogToUpdate.Count}개 업데이트");
+
             var updateHandle = Addressables.UpdateCatalogs(catalogToUpdate, false);
             await updateHandle.ToUniTask(cancellationToken: ct);
             Addressables.Release(updateHandle);
         }
 
-        // 특정 라벨 또는 기본 번들 다운로드 사이즈 확인
+        // 다운로드 용량 산출
         var sizeHandle = Addressables.GetDownloadSizeAsync(labelOrKey);
         long downladSize = await sizeHandle.ToUniTask(cancellationToken: ct);
         Addressables.Release(sizeHandle);
@@ -74,7 +79,7 @@ public class AddressableManager : Singleton<AddressableManager>
 
     #endregion
 
-    #region 씬 및 프리팹 인스턴스화
+    #region 씬 비동기 로드
     /// <summary>
     /// 등록된 씬을 비동기로 로드 - Login, Lobby
     /// </summary>
@@ -83,27 +88,11 @@ public class AddressableManager : Singleton<AddressableManager>
         var handle = Addressables.LoadSceneAsync(sceneAddress, mode, activateOnLoad);
         return await handle.ToUniTask();
     }
+    #endregion
 
+    #region ObjectPool 연동을 위한 프리팹 및 에셋 로드
     /// <summary>
-    /// Addressables 프리팹을 인스턴스화하고 핸들을 캐싱
-    /// </summary>
-    public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null, CancellationToken ct = default)
-    {
-        var handle = Addressables.InstantiateAsync(key, parent);
-        GameObject result = await handle.ToUniTask(cancellationToken: ct);
-
-        if(handle.Status == AsyncOperationStatus.Succeeded)
-        {
-            instanceHandles[result] = handle;
-            return result;
-        }
-
-        UtilDebug.LogWarning($"생성 실패 : {key}");
-        return null;
-    }
-
-    /// <summary>
-    /// 프리팹 / 텍스처 / 오디오 등 메모리 원본 에셋을 로드하고 핸들을 보관
+    /// 프리팹 / 텍스처 / 오디오 등 메모리 원본 단일 에셋을 로드하고 핸들을 보관
     /// </summary>
     public async UniTask<T> LoadAssetAsync<T>(string key, CancellationToken ct = default) where T : UnityEngine.Object
     {
@@ -122,9 +111,58 @@ public class AddressableManager : Singleton<AddressableManager>
         UtilDebug.LogWarning($"에셋 로드 실패 : {key}");
         return null;
     }
+
+    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, CancellationToken ct = default, Action<T> callback = null) where T : UnityEngine.Object
+    {
+        var handle = Addressables.LoadAssetsAsync<T>(label, callback);
+        IList<T> result = await handle.ToUniTask(cancellationToken: ct);
+
+        if(handle.Status == AsyncOperationStatus.Succeeded)
+        {
+            assetHandles[label] = handle;
+            return result;
+        }
+
+        UtilDebug.LogWarning($"레이블 로드 실패 : {label}");
+        return null;
+    }
+
+    public async UniTask<T> LoadPrefabComponentAsync<T>(string key, CancellationToken ct = default)
+    {
+        GameObject go = await LoadAssetAsync<GameObject>(key, ct);
+        if (go != null && go.TryGetComponent<T>(out var comp))
+            return comp;
+
+        UtilDebug.LogError($"프리팹 {key}에서 컴포넌트({typeof(T).Name})을 찾을 수 없음");
+        return default;
+    }
+    #endregion
+
+    #region 1회성 인스턴스화 ( 풀링 미사용 프리팹 )
+    /// <summary>
+    /// 풀링하지 않는 1회성 프리팹(예: 고유 팝업 UI)을 Addressables로 바로 생성
+    /// </summary>
+    public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null, CancellationToken ct = default)
+    {
+        var handle = Addressables.InstantiateAsync(key, parent);
+        GameObject result = await handle.ToUniTask(cancellationToken: ct);
+
+        if (handle.Status == AsyncOperationStatus.Succeeded)
+        {
+            instanceHandles[result] = handle;
+            return result;
+        }
+
+        UtilDebug.LogWarning($"생성 실패 : {key}");
+        return null;
+    }
     #endregion
 
     #region 메모리 해제
+    /// <summary>
+    /// 특정 인스턴스 해제
+    /// </summary>
+    /// <param name="go"></param>
     public void ReleaseInstance(GameObject go)
     {
         if (go == null) return;
@@ -137,6 +175,22 @@ public class AddressableManager : Singleton<AddressableManager>
             Destroy(go);
     }
 
+    /// <summary>
+    /// 씬 전환 시 1회성으로 생성한 인스턴스 모두 해제
+    /// </summary>
+    public void ReleaseAllInstance()
+    {
+        foreach(var handle in instanceHandles.Values)
+        {
+            Addressables.Release(handle);
+        }
+        instanceHandles.Clear();
+    }
+
+    /// <summary>
+    /// 에셋을 내림
+    /// </summary>
+    /// <param name="key"></param>
     public void ReleaseAsset(string key)
     {
         if(assetHandles.TryGetValue(key, out var handle))
@@ -147,13 +201,11 @@ public class AddressableManager : Singleton<AddressableManager>
     }
 
     /// <summary>
-    /// 씬 전환 전 모든 캐시된 핸들 정리
+    /// 캐시된 모든 원본 에셋과 인스턴스 핸들을 강제 정리
     /// </summary>
     public void ReleaseAll()
     {
-        foreach (var handle in instanceHandles.Values)
-            Addressables.Release(handle);
-        instanceHandles.Clear();
+        ReleaseAllInstance();
 
         foreach (var handle in assetHandles.Values)
             Addressables.Release(handle);

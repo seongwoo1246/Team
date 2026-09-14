@@ -15,11 +15,17 @@ MonoBehaviour:
   m_GroupName: RemoteScenes
   m_GUID: 646b5e3af7d3a504bbaccea0da2d46d0
   m_SerializeEntries:
-  - m_GUID: a38fa7d1e19a57543b03988b935bafb5
-    m_Address: LobbySceneTest(Server)
+  - m_GUID: 1da566e2c919e3a42a47a4cd46c50fba
+    m_Address: Assets/02.Prefabs/Test/PoolTestController.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
-    - RemoteScenes
+    - Remote_Scenes
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a38fa7d1e19a57543b03988b935bafb5
+    m_Address: LobbySceneTest
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Remote_Scenes
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}

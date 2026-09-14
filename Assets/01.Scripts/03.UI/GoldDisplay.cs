@@ -1,4 +1,4 @@
-/*
+﻿/*
 MainUI PartyHeaderPanel의 GoldText("Gold: 100G") 자리표시 텍스트를 실제 보유 골드로 바꿔주는 스크립트
 GoldWallet.BalanceChanged 이벤트를 구독해서 골드가 바뀔 때마다(분당 골드 지급, 클리어 보너스 등) 자동 갱신됨
 */
@@ -21,7 +21,7 @@ public sealed class GoldDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        _goldWallet = GoldWallet.instance;
+        _goldWallet = GoldWallet.Instance;
         if (_goldWallet != null)
         {
             _goldWallet.BalanceChanged += OnBalanceChanged;

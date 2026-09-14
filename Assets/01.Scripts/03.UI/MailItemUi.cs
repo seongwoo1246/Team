@@ -76,7 +76,7 @@ public class MailItemUi : MonoBehaviour , IPoolable
         // 클릭 중복 방지 ( 서버 통신 중에는 비활성화)
         claimButton.interactable = false;
 
-        bool success = await MailBoxManager.instance.ClaimMailAsync(currnetMailId);
+        bool success = await MailBoxManager.Instance.ClaimMailAsync(currnetMailId);
 
         if(!success)
         {

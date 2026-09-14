@@ -1,4 +1,4 @@
-/*
+﻿/*
 장비 1종의 고정 정보(부위, 착용 제한)를 담는 SO. 구글 시트 Equipment 탭 → CSV 임포터가 채워줌
 개별 드랍/장착 시 굴리는 랜덤 % 옵션은 여기 없고 EquippedItem이 따로 들고 있음 (SO는 여러 개체가 공유하는 값이라
 이 아이템이 몇 %로 떴는지 같은 개체별 값은 못담음)
@@ -13,7 +13,7 @@ using UnityEngine;
 /// 장비 기본 데이터. 프로젝트 창에서 우클릭 → Create → Game/Equipment Data 로 생성
 /// </summary>
 [CreateAssetMenu(fileName = "EquipmentData", menuName = "Game/Equipment Data", order = 4)]
-public sealed class EquipmentData : ScriptableObject
+public sealed class EquipmentData : ScriptableObject, IIdentifiable
 {
     [Header("식별 정보")]
     [Tooltip("고유 키. 시트: id (예: eq_sword_warrior). 절대 바뀌지 않는값. 세이브/드랍 전달 시 SO 참조 대신 이 id로 식별함")]

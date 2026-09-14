@@ -1,4 +1,4 @@
-/*
+﻿/*
 특별 강화재료 지갑. 장비 강화(+10까지)에 쓰는 재화. 골드랑 다르게 딱 떨어지는 개수(int)로 관리함
 
 얻는 방법 3가지:
@@ -62,7 +62,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
     {
         ApplyOfflineTime();
 
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
         if (_stageManager != null)
         {
             _stageManager.StageCleared += OnStageCleared;
@@ -202,9 +202,9 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>
 
         // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
         // instance/필드 둘 다 null 체크하고 지나감 (없어도 재료 지급 자체는 이미 끝난 뒤라 안전함)
-        if (grantedByOffline > 0 && RewardManager.instance != null && RewardManager.instance.GetUpgardMaterial != null)
+        if (grantedByOffline > 0 && RewardManager.Instance != null && RewardManager.Instance.GetUpgardMaterial != null)
         {
-            RewardManager.instance.GetUpgardMaterial.text = grantedByOffline.ToString();
+            RewardManager.Instance.GetUpgardMaterial.text = grantedByOffline.ToString();
         }
     }
 

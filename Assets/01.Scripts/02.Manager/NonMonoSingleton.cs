@@ -11,7 +11,7 @@ public class NonMonoSingleton<T> where T : class, new()
 {
     private static T _instance;
 
-    public static T instance
+    public static T Instance
     {
         get
         {
