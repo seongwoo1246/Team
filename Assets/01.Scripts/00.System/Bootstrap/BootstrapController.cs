@@ -76,7 +76,7 @@ public class BootstrapController : MonoBehaviour
         await UniTask.Delay(150, cancellationToken: ct);
        
         var sceneLoader = ServiceLocator.Get<SceneLoadManager>();
-        sceneLoader.LoadSceneFlowAsync(SceneId.LobbyScene).Forget();
+        sceneLoader.LoadSceneFlowAsync(SceneId.LobbySceneTest).Forget();
     }
 
     #region STEP 1. 인프로 초기화
