@@ -9,6 +9,9 @@ public class EquipmentInventorySlot : MonoBehaviour
     private EquippedItem equippedItem;
     private EquipmentInventoryController controller;
 
+    [SerializeField] private TextMeshProUGUI enhanceText;
+    [SerializeField] private TextMeshProUGUI statText;
+
     public void SetItem(EquippedItem item, EquipmentInventoryController inventoryController)
     {
         equippedItem = item;
@@ -18,6 +21,8 @@ public class EquipmentInventorySlot : MonoBehaviour
             return;
 
         nameText.text = equippedItem.Data.NameKr;
+        enhanceText.text = "+" + equippedItem.EnhanceLevel;
+        statText.text = "옵션 +" + equippedItem.TotalRollPercent.ToString("F1") + "%";
 
         Button button = GetComponent<Button>();
 
@@ -36,10 +41,14 @@ public class EquipmentInventorySlot : MonoBehaviour
         if (equippedItem == null || equippedItem.Data == null)
         {
             nameText.text = "";
+            enhanceText.text = "";
+            statText.text = "";
             return;
         }
 
         nameText.text = equippedItem.Data.NameKr;
+        enhanceText.text = "+" + equippedItem.EnhanceLevel;
+        statText.text = "옵션 +" + equippedItem.TotalRollPercent.ToString("F1") + "%";
 
         Button button = GetComponent<Button>();
 
