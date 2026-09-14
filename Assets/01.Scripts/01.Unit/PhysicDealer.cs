@@ -47,10 +47,10 @@ public class PhysicDealer : CharacterBase
         }
     }
 
-    /// <summary>스킬1: 강타. 가장 가까운 적 1체에게 평타보다 훨씬 센 단일 타격</summary>
+    /// <summary>스킬1: 강타. 체력이 가장 낮은 적 1체에게 평타보다 훨씬 센 단일 타격 (막타 우선)</summary>
     protected override void UseSkill1()
     {
-        IEntity target = GetNearestEntity(EnemyLayer);
+        IEntity target = GetLowestHpEntity(EnemyLayer);
         if (target == null || target.IsDead)
         {
             return;
@@ -94,5 +94,5 @@ public class PhysicDealer : CharacterBase
     /// <summary>스킬2(휩쓸기)도 동일한 조건</summary>
     protected override bool CanUseSkill2() => HasEnemyInRange();
 
-    private bool HasEnemyInRange() => GetNearestEntity(EnemyLayer) != null;
+    private bool HasEnemyInRange() => GetLowestHpEntity(EnemyLayer) != null;
 }

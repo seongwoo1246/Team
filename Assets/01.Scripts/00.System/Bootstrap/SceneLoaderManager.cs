@@ -1,4 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/* 담담자 - 송태훈
+
+ */
+
+using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -102,7 +106,6 @@ public class SceneLoaderManager : Singleton<SceneLoaderManager>
             progressSlider.value = Mathf.Lerp(startValue, targetValue, elapsed / duration);
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
         }
-
         progressSlider.value = targetValue;
     }
 

@@ -1,4 +1,8 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/*
+ 담담자 - 송태훈
+ 
+ */
+using Cysharp.Threading.Tasks;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -19,12 +23,20 @@ public class DownloadPopupUI : MonoBehaviour
         downloadSizeText.text = $"{totalBytes / (1024f * 1024f):F1} MB";
         gameObject.SetActive(true);
 
-        var confirmTask = confirmButton.OnClickAsync(ct);
-        var cancelTask = cancelButton.OnClickAsync(ct);
+        using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        try
+        {
+            var confirmTask = confirmButton.OnClickAsync(ct);
+            var cancelTask = cancelButton.OnClickAsync(ct);
 
-        int result = await UniTask.WhenAny(confirmTask, cancelTask);
+            int result = await UniTask.WhenAny(confirmTask, cancelTask);
 
-        gameObject.SetActive(false);
-        return result == 0; // confirm이면 true, cancel이면 false
+            return result == 0; // confirm이면 true, cancel이면 false
+        }
+        finally
+        {
+            linkedCts.Cancel();
+            gameObject.SetActive(false);
+        }
     }
 }

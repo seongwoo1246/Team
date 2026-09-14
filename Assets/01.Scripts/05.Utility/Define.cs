@@ -17,6 +17,17 @@ public enum AttackType
 }
 
 /// <summary>
+/// 캐릭터의 전열/후열 위치. 몬스터 AI가 타겟 우선순위를 정할 때 씀 (예: 후열 우선 타겟팅)
+/// </summary>
+public enum CharacterRow
+{
+    // 전열 (예: 전사 - 앞에서 버티는 역할)
+    Front,
+    // 후열 (예: 마법사, 힐러 - 뒤에서 지원하는 역할)
+    Back,
+}
+
+/// <summary>
 /// 공격 대상 범위
 /// </summary>
 public enum TargetType

@@ -30,21 +30,15 @@ public class CharacterEquipment : MonoBehaviour
     {
         if (!characterEquipments.ContainsKey(attackType))
         {
-            characterEquipments.Add(
-                attackType,
-                new Dictionary<EquipmentSlot, EquippedItem>()
-            );
+            characterEquipments.Add(attackType, new Dictionary<EquipmentSlot, EquippedItem>());
         }
     }
 
 
     // 현재 캐릭터의 장착 장비 가져오기
-    public EquippedItem GetEquippedItem(
-        AttackType attackType,
-        EquipmentSlot slot)
+    public EquippedItem GetEquippedItem(AttackType attackType, EquipmentSlot slot)
     {
         CreateCharacterEquipment(attackType);
-
         if (characterEquipments[attackType].ContainsKey(slot))
         {
             return characterEquipments[attackType][slot];
@@ -75,23 +69,5 @@ public class CharacterEquipment : MonoBehaviour
         glovesSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Gloves));
         ringSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Ring));
         shoesSlot.SetEquippedItem(GetEquippedItem(attackType, EquipmentSlot.Shoes));
-    }
-
-    // 장비 변경 확정창 NO 버튼에 쓸거 (장비 변경 복구)
-    public void RestoreEquipment(AttackType attackType, Dictionary<EquipmentSlot, EquippedItem> equipments)
-    {
-        foreach (var pair in equipments)
-        {
-            SetEquipment(attackType, pair.Key, pair.Value);
-        }
-
-        RefreshEquipmentSlots(attackType);
-    }
-
-    // 바로 위 RestoreEquipment 실행하는데 null값 있을수도있으니까
-    private void SetEquipment(AttackType attackType, EquipmentSlot slot, EquippedItem item)
-    {
-        CreateCharacterEquipment(attackType);
-        characterEquipments[attackType][slot] = item;
     }
 }

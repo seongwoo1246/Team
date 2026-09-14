@@ -2,34 +2,61 @@
 
 public class CharacterSelectController : MonoBehaviour
 {
-    //캐릭터 패널 상단 캐릭터 선택 버튼
+    [Header("캐릭터")]
+    [SerializeField] private CharacterBase warrior;
+    [SerializeField] private CharacterBase mage;
+    [SerializeField] private CharacterBase healer;
 
-    private AttackType currentAttackType;
+    [Header("장비 UI")]
+    [SerializeField] private EquipmentInventoryController equipmentInventoryController;
+
+    private AttackType currentAttackType = AttackType.Physical;
+
     public AttackType CurrentAttackType => currentAttackType;
 
-    [Header("캐릭터 장비")]
-    [SerializeField] private CharacterEquipment characterEquipment;
 
+    // 현재 선택된 캐릭터
+    public CharacterBase CurrentCharacter
+    {
+        get
+        {
+            switch (currentAttackType)
+            {
+                case AttackType.Physical:
+                    return warrior;
 
-    // 전사
+                case AttackType.Magic:
+                    return mage;
+
+                case AttackType.Heal:
+                    return healer;
+            }
+
+            return null;
+        }
+    }
+
+    // 캐릭터 패널 상단 캐릭터 선택버튼
     public void SelectWarrior()
     {
         currentAttackType = AttackType.Physical;
-        characterEquipment.RefreshEquipmentSlots(currentAttackType);
+        equipmentInventoryController.RefreshEquippedSlots();
+        //characterEquipment.RefreshEquipmentSlots(currentAttackType);
     }
 
-    // 마법사
+
     public void SelectMage()
     {
         currentAttackType = AttackType.Magic;
-        characterEquipment.RefreshEquipmentSlots(currentAttackType);
+        equipmentInventoryController.RefreshEquippedSlots();
+        //characterEquipment.RefreshEquipmentSlots(currentAttackType);
     }
 
-    // 힐러
+
     public void SelectHealer()
     {
         currentAttackType = AttackType.Heal;
-        characterEquipment.RefreshEquipmentSlots(currentAttackType);
-
+        equipmentInventoryController.RefreshEquippedSlots();
+        //characterEquipment.RefreshEquipmentSlots(currentAttackType);
     }
 }

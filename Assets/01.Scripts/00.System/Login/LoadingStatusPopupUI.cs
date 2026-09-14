@@ -1,4 +1,10 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/* 담담자 - 송태훈
+ 
+ 
+ 
+ */
+
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UtilDebug = DebugLogger<LoadingStatusPopupUI>;

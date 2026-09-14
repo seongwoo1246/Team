@@ -118,6 +118,9 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 공격 방식 (물리 / 마법 / 힐)
     public AttackType AttackType => statData != null ? statData.AttackType : AttackType.Physical;
 
+    // 전열/후열 위치. 몬스터 AI가 타겟 우선순위 정할 때 읽어감 (예: 후열 우선 타겟팅)
+    public CharacterRow Row => statData != null ? statData.Row : CharacterRow.Front;
+
     // 공격 사거리
     protected float AttackRange => attackRange;
 
@@ -428,12 +431,12 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 실제 공격 동작. 기본 구현은 사거리 안 가장 가까운 적 1체에게 Power 만큼 피해
+    /// 실제 공격 동작. 기본 구현은 사거리 안 체력이 가장 낮은 적 1체에게 Power 만큼 피해 (막타 우선)
     /// 마법 딜러(다수) / 힐러(회복)는 이 함수를 override
     /// </summary>
     protected virtual void PerformAttack()
     {
-        IEntity target = GetNearestEntity(enemyLayer);
+        IEntity target = GetLowestHpEntity(enemyLayer);
         if (target != null && !target.IsDead)
         {
             target.TakeDamage(_currentPower);
@@ -507,17 +510,18 @@ public class CharacterBase : MonoBehaviour, IEntity
     protected virtual void OnDied() { }
 
     /// <summary>
-    /// 사거리 안에서 주어진 레이어의 대상들을 찾아 가장 가까운 IEntity를 돌려줌
-    /// 할당 없는 2D 원형 탐지(OverlapCircle)를 사용
+    /// 사거리 안에서 주어진 레이어의 대상들을 찾아 체력이 가장 낮은 IEntity를 돌려줌 (막타 우선)
+    /// 딜러 단일 타겟 공격/스킬이 전부 이 함수를 거쳐가서, 가까운 순서가 아니라 빨리 처치할 수 있는
+    /// 대상부터 집중 공격하게 됨. 할당 없는 2D 원형 탐지(OverlapCircle)를 사용
     /// </summary>
     /// <param name="layer">탐지할 레이어 마스크</param>
-    /// 가장 가까운 대상. 없으면 null
-    protected IEntity GetNearestEntity(LayerMask layer)
+    /// 체력이 가장 낮은 대상. 없으면 null
+    protected IEntity GetLowestHpEntity(LayerMask layer)
     {
         int count = OverlapCircle(layer, _targetBuffer);
 
-        IEntity nearest = null;
-        float nearestSqr = float.MaxValue;
+        IEntity lowestHp = null;
+        float lowestHpValue = float.MaxValue;
 
         for (int i = 0; i < count; i++)
         {
@@ -532,15 +536,14 @@ public class CharacterBase : MonoBehaviour, IEntity
                 continue;
             }
 
-            float sqr = (hit.transform.position - transform.position).sqrMagnitude;
-            if (sqr < nearestSqr)
+            if (entity.CurrentHP < lowestHpValue)
             {
-                nearestSqr = sqr;
-                nearest = entity;
+                lowestHpValue = entity.CurrentHP;
+                lowestHp = entity;
             }
         }
 
-        return nearest;
+        return lowestHp;
     }
 
     /// <summary>
