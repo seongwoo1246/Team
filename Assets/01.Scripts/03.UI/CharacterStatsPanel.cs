@@ -30,7 +30,7 @@ public class CharacterStatsPanel : MonoBehaviour
         if (character == null)
             return;
 
-        if (UpgradeSystem.instance == null)
+        if (UpgradeSystem.Instance == null)
             return;
 
         // 현재 캐릭터의 실제 HP와 공격력
@@ -38,8 +38,8 @@ public class CharacterStatsPanel : MonoBehaviour
         atkText.text = "ATK: " + character.Power.ToString("F1");
 
         // 로비 공용 강화 레벨
-        int critLevel = UpgradeSystem.instance.GetLevel(UpgradeTrack.Crit);
-        int critDamageLevel = UpgradeSystem.instance.GetLevel(UpgradeTrack.CritDamage);
+        int critLevel = UpgradeSystem.Instance.GetLevel(UpgradeTrack.Crit);
+        int critDamageLevel = UpgradeSystem.Instance.GetLevel(UpgradeTrack.CritDamage);
 
         // 기준 캐릭터 데이터
         BaseStatData characterStats = character.StatData;
@@ -62,8 +62,8 @@ public class CharacterStatsPanel : MonoBehaviour
         float critDamageEquipmentBonus = character.GetEquippedBonusRatio(EquipmentSlot.Ring) * 100f;
 
         // 로비 공용 강화 배율
-        float attackSpeedUpgradeBonus = (UpgradeSystem.instance.GetAttackSpeedFactor() - 1f) * 100f;
-        float goldGainUpgradeBonus = (float)((UpgradeSystem.instance.GetGoldMultiplier() - 1d) * 100d);
+        float attackSpeedUpgradeBonus = (UpgradeSystem.Instance.GetAttackSpeedFactor() - 1f) * 100f;
+        float goldGainUpgradeBonus = (float)((UpgradeSystem.Instance.GetGoldMultiplier() - 1d) * 100d);
 
         // 최종 표시 수치
         float finalAttackSpeed = attackSpeedUpgradeBonus + attackSpeedEquipmentBonus;

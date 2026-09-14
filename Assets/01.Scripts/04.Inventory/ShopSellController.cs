@@ -138,7 +138,7 @@ public class ShopSellController : MonoBehaviour
         {
             int totalGold = sellCount * goldPerItem;
 
-            GoldWallet.instance.Add(totalGold);
+            GoldWallet.Instance.Add(totalGold);
 
             Debug.Log(
                 sellCount + "개의 장비를 판매했습니다. 획득 골드: " + totalGold
