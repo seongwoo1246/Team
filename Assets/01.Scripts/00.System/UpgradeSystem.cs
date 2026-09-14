@@ -22,11 +22,27 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
     [Tooltip("트랙별 강화 비용 파라미터. CSV 임포터가 만든 GameConfig 에셋을 넣는다")]
     [SerializeField] private GameConfig config;
 
+    private const string LEVEL_KEY_PREFIX = "UpgradeSystem_Level_";
+
     // 인덱스 = (int)UpgradeTrack (Power=0 ... AttackSpeed=5)
     private readonly int[] _levels = new int[System.Enum.GetValues(typeof(UpgradeTrack)).Length];
 
     //트랙이 강화되면 발생 (인자 = 강화된 트랙). 캐릭터·UI가 구독해 갱신한다
     public event Action<UpgradeTrack> TrackUpgraded;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        Load();
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+
+        Save();
+    }
 
     // 현재 트랙 레벨 (0부터 시작)
     public int GetLevel(UpgradeTrack track)
@@ -85,8 +101,25 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
         }
 
         _levels[(int)track]++;
+        Save();
         TrackUpgraded?.Invoke(track);
         return true;
+    }
+
+    private void Load()
+    {
+        foreach (UpgradeTrack track in System.Enum.GetValues(typeof(UpgradeTrack)))
+        {
+            _levels[(int)track] = Mathf.Max(0, PlayerPrefs.GetInt(LEVEL_KEY_PREFIX + track, 0));
+        }
+    }
+    private void Save()
+    {
+        foreach (UpgradeTrack track in System.Enum.GetValues(typeof(UpgradeTrack)))
+        {
+            PlayerPrefs.SetInt(LEVEL_KEY_PREFIX + track, _levels[(int)track]);
+        }
+        PlayerPrefs.Save();
     }
 
     // 현재 GoldGain 트랙 레벨 기준 골드 획득 배율. (1.0 = 기본, 1.2 = +20%)
