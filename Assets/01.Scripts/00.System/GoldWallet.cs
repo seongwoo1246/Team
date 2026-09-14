@@ -51,6 +51,9 @@ public class GoldWallet : Singleton<GoldWallet>
     // 마지막으로 게임이 종료(또는 확인)된 시각을 저장해두는 PlayerPrefs 키. 오프라인 보상 계산용
     private const string LAST_SEEN_UTC_KEY = "GoldWallet_LastSeenUtc";
 
+    // 현재 보유 골드를 저장해두는 PlayerPrefs
+    private const string BALANCE_KEY = "GoldWallet_Balance";
+
     private double _balance;
 
     // Start에서 구독할 때 캐싱해두고 OnDestroy에서 구독 해제할 때 이 캐시로만 접근한다.
@@ -68,7 +71,18 @@ public class GoldWallet : Singleton<GoldWallet>
     protected override void Awake()
     {
         base.Awake();
-        _balance = startGold;
+
+        string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
+        if (!string.IsNullOrEmpty(savedBalance)
+            && double.TryParse(savedBalance, NumberStyles.Float, CultureInfo.InvariantCulture, out double loaded)
+            && loaded >= 0d)
+        {
+            _balance = loaded;
+        }
+        else
+        {
+            _balance = startGold;
+        }
     }
 
     private void Start()
@@ -94,13 +108,13 @@ public class GoldWallet : Singleton<GoldWallet>
             _stageManager.StageCleared -= OnStageCleared;
         }
 
-        SaveLastSeenNow();
+        Save();
     }
 
     // 앱이 완전히 꺼질 때 (에디터 정지 포함은 아님 - 빌드 기준)
     private void OnApplicationQuit()
     {
-        SaveLastSeenNow();
+        Save();
     }
 
     // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 시각을 저장
@@ -108,7 +122,7 @@ public class GoldWallet : Singleton<GoldWallet>
     {
         if (isPaused)
         {
-            SaveLastSeenNow();
+            Save();
         }
     }
 
@@ -146,6 +160,8 @@ public class GoldWallet : Singleton<GoldWallet>
 
         _balance -= amount;
         BalanceChanged?.Invoke(_balance);
+
+        Save();
         return true;
     }
 
@@ -197,7 +213,7 @@ public class GoldWallet : Singleton<GoldWallet>
             if (timeSinceLastSave >= lastSeenSaveInterval)
             {
                 timeSinceLastSave = 0f;
-                SaveLastSeenNow();
+                Save();
             }
         }
     }
@@ -243,14 +259,15 @@ public class GoldWallet : Singleton<GoldWallet>
             }
         }
 
-        SaveLastSeenNow();
+        Save();
     }
 
     /// <summary>
-    /// 지금 시각(UTC)을 오프라인 보상 계산용으로 PlayerPrefs에 저장
+    /// 현재 보유 골드 + 지금 시각(UTC, 오프라인 보상 계산용)을 PlayerPrefs에 저장
     /// </summary>
-    private void SaveLastSeenNow()
+    private void Save()
     {
+        PlayerPrefs.SetString(BALANCE_KEY, _balance.ToString("R", CultureInfo.InvariantCulture));
         PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
         PlayerPrefs.Save();
     }

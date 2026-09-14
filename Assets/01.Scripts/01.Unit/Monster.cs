@@ -43,7 +43,7 @@ public class Monster : MonoBehaviour, IEntity
     [SerializeField] private float aggroRange = 50f;
 
     [Header("장비 드랍")]
-    [Tooltip("죽었을 때 장비가 드랍될 확률 (0~1). 0.02 = 2%")]
+    [Tooltip("죽었을 때 장비가 드랍될 확률 (0~1). 0.001 = 0.1%")]
     [SerializeField] private float equipmentDropChance = 0.001f;
 
     [Tooltip("드랍 가능한 장비 후보들. 죽을 때 이 중 하나를 무작위로 골라 1~10% 랜덤 옵션으로 드랍함")]
@@ -470,6 +470,10 @@ public class Monster : MonoBehaviour, IEntity
 
         float rollPercent = UnityEngine.Random.Range(1f, 10f);
         EquippedItem dropped = new EquippedItem(picked, rollPercent);
+
+        // 드랍 확인용 로그 어느 부위 장비가 몇 %로 떴는지 바로 확인 가능
+        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {rollPercent:F1}%)");
+
         EquipmentDropped?.Invoke(dropped);
     }
 

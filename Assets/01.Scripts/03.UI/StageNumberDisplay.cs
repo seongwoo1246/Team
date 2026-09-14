@@ -21,8 +21,6 @@ public sealed class StageNumberDisplay : MonoBehaviour
     // 마지막으로 화면에 그린 스테이지 번호. 안 바뀌면 다시 안 그려서 GC를 피함
     private int _lastDisplayedStageNumber = int.MinValue;
 
-    private bool _wasChallengeMode;
-
     // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
     // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
     // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
@@ -34,7 +32,10 @@ public sealed class StageNumberDisplay : MonoBehaviour
         if (_stageManager != null)
         {
             _stageManager.ChallengeStarted += OnChallengeStarted;
+            _stageManager.ModeChanged += OnModeChanged;
         }
+
+        ApplyCurrentState();
     }
 
     private void OnDisable()
@@ -42,31 +43,35 @@ public sealed class StageNumberDisplay : MonoBehaviour
         if (_stageManager != null)
         {
             _stageManager.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.ModeChanged -= OnModeChanged;
         }
     }
 
-    /// <summary>챌린지가 시작(재시작 포함)되면 그 스테이지 번호를 기억해둔다</summary>
+    /// <summary>챌린지가 시작(재시작 포함)되면 그 스테이지 번호를 기억하고 텍스트를 갱신한다</summary>
     private void OnChallengeStarted(int stageNumber)
     {
         _currentStageNumber = stageNumber;
+        ApplyCurrentState();
     }
 
-    private void Update()
+    /// <summary>모드가 바뀌면(파밍 ↔ 챌린지) 보임/숨김을 다시 맞춘다</summary>
+    /// <param name="mode">바뀐 후의 모드 (여기선 안 씀 - CurrentMode로 직접 확인)</param>
+    private void OnModeChanged(StageMode mode)
     {
-        if (stageNumberText == null)
+        ApplyCurrentState();
+    }
+
+    /// <summary>
+    /// 현재 모드가 챌린지면 텍스트를 켜고 스테이지 번호를 그린다. 파밍이면 숨긴다
+    /// </summary>
+    private void ApplyCurrentState()
+    {
+        if (stageNumberText == null || _stageManager == null)
         {
             return;
         }
 
-        bool isChallengeMode = _stageManager != null && _stageManager.CurrentMode == StageMode.Challenge;
-
-        if (isChallengeMode != _wasChallengeMode)
-        {
-            _wasChallengeMode = isChallengeMode;
-            _lastDisplayedStageNumber = int.MinValue; // 다시 챌린지 들어가면 무조건 새로 그리게 초기화
-        }
-
-        // 매 프레임 무조건 실제 모드에 맞춰줌 (조건부로 하면 "우연히 초기값이 같은 경우" 처음에 안 맞춰지는 문제가 있음)
+        bool isChallengeMode = _stageManager.CurrentMode == StageMode.Challenge;
         stageNumberText.gameObject.SetActive(isChallengeMode);
 
         if (!isChallengeMode || _currentStageNumber == _lastDisplayedStageNumber)
