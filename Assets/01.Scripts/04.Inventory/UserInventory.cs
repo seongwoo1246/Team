@@ -16,7 +16,7 @@ public class UserInventory : Singleton<UserInventory>
     [SerializeField] public TextMeshProUGUI coin;
     
     // 나중에 text와 실수 값을 연동해줘야 함
-   double gold = GoldWallet.instance.Balance;
+   double gold = GoldWallet.Instance.Balance;
 
     // 인벤토리에서 보여질 화면
     public Sprite icon;

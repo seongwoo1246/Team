@@ -1,4 +1,9 @@
-﻿using UnityEngine;
+﻿/*
+ 담담자 - 송태훈
+
+
+ */
+using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Cysharp.Threading.Tasks;
@@ -14,7 +19,6 @@ public class BootstrapView : MonoBehaviour
     [Header("팝업 컴포넌트")]
     [SerializeField] private DownloadPopupUI downloadPopupUI;
     [SerializeField] private ErrorPopupUI ErrorPopupUI;
-
     [SerializeField] private CanvasGroup loadingCanvasGroup;
 
     private void Awake()

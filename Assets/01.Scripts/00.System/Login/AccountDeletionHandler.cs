@@ -11,11 +11,9 @@ using UtilDebug = DebugLogger<AccountDeletionHandler>;
 
 public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 {
-    private const string BOOTSTRAP_SCENE = "BootstrapScene";
-
     public async UniTask<bool> ProcessAccountDeletionAsync(CancellationToken ct = default)
     {
-        string uid = AuthLoginSystem.instance.UserId;
+        string uid = AuthLoginSystem.Instance.UserId;
         if (string.IsNullOrEmpty(uid))
         {
             UtilDebug.LogError("사용자 ID를 가져올 수 없습니다. 로그인 상태를 확인하세요.");
@@ -23,7 +21,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         }
 
         // 1. RTDB 데이터 먼저 제거 
-        bool dbDeleted = await UserManager.instance.DeleteUserDataAsync(uid, ct);
+        bool dbDeleted = await UserManager.Instance.DeleteUserDataAsync(uid, ct);
         if(!dbDeleted)
         {
             UtilDebug.LogError("사용자 데이터를 삭제하는 데 실패했습니다.");
@@ -31,7 +29,7 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         }
 
         // 2. Firebase Auth 계정 삭제
-        var (authSucces, erroMsg) = await AuthLoginSystem.instance.DeleteAccountAsync(ct);
+        var (authSucces, erroMsg) = await AuthLoginSystem.Instance.DeleteAccountAsync(ct);
         if(!authSucces)
         {
             UtilDebug.LogError($"계정 삭제에 실패했습니다. 오류 메시지: {erroMsg}");
@@ -39,10 +37,10 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
         }
 
         // 3. 로컬 캐시 메모리 제거
-        UserManager.instance.ClearLocalData();
+        UserManager.Instance.ClearLocalData();
 
         // 로그인 기능과 전체적인 틀을 만들면 해제
-        await SceneLoaderManager.instance.LoadSceneFlowAsync(BOOTSTRAP_SCENE);
+        await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
         return true;
     }
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
 Party_Panel 스크롤 안에 있는 강화 카드 1개. UpgradeTrack(공격력/체력/치명타율/치명타피해/골드획득/공격속도)
 6개 중 하나를 담당해서 이름 + 현재수치 -> 강화후수치 + 다음 강화비용을 보여주고, LevelUpButton으로
 그 트랙만 강화한다 (트랙 레벨은 파티 공용이라 강화하면 파티원 전체에 동시 적용됨)
@@ -45,7 +45,7 @@ public sealed class UpgradeStatCard : MonoBehaviour
 
     private void OnEnable()
     {
-        _upgradeSystem = UpgradeSystem.instance;
+        _upgradeSystem = UpgradeSystem.Instance;
         if (_upgradeSystem != null)
         {
             _upgradeSystem.TrackUpgraded += OnTrackUpgraded;
@@ -82,24 +82,24 @@ public sealed class UpgradeStatCard : MonoBehaviour
     /// <summary>LevelUpButton의 OnClick에 연결. 이 카드가 담당하는 트랙만 강화 시도</summary>
     private void OnClickLevelUp()
     {
-        if (UpgradeSystem.instance == null)
+        if (UpgradeSystem.Instance == null)
         {
             return;
         }
 
-        UpgradeSystem.instance.TryUpgrade(track);
+        UpgradeSystem.Instance.TryUpgrade(track);
         RefreshDisplay(); // 성공/실패(골드 부족 등) 상관없이 최신 상태로 다시 그림
     }
 
     /// <summary>이름/현재수치→강화후수치/비용을 전부 다시 계산해서 표시</summary>
     private void RefreshDisplay()
     {
-        if (UpgradeSystem.instance == null)
+        if (UpgradeSystem.Instance == null)
         {
             return;
         }
 
-        int currentLevel = UpgradeSystem.instance.GetLevel(track);
+        int currentLevel = UpgradeSystem.Instance.GetLevel(track);
         int nextLevel = currentLevel + 1;
 
         if (statNameText != null)
@@ -114,7 +114,7 @@ public sealed class UpgradeStatCard : MonoBehaviour
 
         if (upgradeCostText != null)
         {
-            upgradeCostText.text = $"다음 강화: {UpgradeSystem.instance.GetCost(track):N0}G";
+            upgradeCostText.text = $"다음 강화: {UpgradeSystem.Instance.GetCost(track):N0}G";
         }
     }
 
@@ -148,9 +148,9 @@ public sealed class UpgradeStatCard : MonoBehaviour
             case UpgradeTrack.CritDamage:
                 return referenceCharacterStats == null ? "-" : (StatCalculator.GetCritBonus(referenceCharacterStats, level) * 100f).ToString("F0") + "%";
             case UpgradeTrack.GoldGain:
-                return ((UpgradeSystem.instance.GetGoldMultiplierAtLevel(level) - 1d) * 100d).ToString("F0") + "%";
+                return ((UpgradeSystem.Instance.GetGoldMultiplierAtLevel(level) - 1d) * 100d).ToString("F0") + "%";
             case UpgradeTrack.AttackSpeed:
-                return ((UpgradeSystem.instance.GetAttackSpeedFactorAtLevel(level) - 1f) * 100f).ToString("F0") + "%";
+                return ((UpgradeSystem.Instance.GetAttackSpeedFactorAtLevel(level) - 1f) * 100f).ToString("F0") + "%";
             default:
                 return "-";
         }

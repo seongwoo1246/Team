@@ -189,7 +189,7 @@ public class CharacterBase : MonoBehaviour, IEntity
     private void Start()
     {
         // 파티 강화 시스템 구독 (트랙이 오르면 스탯 재계산)
-        _upgradeSystem = UpgradeSystem.instance;
+        _upgradeSystem = UpgradeSystem.Instance;
         if (_upgradeSystem != null)
         {
             _upgradeSystem.TrackUpgraded += OnTrackUpgraded;
@@ -358,7 +358,7 @@ public class CharacterBase : MonoBehaviour, IEntity
             return false;
         }
 
-        if (MaterialWallet.instance == null || !MaterialWallet.instance.TrySpend(1))
+        if (MaterialWallet.Instance == null || !MaterialWallet.Instance.TrySpend(1))
         {
             return false;
         }

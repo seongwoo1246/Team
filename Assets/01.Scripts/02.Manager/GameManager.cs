@@ -105,7 +105,7 @@ public class GameManager : Singleton<GameManager>
         //이 부분에서 게임 나가 있는 동안 쌓인 보상들 받는 함수
 
 
-        ScenesManager.instance.LoadScenes(ScenesName.Lobby);
+        ScenesManager.Instance.LoadScenes(ScenesName.Lobby);
 
     }
 

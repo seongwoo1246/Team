@@ -33,7 +33,7 @@ public class GachaResultPanel : MonoBehaviour
 
         for(int i = 0; i < list.Count; i++)
         {
-            GachaSlot item = ObjcetPoolManager.instance.Spawn<GachaSlot>(enumType.Item_Gear);
+            GachaSlot item = ObjcetPoolManager.Instance.Spawn<GachaSlot>(enumType.Item_Gear);
             item.OnSpawn();
             item.Setup(list[i]);
             spawnedTextItem.Add(item);

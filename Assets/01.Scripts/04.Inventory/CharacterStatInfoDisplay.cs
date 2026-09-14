@@ -1,4 +1,4 @@
-/*
+﻿/*
 캐릭터 스탯 총괄 화면(StatInfoPanel)에 공격력/체력/치명타율/치명타피해/공격속도/골드획득을 보여준다
 전부 "기본 스탯 + 장비 보너스"가 합쳐진 최종값 - CharacterBase가 RecalculateStats()에서
 이미 다 계산해둔값을 그대로 읽어오기만함 (여기서 새로 계산하는건 없음)
@@ -34,7 +34,7 @@ public sealed class CharacterStatInfoDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
 
         _lastCharacter = null;
         _lastGoldBonus = double.NegativeInfinity;

@@ -12,7 +12,7 @@ using UnityEngine;
 /// 캐릭터 기본 스탯 데이터. 프로젝트 창에서 우클릭 → Create → Game/Character Stat Data 로 생성
 /// </summary>
 [CreateAssetMenu(fileName = "CharacterStat", menuName = "Game/Character Stat Data", order = 0)]
-public class BaseStatData : ScriptableObject
+public class BaseStatData : ScriptableObject, IIdentifiable
 {
     [Header("식별 정보")]
     [Tooltip("고유 키. 시트: id (예: char_warrior). 절대 바뀌지 않는 값")]

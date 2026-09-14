@@ -1,4 +1,4 @@
-/*
+﻿/*
 화면 상단 왼쪽에 플레이어 레벨을 보여주는 텍스트
 */
 
@@ -18,12 +18,12 @@ public sealed class PlayerLevelDisplay : MonoBehaviour
 
     private void Update()
     {
-        if (levelText == null || PlayerLevelSystem.instance == null)
+        if (levelText == null || PlayerLevelSystem.Instance == null)
         {
             return;
         }
 
-        int level = PlayerLevelSystem.instance.Level;
+        int level = PlayerLevelSystem.Instance.Level;
         if (level == _lastDisplayedLevel)
         {
             return;

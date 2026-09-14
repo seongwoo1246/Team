@@ -4,7 +4,7 @@
 /// 몬스터 기본 스탯 데이터. 프로젝트 창에서 우클릭 → Create → Game/Monster Stat Data 로 생성
 /// </summary>
 [CreateAssetMenu(fileName = "MonsterStat", menuName = "Game/Monster Stat Data", order = 1)]
-public class MonsterStatData : ScriptableObject
+public class MonsterStatData : ScriptableObject, IIdentifiable
 {
     [Header("식별 정보")]
     [Tooltip("고유 키. 시트: id (예: mon_slime)")]

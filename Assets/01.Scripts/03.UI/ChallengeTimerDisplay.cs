@@ -1,4 +1,4 @@
-/*
+﻿/*
 챌린지 남은 시간을 화면에 보여주는 UI. 파밍 중에는 숨겨져 있다가 챌린지에 들어가면 나타남!
 스테이지 클리어 후(선택 화면 대기 중)에는 시간이 의미 없으니 멈춰서 숨긴다.
 */
@@ -32,7 +32,7 @@ public sealed class ChallengeTimerDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
         if (_stageManager != null)
         {
             _stageManager.StageCleared += OnStageCleared;

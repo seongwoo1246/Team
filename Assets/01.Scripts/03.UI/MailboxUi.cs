@@ -39,7 +39,7 @@ public class MailboxUi : MonoBehaviour
     private void Start()
     {
         //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
-        ObjcetPoolManager.instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 10);
+        ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 10);
     }
 
     private void OnEnable()
@@ -67,7 +67,7 @@ public class MailboxUi : MonoBehaviour
         //1. 기존에 있던 슬롯 Ui 모두 제거
         ClearMailList();
 
-        var mailDict = MailBoxManager.instance.mailDictionary;
+        var mailDict = MailBoxManager.Instance.mailDictionary;
 
         // 우편함이 비웠는지 확인한다.
         bool isEnpty = mailDict.Count == 0;
@@ -79,7 +79,7 @@ public class MailboxUi : MonoBehaviour
         foreach (var kvp in mailDict)
         {
             //스폰) 풀에서 안전하게 활성화
-            MailItemUi item = ObjcetPoolManager.instance.Spawn<MailItemUi>(enumType.Item_Mail);
+            MailItemUi item = ObjcetPoolManager.Instance.Spawn<MailItemUi>(enumType.Item_Mail);
 
             if(item != null)
             {
@@ -94,7 +94,7 @@ public class MailboxUi : MonoBehaviour
 
     private void ClearMailList()
     {
-        var ObjPoolM = ObjcetPoolManager.instance;
+        var ObjPoolM = ObjcetPoolManager.Instance;
 
         for (int i = 0; i<activeMailItems.Count; i++)
         {
@@ -109,7 +109,7 @@ public class MailboxUi : MonoBehaviour
 
     private void OnClickClaimAll()
     {
-        MailBoxManager.instance.ClaimAllMails();
+        MailBoxManager.Instance.ClaimAllMails();
     }
 
     private void CloseWindow()

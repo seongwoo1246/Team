@@ -90,7 +90,7 @@ public class GoldWallet : Singleton<GoldWallet>
         // StageManager의 _maxClearedStage 로드(Awake)가 전부 끝난 뒤에 계산해야 정확하므로 Start에서 처리
         ApplyOfflineGold();
 
-        _stageManager = StageManager.instance;
+        _stageManager = StageManager.Instance;
         if (_stageManager != null)
         {
             _stageManager.StageCleared += OnStageCleared;
@@ -172,7 +172,7 @@ public class GoldWallet : Singleton<GoldWallet>
     /// <param name="baseAmount">배율 적용 전 골드</param>
     private void AddPassiveGold(double baseAmount)
     {
-        double multiplier = UpgradeSystem.instance != null ? UpgradeSystem.instance.GetGoldMultiplier() : 1d;
+        double multiplier = UpgradeSystem.Instance != null ? UpgradeSystem.Instance.GetGoldMultiplier() : 1d;
         Add(baseAmount * multiplier);
     }
 
@@ -181,13 +181,13 @@ public class GoldWallet : Singleton<GoldWallet>
     /// </summary>
     private double GetCurrentGoldPerMinute()
     {
-        if (StageManager.instance == null)
+        if (StageManager.Instance == null)
         {
             return baseGoldPerMinute;
         }
 
-        double stageMultiplier = StageManager.instance.ClearGoldMultiplier;
-        double equipmentBonus = StageManager.instance.PartyEquipmentGoldBonusRatio;
+        double stageMultiplier = StageManager.Instance.ClearGoldMultiplier;
+        double equipmentBonus = StageManager.Instance.PartyEquipmentGoldBonusRatio;
         return baseGoldPerMinute * stageMultiplier * (1d + equipmentBonus);
     }
 
@@ -252,9 +252,9 @@ public class GoldWallet : Singleton<GoldWallet>
 
                 // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
                 // instance/필드 둘 다 null 체크하고 지나감 (없어도 골드 지급 자체는 이미 끝난 뒤라 안전함)
-                if (RewardManager.instance != null && RewardManager.instance.GetPlayerReward != null)
+                if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerReward != null)
                 {
-                    RewardManager.instance.GetPlayerReward.text = reward.ToString();
+                    RewardManager.Instance.GetPlayerReward.text = reward.ToString();
                 }
             }
         }

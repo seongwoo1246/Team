@@ -62,7 +62,7 @@ public class GoogleLogin : MonoBehaviour
     private async UniTaskVoid ProcessGoogleSignInAsync(string token) 
     {
         var ct = this.GetCancellationTokenOnDestroy();
-        bool success = await AuthLoginSystem.instance.SignInWithGoogleTokenAsync(token, ct); 
+        bool success = await AuthLoginSystem.Instance.SignInWithGoogleTokenAsync(token, ct); 
 
         if (!success)
         {
