@@ -130,4 +130,28 @@ public class SoundManager : Singleton<SoundManager>
         PlayerPrefs.Save();
     }
 
+    public void MuteOnOffBGM()
+    {
+        if(bgmSource.mute == false)
+        {
+            bgmSource.mute = true;
+        }
+        else if(bgmSource.mute == true)
+        {
+            bgmSource.mute = false;
+        }
+
+    }
+    public void MuteOnOffSFX()
+    {
+        if(sfxSource.mute == false)
+        {
+            sfxSource.mute = true;
+        }
+        else if(sfxSource.mute == true)
+        {
+            sfxSource.mute = false;
+        }
+
+    }
 }

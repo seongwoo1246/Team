@@ -8,7 +8,7 @@ using UnityEngine.Purchasing;
 using UnityEngine.Networking;
 using Cysharp.Threading.Tasks;
 using Debug = DebugLogger<IAPManager>;
-using Firebase.Functions;
+
 
 // 중요한 건 구글 플레이 콘솔 연동이 안되있어서 파이어 베이스 연결해서 웹 주소를 얻어서 바꿔 넣어도 상품 등록이 안됌 (개발자 아이디 만드려고 하니 등록비 25달러라고 함 ㅎㄷㄷ)
 #region 백엔드에 들어갈 코드(예시)
