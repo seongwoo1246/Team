@@ -130,6 +130,17 @@ public sealed class StageManager : Singleton<StageManager>
     public int CurrentWaveNumber => _currentWaveNumber;
 
     /// <summary>
+    /// 파티 편성을 바꾼다. PartyFormationManager가 유저의 편성 변경을 반영할 때 호출함
+    /// 챌린지(전투) 진행 중에는 PartyFormationManager 쪽에서 이미 막고 호출하지만,
+    /// 혹시 몰라 여기도 그냥 배열만 바꿔 끼우고 끝냄 - 진행 중이던 웨이브 로직엔 영향 없음
+    /// </summary>
+    /// <param name="members">새 파티 구성원</param>
+    public void SetParty(CharacterBase[] members)
+    {
+        party = members;
+    }
+
+    /// <summary>
     /// 지정한 스테이지의 총 웨이브 수를 돌려준다 (보스 제외). roster가 없으면 0
     /// 웨이브 진행 표시 UI(WaveProgressDisplay)가 점을 몇 개 그릴지 정할때씀
     /// </summary>

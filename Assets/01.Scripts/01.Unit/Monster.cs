@@ -77,6 +77,11 @@ public class Monster : MonoBehaviour, IEntity
     private IEntity _target;
     private Transform _targetTf;
 
+    // 타겟의 콜라이더도 따로 기억해둔다 - 파티 편성에서 빠진 캐릭터는 죽은게 아니라
+    // 콜라이더만 꺼진 채 멀리(벤치 위치로) 치워지는데, IsDead만 보면 이걸 못 잡아내서
+    // 몬스터가 계속 그 캐릭터를 쫓아가버림(엉뚱한 방향으로 계속 이동하는 버그). 콜라이더가 꺼졌는지도 같이 확인해서 방지
+    private Collider2D _targetCollider;
+
     // 광폭화 시 색 틴트를 입히기 위한 참조. 원래 색(예: 황금 고블린의 금색)을 기억해뒀다가 그 위에 곱함
     private SpriteRenderer _spriteRenderer;
     private Color _baseSpriteColor = Color.white;
@@ -131,6 +136,7 @@ public class Monster : MonoBehaviour, IEntity
         _currentHP = _maxHP;
         _target = null;
         _targetTf = null;
+        _targetCollider = null;
         _isHarmless = false;
 
         // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
@@ -154,8 +160,8 @@ public class Monster : MonoBehaviour, IEntity
             return;
         }
 
-        // 타겟이 없거나 죽었으면 가장 가까운 캐릭터를 다시 잡는다
-        if (_target == null || _target.IsDead || _targetTf == null)
+        // 타겟이 없거나 죽었거나, 편성에서 빠져서 콜라이더가 꺼졌으면 가장 가까운 캐릭터를 다시 잡는다
+        if (_target == null || _target.IsDead || _targetTf == null || _targetCollider == null || !_targetCollider.enabled)
         {
             AcquireTarget();
         }
@@ -190,6 +196,7 @@ public class Monster : MonoBehaviour, IEntity
     {
         _target = null;
         _targetTf = null;
+        _targetCollider = null;
 
         _targetFilter.useTriggers = true;
         _targetFilter.SetLayerMask(targetLayer);
@@ -200,6 +207,7 @@ public class Monster : MonoBehaviour, IEntity
         {
             _target = entity;
             _targetTf = picked.transform;
+            _targetCollider = picked;
         }
     }
 

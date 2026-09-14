@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1c8ee1e463673b44db778f20bed2cdee, type: 3}
-  m_Name: char_warrior
+  m_Name: char_paladin
   m_EditorClassIdentifier: Assembly-CSharp::BaseStatData
-  id: char_warrior
-  nameKr: "\uC804\uC0AC"
-  attackType: 0
+  id: char_paladin
+  nameKr: "\uD314\uB77C\uB518"
+  attackType: 3
   targetType: 0
   row: 0
-  basePower: 20
-  powerPerLevel: 5
-  baseHp: 200
-  critChance: 0.15
-  critBonus: 1
+  basePower: 15
+  powerPerLevel: 4
+  baseHp: 260
+  critChance: 0.08
+  critBonus: 0.8
   critBonusPerLevel: 0.05
-  critChancePerLevel: 0.01
+  critChancePerLevel: 0.006
   hpGrowthRate: 1.17
