@@ -9,7 +9,6 @@ public class SelectedEquipmentInfo : MonoBehaviour
     [Header("선택 장비")]
     [SerializeField] private TextMeshProUGUI selectedEquipmentText;
 
-
     public void ShowEquipment(EquippedItem currentItem, EquippedItem selectedItem)
     {
         ShowCurrentEquipment(currentItem);

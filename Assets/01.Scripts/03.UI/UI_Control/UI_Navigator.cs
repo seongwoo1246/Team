@@ -30,18 +30,36 @@ public class UI_Navigator : MonoBehaviour
 
     public void OpenShop()
     {
+        if (shopPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         shopPanel.SetActive(true);
     }
 
     public void OpenRanking()
     {
+        if (rankingPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         rankingPanel.SetActive(true);
     }
 
     public void OpenChallenge()
     {
+        if (challengePanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         challengePanel.SetActive(true);
     }

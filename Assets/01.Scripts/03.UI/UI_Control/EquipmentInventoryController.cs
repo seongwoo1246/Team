@@ -1,5 +1,6 @@
-﻿using UnityEngine;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using TMPro;
+using UnityEngine;
 
 public class EquipmentInventoryController : MonoBehaviour
 {
@@ -32,6 +33,11 @@ public class EquipmentInventoryController : MonoBehaviour
     [Header("장비 강화")]
     [Tooltip("탭을 바꿀 때 이전 부위의 '+N%' 강화 결과 표시를 같이 지워주기 위한 참조")]
     [SerializeField] private EquipmentEnhanceButton enhanceButton;
+
+    [Header("인벤토리 정렬")]
+    [SerializeField] private TMP_Dropdown sortDropdown;
+
+    private int currentSortOption = 0;
 
     private EquippedItem selectedEquipment;
     private EquipmentSlot currentSlot;
@@ -83,6 +89,13 @@ public class EquipmentInventoryController : MonoBehaviour
         // 장비 변경을 눌렀을 때 부위가 안 맞는 엉뚱한 장비로 장착 시도하게 되므로 초기화
         selectedEquipment = null;
 
+        // 아이템 순서 정렬엔 항상 기본(0)으로 시작
+        currentSortOption = 0;
+        if (sortDropdown != null)
+        {
+            sortDropdown.SetValueWithoutNotify(0);
+        }
+
         statsPanel.SetActive(false);
         inventoryPanel.SetActive(true);
         RefreshInventory(equipmentSlot);
@@ -128,6 +141,21 @@ public class EquipmentInventoryController : MonoBehaviour
         else
         {
             items = equipmentInventory.GetItemsBySlot(slot);
+        }
+
+        // 원본 인벤토리 순서를 유지하기 위해 복사
+        items = new List<EquippedItem>(items);
+
+        // 정렬 옵션에 따라 정렬
+        if (currentSortOption == 1)
+        {
+            // 스탯 높은 순
+            items.Sort((a, b) => b.TotalRollPercent.CompareTo(a.TotalRollPercent));
+        }
+        else if (currentSortOption == 2)
+        {
+            // 스탯 낮은 순
+            items.Sort((a, b) => a.TotalRollPercent.CompareTo(b.TotalRollPercent));
         }
 
         // 장비 슬롯 생성
@@ -188,5 +216,15 @@ public class EquipmentInventoryController : MonoBehaviour
     public void CancelEquipmentChange()
     {
         confirmPanel.SetActive(false);
+    }
+
+    // 정렬 옵션이 변경됐을 때 호출
+    public void OnSortChanged(int option)
+    {
+        //확인용 로그
+        Debug.Log("정렬 옵션 변경: " + option);
+        currentSortOption = option;
+        // 현재 열려 있는 부위의 인벤토리 다시 생성
+        RefreshInventory(currentSlot);
     }
 }
