@@ -1,13 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
-using Cysharp.Threading.Tasks;
-using System.Threading;
 using Debug = DebugLogger<ADManager>;
-using System;
-using System.Threading.Tasks;
 
 
 
@@ -34,14 +33,20 @@ public class ADManager : Singleton<ADManager>
     //씬 파괴 및 광고 취소 제어용 
     private CancellationTokenSource adCancellationTokenSource;
 
+    public RewardType type;
+    public double amount = 0;
 
     protected override void Awake()
     {
         base.Awake();
 
         if(adPanel != null ) adPanel.SetActive(false);
-        if (closeAdBtn != null) closeAdBtn.onClick.AddListener(CloseRewardAD);
-        if (openAdBtn != null) openAdBtn.onClick.AddListener(OnClickAdRewardButton);
+        if (closeAdBtn != null)
+        {
+            closeAdBtn.onClick.AddListener(CloseRewardAD);
+            closeAdBtn.gameObject.SetActive(false);
+        }
+        if (openAdBtn != null) openAdBtn.onClick.AddListener(() => OnClickAdRewardButton(type, amount));
         if (AdSkipTimeText != null) AdSkipTimeText.gameObject.SetActive(false);
        
     }
@@ -219,6 +224,7 @@ public class ADManager : Singleton<ADManager>
     public void CloseRewardAD()
     {
         openAdBtn.gameObject.SetActive(true);
+        closeAdBtn.gameObject.SetActive(false);
 
         if(videoPlayer != null&&videoPlayer.isPlaying)
         {
@@ -236,11 +242,12 @@ public class ADManager : Singleton<ADManager>
     }
 
 
-    public async void OnClickAdRewardButton()
+    public async void OnClickAdRewardButton(RewardType reward, double amount)
     {
         bool isRewarded = await ShowRewardADAsync();
         if(isRewarded)
         {
+            ADRewards(reward, amount);
             Debug.Log("여기서 보상 지급 해주면 됨");
         }
         else
@@ -249,6 +256,24 @@ public class ADManager : Singleton<ADManager>
         }
     }
 
+    public void ADRewards(RewardType reward,double amount)
+    {
+        switch (reward)
+        {
+            case RewardType.Gold:
+                GameEvents.TriggerOnGoldObtained(amount);
+                GoldWallet.Instance.Add(amount);
+                break;
+
+            case RewardType.Diamond:
+                // 유료 재화가 생길 시 여기서 추가하는 함수 넣기
+                break;
+
+            case RewardType.Item:
+                // 인벤토리에 리워드 아이템 코드를 찾아서 받아오는 식
+                break;
+        }
+    }
 
     #endregion
 }
