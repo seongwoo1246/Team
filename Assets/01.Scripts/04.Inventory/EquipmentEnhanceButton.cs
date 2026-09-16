@@ -1,3 +1,4 @@
+// 작성자: 김주연
 using UnityEngine;
 using TMPro;
 

@@ -16,6 +16,7 @@ MonoBehaviour:
   nameKr: "\uC804\uC0AC"
   attackType: 0
   targetType: 0
+  row: 0
   basePower: 20
   powerPerLevel: 5
   baseHp: 200

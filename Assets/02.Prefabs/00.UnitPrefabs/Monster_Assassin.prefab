@@ -179,20 +179,8 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   aggroRange: 50
-  equipmentDropChance: 1
-  possibleDrops:
-  - {fileID: 11400000, guid: 89cc9dc09b4f8e94593f629141bf9bd8, type: 2}
-  - {fileID: 11400000, guid: 1e3f6952fa320ff4a8153c6d1c4965a0, type: 2}
-  - {fileID: 11400000, guid: e46f8c147fbbe964c98e6d89d5d9be08, type: 2}
-  - {fileID: 11400000, guid: 2bb445bd34c49ee4a810d27767e09226, type: 2}
-  - {fileID: 11400000, guid: 9b9270b2da3d35843ba30dd29c725669, type: 2}
-  - {fileID: 11400000, guid: 057714f7580510e44a59eb73cb0d3df8, type: 2}
-  - {fileID: 11400000, guid: dabc59be5342eef419ff68c548e49607, type: 2}
-  - {fileID: 11400000, guid: 290985fd7d8faf442b5438eea759d4a5, type: 2}
-  enrageHpRatio: 0.3
-  enrageMultiplier: 1.5
-  enrageTintColor: {r: 1, g: 0.15, b: 0.15, a: 1}
-  enrageTintStrength: 0.6
+  equipmentDropChance: 0.001
+  possibleDrops: []
 --- !u!1 &2823518067359865849
 GameObject:
   m_ObjectHideFlags: 0

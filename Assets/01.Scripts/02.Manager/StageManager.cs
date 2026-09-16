@@ -1,4 +1,5 @@
-﻿/*
+﻿// 작성자: 김주연
+/*
 스테이지 흐름을 관리하는 클래스
 메인 화면 파밍(Farming) ↔ 챌린지 스테이지(Challenge) 두모드를 오가며
 챌린지 스테이지를 클리어할 때마다 파밍 골드 획득 배율이 영구히 오름
@@ -128,6 +129,17 @@ public sealed class StageManager : Singleton<StageManager>
 
     // 챌린지 진행 중 지금 몇 번째 웨이브인지 (1부터 시작). 파밍 중이거나 보스전이면 0
     public int CurrentWaveNumber => _currentWaveNumber;
+
+    /// <summary>
+    /// 파티 편성을 바꾼다. PartyFormationManager가 유저의 편성 변경을 반영할 때 호출함
+    /// 챌린지(전투) 진행 중에는 PartyFormationManager 쪽에서 이미 막고 호출하지만,
+    /// 혹시 몰라 여기도 그냥 배열만 바꿔 끼우고 끝냄 - 진행 중이던 웨이브 로직엔 영향 없음
+    /// </summary>
+    /// <param name="members">새 파티 구성원</param>
+    public void SetParty(CharacterBase[] members)
+    {
+        party = members;
+    }
 
     /// <summary>
     /// 지정한 스테이지의 총 웨이브 수를 돌려준다 (보스 제외). roster가 없으면 0
@@ -366,7 +378,10 @@ public sealed class StageManager : Singleton<StageManager>
         bool bossDefeated = await RunBossAsync(stageNumber, token);
         if (bossDefeated)
         {
-            OnStageCleared(stageNumber);
+            RankingUi clearTimeRank = RankingUi.Instance;
+            clearTimeRank.AddRecord(clearTimeRank.ClearTimeList, MathF.Max(0, (Time.time - _challengeStartTime)));
+            GameEvents.TriggerOnStageCleared();
+            OnStageCleared(stageNumber); 
         }
         else if (IsPartyWiped() || IsTimeUp())
         {

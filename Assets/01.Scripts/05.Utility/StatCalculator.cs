@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 방치형 게임 밸런스 모음 (순수 계산 함수, MonoBehaviour 아님)
 출처: 우리 구글 시트 (_Config / Characters / Monsters )
 
