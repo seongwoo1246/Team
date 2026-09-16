@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿// 담당자 - 송태훈
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UtilDebug = DebugLogger<LobbyBootstrapRunner>;
 public class LobbyBootstrapRunner : MonoBehaviour, ISceneBootstrap
