@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Debug = DebugLogger<ObjcetPoolManager>;
+//담당자 - 정성우
 
 /// <summary>
 /// 오브젝트 폴링 할 모든 친구들한태 넣어줄 인터페이스

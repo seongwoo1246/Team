@@ -1,6 +1,6 @@
 ﻿using TMPro;
 using UnityEngine;
-
+//담당자 - 정성우
 public class GachaSlot : MonoBehaviour, IPoolable
 {
     // 결과창 보여주는 텍스트

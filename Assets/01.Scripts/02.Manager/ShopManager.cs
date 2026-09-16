@@ -4,8 +4,8 @@ using System.Threading.Tasks;
 using System;
 using UnityEngine;
 using Dedug = DebugLogger<ShopManager>;
-using UnityEngine.UI;
 
+//담당자 - 정성우
 
 //아이템 등급에 관련된 enum 필요없어질 시 천장 달성시 원하는 아이템을 주는 식으로 변경
 public enum ItemRarity

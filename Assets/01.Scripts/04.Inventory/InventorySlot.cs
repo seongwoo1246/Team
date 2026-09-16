@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
+//담당자 - 정성우
 
 /// <summary>
 /// 인벤토리 미리 만들어서 넣어둔다고 해서 만든 슬롯 스크립트, 

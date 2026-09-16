@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+//담당자 - 정성우
 
 /// <summary>
 /// 가챠 돌리고 나오는 패널에 붙여줄 스크립트

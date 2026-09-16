@@ -1,8 +1,8 @@
-﻿using System.Runtime.InteropServices;
+﻿
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
+//담당자 - 정성우
 
 
 
@@ -12,9 +12,9 @@ using UnityEngine.UI;
 public class MailItemUi : MonoBehaviour , IPoolable
 {
     [Header("Ui 컴포넌트들")]
-    [SerializeField] private TextMeshPro titleText; //우편 제목
-    [SerializeField] private TextMeshPro contentText; // 우편 내용
-    [SerializeField] private TextMeshPro expireText; // 우편 만료시간
+    [SerializeField] private TextMeshProUGUI titleText; //우편 제목
+    [SerializeField] private TextMeshProUGUI contentText; // 우편 내용
+    [SerializeField] private TextMeshProUGUI expireText; // 우편 만료시간
     [SerializeField] private Button claimButton; // 수령 버튼
     [SerializeField] private Image rewardIcon; // 첫 번째 대표 아이템 아이콘
 

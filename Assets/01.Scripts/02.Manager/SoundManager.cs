@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Debug = DebugLogger<SoundManager>;
-
+//담당자 - 정성우
 
 
 [Serializable]

@@ -5,9 +5,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Firebase.Database;
-using Firebase.Extensions;
 using Debug = DebugLogger<MailBoxManager>;
-
+//담당자 - 정성우
 
 public enum RewardType
 {
@@ -58,6 +57,7 @@ public class MailBoxManager : Singleton<MailBoxManager>
     private DatabaseReference dbRef;
     private string currentUserId = ""; // 나중에는 파이어베이스 Auth UID사용
 
+    UserInfo userInfo;
     //로컬 우편캐시(mailId,mailItem)
     public Dictionary<string, mailItem> mailDictionary {  get; private set; } = new Dictionary<string, mailItem>();
 
@@ -67,10 +67,15 @@ public class MailBoxManager : Singleton<MailBoxManager>
     {
         base.Awake();
         dbRef = FirebaseDatabase.DefaultInstance.RootReference;
+
+        userInfo=GetComponent<UserInfo>();
+        SetUserID(userInfo);
     }
 
-    private void Start()
+    public void SetUserID(UserInfo user)
     {
+        currentUserId = user.UID;
+
         //실시간 우편 감지 시작
         StartListeningMails();
     }

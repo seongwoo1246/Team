@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+// 담당자 - 정성우
 
 /*
  사용 예시
@@ -15,7 +15,7 @@ record 버튼 열 때 OnOpenRankUI();를 실행해서 랭킹표에 데이터를 
 /// <summary>
 /// 여러 카테고리의 랭킹 데이터를 관리하고 탭 전환을 처리하는 UI 관리 스크립트
 /// </summary>
-public class RankingUi : MonoBehaviour
+public class RankingUi : Singleton<RankingUi>
 {
     /// <summary>
     /// 랭킹 슬롯 UI을 여기 넣어주면 된다.
@@ -37,16 +37,18 @@ public class RankingUi : MonoBehaviour
     
     private RankCategoty currentCategory = RankCategoty.Damage;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+        isDDOL = true;
         // 각 딕셔너리에 미리 크기 지정
         top3CategoryDataDict[RankCategoty.Damage] = new UserRankData[3];
         top3CategoryDataDict[RankCategoty.PlayTime] = new UserRankData[3];
         top3CategoryDataDict[RankCategoty.ClearTime] = new UserRankData[3];
         // 탭 버튼 이벤트 연결
-        damageTapBtn.onClick.AddListener(()=> OnClickTap(RankCategoty.Damage));
-        playTimeTapBtn.onClick.AddListener(()=> OnClickTap(RankCategoty.PlayTime));
-        clearTimeTapBtn.onClick.AddListener(()=> OnClickTap(RankCategoty.ClearTime));
+        damageTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.Damage));
+        playTimeTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.PlayTime));
+        clearTimeTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.ClearTime));
         
     }
 
@@ -61,7 +63,7 @@ public class RankingUi : MonoBehaviour
     }
 
     /// <summary>
-    /// Record 버튼을 누를 때 지금까지 모은 데이터를 한 번에 보내줘서 초기화 하는 작업
+    /// Record or Ranking 버튼을 누를 때 지금까지 모은 데이터를 한 번에 보내줘서 초기화 하는 작업
     /// </summary>
     public void OnOpenRankUI()
     {
