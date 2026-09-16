@@ -146,6 +146,12 @@ public class UserManager : NonMonoSingleton<UserManager>
     #endregion
 
     #region [Facade API : 단일 도메인]
+    public async UniTask<bool> UpdateGoldAsync(long newGold, CancellationToken ct =default)
+    {
+        if (CurrentUser == null) return false;
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newGold, ct);
+    }
+
     /// <summary>
     /// 캐릭터 장비 장착(스왑)
     /// </summary>
