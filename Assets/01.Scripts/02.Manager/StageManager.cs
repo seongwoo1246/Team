@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 스테이지 흐름을 관리하는 클래스
 메인 화면 파밍(Farming) ↔ 챌린지 스테이지(Challenge) 두모드를 오가며
@@ -378,7 +378,10 @@ public sealed class StageManager : Singleton<StageManager>
         bool bossDefeated = await RunBossAsync(stageNumber, token);
         if (bossDefeated)
         {
-            OnStageCleared(stageNumber);
+            RankingUi clearTimeRank = RankingUi.Instance;
+            clearTimeRank.AddRecord(clearTimeRank.ClearTimeList, MathF.Max(0, (Time.time - _challengeStartTime)));
+            GameEvents.TriggerOnStageCleared();
+            OnStageCleared(stageNumber); 
         }
         else if (IsPartyWiped() || IsTimeUp())
         {
