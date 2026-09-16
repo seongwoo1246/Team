@@ -21,7 +21,6 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         base.Init();
         rootRef = FirebaseDatabase.DefaultInstance.RootReference;
-        ServiceLocator.Register<UserManager>(this);
     }
 
     private DatabaseReference GetUserRef(string uid) => rootRef?.Child(Users).Child(uid);

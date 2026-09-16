@@ -53,6 +53,7 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
         {
             Destroy(this.gameObject);
         }
+        DebugLogger<T>.Log($"{typeof(T).Name} Awake");
     }
 
     protected virtual void OnDestroy()

@@ -1,73 +1,55 @@
-﻿using Cysharp.Threading.Tasks;
+﻿/* 담당자 - 송태훈
+ 각 씬 별 데이터 캐싱 및 조회 총괄 매니저
+ */
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using UtilDebug = DebugLogger<DataManager>;
 
 public class DataManager : Singleton<DataManager>, ILoadable
 {
-    public int LoadOrder => 1;
+    public int LoadOrder => 2;
     private readonly Dictionary<System.Type, Dictionary<string, ScriptableObject>> _identifiedDataCache = new();
     private readonly Dictionary<System.Type, ScriptableObject> _singleDataCache = new();
-    private SceneDataConfigSO _currentSceneConfig;
 
     protected override void Awake()
     {
         isDDOL = true;
         base.Awake();
-        ServiceLocator.Register<DataManager>(this);
-        SceneLoadManager.Instance.RegisterLoadable(this);
     }
 
     public async UniTask OnSceneLoadCreate(SceneId scene)
     {
         if (scene == SceneId.None) return;
-        
-        CancellationToken ct = this.destroyCancellationToken;
 
-        var addressableMgr = ServiceLocator.Get<AddressableManager>();
-
-        // 1. 해당 씬 설정 SO 로드 ( 이름 컨벤션 : "{SceneId}_Config" )
-        string configKey = $"{scene}_Config";
-        _currentSceneConfig = await addressableMgr.LoadAssetAsync<SceneDataConfigSO>(configKey, ct);
-        if (_currentSceneConfig == null) return;
-
+        System.Threading.CancellationToken ct = this.destroyCancellationToken;
         UtilDebug.Log($"[{scene}] 데이터 로드 시작");
 
-        // 2. Config에 등록되 Addressable Label 순회 로드 ( SO 기반 일괄 로드 )
-        foreach (string label in _currentSceneConfig.DataLabels)
-        {
-            var loadedAssets = await addressableMgr.LoadAssetsByLabelAsync<ScriptableObject>(label, ct);
-            if(loadedAssets != null)
-            {
-                foreach(var asset in loadedAssets)
-                {
-                    RegisterAsset(asset);
-                }
-            }
-        }
+        // 1. 해당 씬 설정 SO 로드 ( 이름 컨벤션 : "{SceneId}_Data" )
+        string dataLabel = $"{scene}_Data";
+        var loadedAssets = await AddressableManager.Instance.LoadAssetsByLabelAsync<ScriptableObject>(dataLabel, ct);
 
-        foreach(string key in _currentSceneConfig.IndividualAssetKeys)
+        if (loadedAssets != null)
         {
-            var asset = await addressableMgr.LoadAssetAsync<ScriptableObject>(key, ct);
-            if(asset != null)
+            foreach(var aseet in loadedAssets)
             {
-                RegisterAsset(asset);
+                RegisterAsset(aseet);
             }
+            UtilDebug.Log($"[{scene}] 기획 데이터 {loadedAssets.Count}개 캐싱 완료");
+        }
+        else
+        {
+            UtilDebug.Log($"[{scene}] 로드할 기획 데이터가 없습니다. (Label: {dataLabel})");
         }
     }
 
-    public void Init(SceneId scene)
-    {
-
-    }
+    public void Init(SceneId scene) => UtilDebug.Log($"[{scene}] DataManager 초기화 완료");
 
     public void OnSceneDestory(SceneId scene)
     {
         // 씬 전환 시 캐시 비우기
         _identifiedDataCache.Clear();
         _singleDataCache.Clear();
-        _currentSceneConfig = null;
     }
 
     /// <summary>
@@ -128,7 +110,7 @@ public class DataManager : Singleton<DataManager>, ILoadable
 
     /// <summary>
     /// 단일 데이터 조회 ( GameConfig, StageRosterData )
-    /// 사용 예 : DataManager.instance.GetSingle<GameConfig>();
+    /// 사용 예 : DataManager.Instance.GetSingle<GameConfig>();
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>

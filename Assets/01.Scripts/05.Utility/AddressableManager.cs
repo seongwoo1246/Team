@@ -7,7 +7,9 @@ using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceLocations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 using UtilDebug = DebugLogger<AddressableManager>;
@@ -18,21 +20,20 @@ public class AddressableManager : Singleton<AddressableManager>
     private readonly Dictionary<string, AsyncOperationHandle> assetHandles = new();
     // 런타임에 Instantiate된 오브젝트 핸들 캐시 ( 풀링되지 않는 1회성 오브젝트용)
     private readonly Dictionary<GameObject, AsyncOperationHandle> instanceHandles = new();
-
+    private List<IResourceLocation> _downloadLocations = new();
     public int LoadOrder => 1;
 
     protected override void Awake()
     {
         isDDOL = true;
         base.Awake();
-        ServiceLocator.Register<AddressableManager>(this);
     }
 
     #region 원격 카탈로그 및 CDN 다운로드 패치
     /// <summary>
-    /// 원격 CDN(Cloudflare) 카탈로그를 확인하고 필요 시 다운로드 할 총 용량을 반환
+    /// 원격 CDN(Cloudflare) 카탈로그를 확인하고 모든 원격 에셋의 다운로드 필요 총 용량을 산출
     /// </summary>
-    public async UniTask<long> CheckDownladSizeAsync(string labelOrKey, CancellationToken ct = default)
+    public async UniTask<long> CheckTotalDownloadSizeAsync(CancellationToken ct = default)
     {
         // addressables 초기화
         await Addressables.InitializeAsync().ToUniTask(cancellationToken: ct);
@@ -52,19 +53,39 @@ public class AddressableManager : Singleton<AddressableManager>
         }
 
         // 다운로드 용량 산출
-        var sizeHandle = Addressables.GetDownloadSizeAsync(labelOrKey);
-        long downladSize = await sizeHandle.ToUniTask(cancellationToken: ct);
+        var allkeys = new HashSet<object>();
+        foreach(IResourceLocator locator in Addressables.ResourceLocators)
+        {
+            foreach(object key in locator.Keys)
+            {
+                allkeys.Add(key);
+            }
+        }
+        var locationsHandle = Addressables.LoadResourceLocationsAsync(allkeys, Addressables.MergeMode.Union);
+        IList<IResourceLocation> locations = await locationsHandle.ToUniTask(cancellationToken: ct);
+
+        _downloadLocations = new List<IResourceLocation>(locations);
+        Addressables.Release(locationsHandle);
+
+        if (_downloadLocations.Count == 0)
+            return 0;
+
+        var sizeHandle = Addressables.GetDownloadSizeAsync(_downloadLocations);
+        long downloadSize = await sizeHandle.ToUniTask(cancellationToken: ct);
         Addressables.Release(sizeHandle);
 
-        return downladSize;
+        return downloadSize;
     }
 
     /// <summary>
-    /// 대상 에셋 번들을 비동기로 다운로드
+    /// CheckTotalDownloadSizeAsync에서 감지된 모든 원격 의존성 에셋 번들 일괄 다운로드
     /// </summary>
-    public async UniTask<bool> DownloadDependenciesAsync(string labelOrKey, Action<float> onProgress = null ,CancellationToken ct = default)
+    public async UniTask<bool> DownloadAllDependenciesAsync(Action<float> onProgress = null ,CancellationToken ct = default)
     {
-        var downloadHandle = Addressables.DownloadDependenciesAsync(labelOrKey, false);
+        if (_downloadLocations == null || _downloadLocations.Count == 0)
+            return true;
+
+        var downloadHandle = Addressables.DownloadDependenciesAsync(_downloadLocations, false);
 
         while(!downloadHandle.IsDone)
         {
@@ -74,6 +95,9 @@ public class AddressableManager : Singleton<AddressableManager>
 
         bool success = downloadHandle.Status == AsyncOperationStatus.Succeeded;
         Addressables.Release(downloadHandle);
+
+        // 다운로드 완료 후 로케이션 캐시 정리
+        _downloadLocations.Clear();
         return success;
     }
 
@@ -115,7 +139,7 @@ public class AddressableManager : Singleton<AddressableManager>
     public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, CancellationToken ct = default, Action<T> callback = null) where T : UnityEngine.Object
     {
         var handle = Addressables.LoadAssetsAsync<T>(label, callback);
-        IList<T> result = await handle.ToUniTask(cancellationToken: ct);
+        var result = await handle.ToUniTask(cancellationToken: ct);
 
         if(handle.Status == AsyncOperationStatus.Succeeded)
         {

@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 2d94eeee82208164198ebf2ca66aae62
   m_currentHash:
     serializedVersion: 2
-    Hash: 8a953ad258403f821c39c25ac9efbfa5
+    Hash: 1ff6437146e981585792d5658b314044
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 1
   m_CatalogRequestsTimeout: 0
@@ -121,6 +121,8 @@ MonoBehaviour:
     - Remote_Scenes
     - Remote_Poolables
     - Remote_UI
+    - Bootstrap_Local
+    - LobbySceneTest_Data
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: c09c1e7f3ff9971429f609a953aad4b0, type: 2}

@@ -116,8 +116,7 @@ public class LoginController : MonoBehaviour
 
         if(!isLoggedIn)
         {
-            var userManager = ServiceLocator.Get<UserManager>();
-            userManager?.ClearLocalData();
+            UserManager.Instance.ClearLocalData();
             loadingPopupUI?.ForceHide();
             loginView?.SetPanelActive(true);
             return;
@@ -131,9 +130,7 @@ public class LoginController : MonoBehaviour
     private async UniTaskVoid ProcessUserVerificationAsync(string uid, CancellationToken ct)
     {
         loadingPopupUI?.ShowLoading("유저 계정 정보 확인 중...");
-        var userManager = ServiceLocator.Get<UserManager>();
-
-        var (exists, data) = await userManager.LoadUserInfoAsync(uid, ct);
+        var (exists, data) = await UserManager.Instance.LoadUserInfoAsync(uid, ct);
         if (exists)
         {
             loadingPopupUI?.ForceHide();
@@ -155,11 +152,10 @@ public class LoginController : MonoBehaviour
     {
         var ct = this.GetCancellationTokenOnDestroy();
         string uid = AuthLoginSystem.Instance.UserId;
-        var userManager = ServiceLocator.Get<UserManager>();
 
         loadingPopupUI?.ShowLoading($"계정 생성 중 {nickname}");
 
-        bool isDuplicate = await userManager.IsNicknameDuplicateAsync(nickname, ct);
+        bool isDuplicate = await UserManager.Instance.IsNicknameDuplicateAsync(nickname, ct);
         if (isDuplicate)
         {
             await loadingPopupUI.HideAsync();
@@ -167,7 +163,7 @@ public class LoginController : MonoBehaviour
             return;
         }
 
-        bool success = await userManager.CreateUserInfoAsync(uid, nickname, ct);
+        bool success = await UserManager.Instance.CreateUserInfoAsync(uid, nickname, ct);
         if (success)
         {
             nicknamePopupUI.Close();

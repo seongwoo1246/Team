@@ -5,3 +5,8 @@ public interface IIdentifiable
 {
     string Id { get; }
 }
+
+public interface ISceneBootstrap
+{
+    Cysharp.Threading.Tasks.UniTask OnSceneReadyAsync();
+}
