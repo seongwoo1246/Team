@@ -16,7 +16,7 @@ public class MailboxUi : MonoBehaviour
     [Header("버튼과 알림")]
     [SerializeField] private Button claimAllButton; // 모두 받기 버튼
     [SerializeField] private Button closeButton; // 닫기 버튼
-    [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 몇 개 왔는지 알려줄 빨간 알림
+    [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 우편이 있다고ㅁ 알려줄 빨간 알림
 
 
     //[제일 핵심] 내가 스폰한 우편UI만을 스폰 디스폰 하기 위해 만든 바구니 역할

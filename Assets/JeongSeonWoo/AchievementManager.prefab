@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &570024186945217585
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1202722776724807867}
+  - component: {fileID: 8348600648792859624}
+  m_Layer: 0
+  m_Name: AchievementManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1202722776724807867
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570024186945217585}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 96.94336, y: 1502.199, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8348600648792859624
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570024186945217585}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2bf7f13f73debf4408e247efdc91cbb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AchievementManager
+  isDDOL: 1
+  achievements:
+  - id: 10001
+    title: "\uBAAC\uC2A4\uD130\uB97C \uC7A1\uC544\uB77C"
+    targetProgress: 30
+    currentProgress: 0
+    isUnLocked: 0
+    rewardType: 0
+    rewardAmount: 100
+    isClaimed: 0
+  - id: 10002
+    title: "\uBD80\uC790\uC758 \uAE30\uC900"
+    targetProgress: 50000
+    currentProgress: 0
+    isUnLocked: 0
+    rewardType: 0
+    rewardAmount: 5000
+    isClaimed: 0
+  - id: 10003
+    title: "\uC815\uC0C1\uC744 \uD5A5\uD558\uC5EC"
+    targetProgress: 10
+    currentProgress: 0
+    isUnLocked: 0
+    rewardType: 0
+    rewardAmount: 1000
+    isClaimed: 0
+  - id: 10004
+    title: "\uC560\uC815\uC758 \uC815\uB3C4"
+    targetProgress: 50000
+    currentProgress: 0
+    isUnLocked: 0
+    rewardType: 0
+    rewardAmount: 500
+    isClaimed: 0
