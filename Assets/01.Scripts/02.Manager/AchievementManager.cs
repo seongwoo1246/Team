@@ -1,12 +1,11 @@
 ﻿
 using Firebase.Database;
-using Firebase.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Debug = DebugLogger<AchievementManager>;
-
+//담당자 - 정성우
 
 
 
@@ -91,7 +90,7 @@ public class AchievementManager : Singleton<AchievementManager>
 
     private DatabaseReference databaseReference; //파이어베이스 DB참조
     private string userId = "";  // 실제 서비스 시 Auth에서 가져오는 UID
-    UserInfo userInfo;
+    
 
     protected override void Awake()
     {
@@ -100,15 +99,12 @@ public class AchievementManager : Singleton<AchievementManager>
 
         //파이어 베이스 루트 참조 초기화 (리얼타임 데이터베이스 기준)
         databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
-       
-        userInfo= GetComponent<UserInfo>();
-        SetUserId(userInfo);
     }
 
 
-    public async void SetUserId(UserInfo user)
+    public async void SetUserId(string user)
     {
-        userId = user.UID;
+        userId = user;
 
 
         await LoadAchievementsFromFirebase();
