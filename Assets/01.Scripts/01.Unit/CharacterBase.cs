@@ -296,9 +296,25 @@ public class CharacterBase : MonoBehaviour, IEntity
             return false;
         }
 
+        // 다른 캐릭터가 이미 장착 중인 장비라면 장착 불가
+        if (item.EquippedBy != null && item.EquippedBy != this)
+        {
+            return false;
+        }
+
+        // 기존에 이 부위에 장착 중이던 장비
+        EquippedItem previousItem = _equippedItems[(int)slot];
+
+        // 기존 장비의 장착자 정보 해제
+        if (previousItem != null)
+        {
+            previousItem.SetEquippedBy(null);
+        }
+
         // 체력 비율은 유지한 채로 스탯만 다시 계산 (파티 강화 때와 동일한 방식)
         float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
         _equippedItems[(int)slot] = item;
+        item.SetEquippedBy(this);
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
 

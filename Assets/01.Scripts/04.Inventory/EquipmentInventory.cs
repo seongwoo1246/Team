@@ -25,12 +25,12 @@ public class EquipmentInventory : MonoBehaviour
     }
 
     // 장비를 인벤토리에서 제거
-    public void RemoveItem(EquippedItem item)
+    public bool RemoveItem(EquippedItem item)
     {
         if (item == null)
-            return;
+            return false;
 
-        items.Remove(item);
+        return items.Remove(item);
     }
 
     // 장비를 종류 별로 불러옴

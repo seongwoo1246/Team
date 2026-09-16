@@ -1,4 +1,10 @@
-﻿using UnityEngine;
+﻿/*
+담담자 - 홍준호
+ 최하단 바텀 패널 버튼용 
+ 패널 이동용 스크립트
+ */
+
+using UnityEngine;
 
 public class UI_Navigator : MonoBehaviour
 {
@@ -30,18 +36,36 @@ public class UI_Navigator : MonoBehaviour
 
     public void OpenShop()
     {
+        if (shopPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         shopPanel.SetActive(true);
     }
 
     public void OpenRanking()
     {
+        if (rankingPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         rankingPanel.SetActive(true);
     }
 
     public void OpenChallenge()
     {
+        if (challengePanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         challengePanel.SetActive(true);
     }

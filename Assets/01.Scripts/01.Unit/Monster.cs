@@ -378,14 +378,11 @@ public class Monster : MonoBehaviour, IEntity
         float damage = Mathf.Max(0f, amount);
         _currentHP = Mathf.Max(0f, _currentHP - damage);
         OnDamaged(damage);
-        RankingUi damageRank = RankingUi.Instance;
-        damageRank.AddRecord(damageRank.DamageList, damage);
         CheckEnrage();
 
         if (_currentHP <= 0f)
         {
             Die();
-            GameEvents.TriggerOnEnemyKilled();
         }
     }
 
