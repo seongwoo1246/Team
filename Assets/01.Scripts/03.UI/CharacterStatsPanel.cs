@@ -1,4 +1,9 @@
-﻿using TMPro;
+﻿/*
+담담자 - 홍준호
+ 캐릭터 패널 하단 스탯창 관리
+ */
+
+using TMPro;
 using UnityEngine;
 
 public class CharacterStatsPanel : MonoBehaviour

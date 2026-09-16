@@ -10,8 +10,11 @@ public class EquipmentInventorySlot : MonoBehaviour
     [SerializeField] private TextMeshProUGUI enhanceText;
     [SerializeField] private TextMeshProUGUI statText;
 
-    [Header("선택 테두리")]
+    [Header("상점 판매 선택 테두리")]
     [SerializeField] private Outline selectedOutline;
+
+    [Header("장착 중 표시 테두리")]
+    [SerializeField] private Outline equippedOutline;
 
     private EquippedItem equippedItem;
     private EquipmentInventoryController controller;
@@ -19,8 +22,7 @@ public class EquipmentInventorySlot : MonoBehaviour
 
 
     // 일반 장비 인벤토리에서 사용
-    public void SetItem(
-        EquippedItem item, EquipmentInventoryController inventoryController)
+    public void SetItem(EquippedItem item, EquipmentInventoryController inventoryController)
     {
         equippedItem = item;
         controller = inventoryController;
@@ -106,6 +108,12 @@ public class EquipmentInventorySlot : MonoBehaviour
 
         // TotalRollPercent는 이미 퍼센트 단위이므로 * 100 하지 않음
         statText.text = "옵션 +" + equippedItem.TotalRollPercent.ToString("F1") + "%";
+
+        // 일반 인벤토리에서만 장착 여부 표시
+        if (equippedOutline != null)
+        {
+            equippedOutline.enabled = controller != null && equippedItem.IsEquipped;
+        }
     }
 
 
@@ -119,6 +127,9 @@ public class EquipmentInventorySlot : MonoBehaviour
 
         if (statText != null)
             statText.text = "";
+
+        if (equippedOutline != null)
+            equippedOutline.enabled = false;
     }
 
 

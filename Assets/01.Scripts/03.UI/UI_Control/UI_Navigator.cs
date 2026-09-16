@@ -1,4 +1,10 @@
-﻿using UnityEngine;
+﻿/*
+담담자 - 홍준호
+ 최하단 바텀 패널 버튼용 
+ 패널 이동용 스크립트
+ */
+
+using UnityEngine;
 
 public class UI_Navigator : MonoBehaviour
 {
