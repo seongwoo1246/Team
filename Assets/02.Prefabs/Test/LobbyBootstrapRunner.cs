@@ -8,7 +8,7 @@ public class LobbyBootstrapRunner : MonoBehaviour, ISceneBootstrap
     {
         UtilDebug.Log("[LobbyBootstrapRunner] 로비 씬 내부 컴포넌트 세팅 시작");
         // 1. 각 필요한 시스템 서비스 등록 
-
+        
         // 2. UI 및 Lobby 씬 오브젝트 부착
 
         await UniTask.Yield();
