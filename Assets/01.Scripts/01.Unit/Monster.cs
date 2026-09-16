@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력을 계산함
   현재 체력 = 기본체력 × (체력증가율 ^ 레벨)
@@ -378,11 +378,14 @@ public class Monster : MonoBehaviour, IEntity
         float damage = Mathf.Max(0f, amount);
         _currentHP = Mathf.Max(0f, _currentHP - damage);
         OnDamaged(damage);
+        RankingUi damageRank = RankingUi.Instance;
+        damageRank.AddRecord(damageRank.DamageList, damage);
         CheckEnrage();
 
         if (_currentHP <= 0f)
         {
             Die();
+            GameEvents.TriggerOnEnemyKilled();
         }
     }
 
