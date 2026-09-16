@@ -50,7 +50,7 @@ public class mailItem
 
 
 /// <summary>
-/// 임시로 만든 스크립트(우편함 기능을 구현하기 위해 제작함)
+/// (우편함 기능을 구현하기 위해 제작함)
 /// </summary>
 public class MailBoxManager : Singleton<MailBoxManager>
 {
