@@ -366,10 +366,7 @@ public sealed class StageManager : Singleton<StageManager>
         bool bossDefeated = await RunBossAsync(stageNumber, token);
         if (bossDefeated)
         {
-            RankingUi clearTimeRank = RankingUi.Instance;
-            clearTimeRank.AddRecord(clearTimeRank.ClearTimeList,MathF.Max(0,(Time.time - _challengeStartTime)));
-            GameEvents.TriggerOnStageCleared();
-            OnStageCleared(stageNumber); 
+            OnStageCleared(stageNumber);
         }
         else if (IsPartyWiped() || IsTimeUp())
         {
