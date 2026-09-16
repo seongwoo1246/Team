@@ -1,4 +1,5 @@
-﻿public static class TitleBootstrap
+﻿// 담당자 - 송태훈
+public static class TitleBootstrap
 {
     public static void InitializeSingletons()
     {

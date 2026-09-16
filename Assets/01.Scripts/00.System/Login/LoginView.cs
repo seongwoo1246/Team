@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿// 담당자 - 송태훈
+using UnityEngine;
 
 public class LoginView : MonoBehaviour
 {

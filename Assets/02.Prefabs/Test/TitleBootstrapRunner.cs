@@ -1,4 +1,5 @@
-﻿using Cysharp.Threading.Tasks;
+﻿// 담당자 - 송태훈
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;

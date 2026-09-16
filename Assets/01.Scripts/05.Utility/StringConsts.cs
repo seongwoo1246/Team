@@ -1,4 +1,5 @@
-﻿namespace StringConsts
+﻿// 담당자 - 송태훈
+namespace StringConsts
 {
     public static class UserConstants
     {
