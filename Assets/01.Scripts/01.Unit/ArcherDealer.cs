@@ -88,4 +88,7 @@ public class ArcherDealer : CharacterBase
 
     // 속사는 때릴 대상이 있어야 쓸 수 있음
     protected override bool CanUseSkill2() => GetLowestHpEntity(EnemyLayer) != null;
+
+    public override string Skill1Name => "관통 사격";
+    public override string Skill2Name => "속사";
 }

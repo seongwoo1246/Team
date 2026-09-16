@@ -12,20 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e4b516a58480444cb69fadef8380406, type: 3}
   m_Name: StageRosterData
   m_EditorClassIdentifier: Assembly-CSharp::StageRosterData
-  normalMonsters:
-  - monsterPrefab: {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
-    unlockStage: 1
-  - monsterPrefab: {fileID: 8302749502758054592, guid: a79810249d5c823408edd622b461c492, type: 3}
-    unlockStage: 1
-  - monsterPrefab: {fileID: 774649218372171895, guid: a9b5d42cbfce3cf469010d774f65a660, type: 3}
-    unlockStage: 10
-  - monsterPrefab: {fileID: 2186987795510444607, guid: 7fc55a6b13935134984b8039363ed6af, type: 3}
-    unlockStage: 1
   bossMonsters:
   - monsterPrefab: {fileID: 2162109254367515413, guid: bf069e7077b7b3442b8883e22ee8543b, type: 3}
     unlockStage: 1
+  - monsterPrefab: {fileID: 2416589787680482672, guid: ef4c5309bd950a946971b1df9533ead1, type: 3}
+    unlockStage: 11
+  - monsterPrefab: {fileID: 8461180278936000148, guid: 3afa2588ef0b8db47b219fa014baccb4, type: 3}
+    unlockStage: 21
+  - monsterPrefab: {fileID: 6035923050067334024, guid: 466fac0ba230d9744ab268a68eabf081, type: 3}
+    unlockStage: 31
+  stagesPerBossRotation: 10
   baseWaveCount: 3
   stagesPerWaveIncrease: 0
   maxWaveCount: 10
-  monstersPerWave: 5
+  monstersPerWave: 10
   spawnInterval: 0.5

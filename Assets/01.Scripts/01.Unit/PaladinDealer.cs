@@ -77,4 +77,7 @@ public class PaladinDealer : CharacterBase
 
     // 수호의 방패는 자기 버프라 적 유무랑 상관없이 항상 사용 가능
     protected override bool CanUseSkill2() => true;
+
+    public override string Skill1Name => "방패 강타";
+    public override string Skill2Name => "수호의 방패";
 }
