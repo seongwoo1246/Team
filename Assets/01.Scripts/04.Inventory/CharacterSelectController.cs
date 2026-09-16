@@ -12,6 +12,9 @@ public class CharacterSelectController : MonoBehaviour
     [Header("장비 UI")]
     [SerializeField] private EquipmentInventoryController equipmentInventoryController;
 
+    [Header("스탯 UI")]
+    [SerializeField] private CharacterStatsPanel characterStatsPanel;
+
     private AttackType currentAttackType = AttackType.Physical;
 
     public AttackType CurrentAttackType => currentAttackType;
@@ -49,23 +52,21 @@ public class CharacterSelectController : MonoBehaviour
     {
         currentAttackType = AttackType.Physical;
         equipmentInventoryController.RefreshEquippedSlots();
-        //characterEquipment.RefreshEquipmentSlots(currentAttackType);
+        //characterStatsPanel.RefreshStats();
     }
-
 
     public void SelectMage()
     {
         currentAttackType = AttackType.Magic;
         equipmentInventoryController.RefreshEquippedSlots();
-        //characterEquipment.RefreshEquipmentSlots(currentAttackType);
+        //characterStatsPanel.RefreshStats();
     }
-
 
     public void SelectHealer()
     {
         currentAttackType = AttackType.Heal;
         equipmentInventoryController.RefreshEquippedSlots();
-        //characterEquipment.RefreshEquipmentSlots(currentAttackType);
+        //characterStatsPanel.RefreshStats();
     }
 
     public void SelectPaladin()

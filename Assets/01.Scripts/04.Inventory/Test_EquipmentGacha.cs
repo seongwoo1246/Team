@@ -8,22 +8,51 @@ public class Test_EquipmentGacha : MonoBehaviour
     [Header("장비 인벤토리")]
     [SerializeField] private EquipmentInventory equipmentInventory;
 
+    [Header("가챠 비용")]
+    [SerializeField] private double gachaCost = 1000d;
+
+    [Header("골드 부족 안내창")]
+    [SerializeField] private GameObject notEnoughGoldPanel;
+
 
     // 장비 10개 뽑기
     public void DrawEquipment()
     {
         if (equipmentDatas == null || equipmentDatas.Length == 0)
         {
-            Debug.LogWarning("장비 데이터가 없습니다.");
+            return;
+        }
+
+        // 연결 확인용
+        if (equipmentInventory == null)
+        {
+            Debug.LogWarning("장비 인벤토리가 연결되지 않았습니다.");
+            return;
+        }
+
+        if (GoldWallet.Instance == null)
+        {
+            Debug.LogWarning("GoldWallet을 찾을 수 없습니다.");
+            return;
+        }
+        // 연결 확인용 //
+
+
+
+        // 골드가 충분한지 확인하고 1000골드 차감
+        if (!GoldWallet.Instance.TrySpend(gachaCost))
+        {
+            if (notEnoughGoldPanel != null) 
+                notEnoughGoldPanel.SetActive(true);
+            
+
             return;
         }
 
         for (int i = 0; i < 10; i++)
         {
-            // 6개 장비 중 하나 랜덤 선택
-            int randomIndex =
-                Random.Range(0, equipmentDatas.Length);
-
+            // 장비 데이터 중 하나 랜덤 선택
+            int randomIndex = Random.Range(0, equipmentDatas.Length);
             EquipmentData selectedData = equipmentDatas[randomIndex];
 
             // 장비 옵션 랜덤
@@ -36,6 +65,14 @@ public class Test_EquipmentGacha : MonoBehaviour
             equipmentInventory.AddItem(item);
         }
 
-        Debug.Log("장비 10회 뽑기");
+        Debug.Log($"{gachaCost}골드를 사용하여 장비 10개 뽑기");
+    }
+
+    public void CloseNotEnoughGoldPanel()
+    {
+        if (notEnoughGoldPanel != null)
+        {
+            notEnoughGoldPanel.SetActive(false);
+        }
     }
 }
