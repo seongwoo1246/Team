@@ -1,3 +1,4 @@
+// 작성자: 김주연
 /*
 캐릭터 스킬 버튼. 누르면 해당 캐릭터의 스킬을 시도하고 남은 쿨다운을 원형 게이지(Image Filled/Radial360)로 보여줌
 */
@@ -64,6 +65,16 @@ public sealed class SkillButtonUI : MonoBehaviour
             }
             buttonImage.color = color;
         }
+    }
+
+    /// <summary>
+    /// 이 버튼이 조작할 캐릭터를 바꾼다. 파티 편성이 바뀔 때 PartyFormationManager가 호출해서
+    /// "몇 번 슬롯 스킬 버튼"이 그 슬롯에 지금 배정된 캐릭터를 가리키도록 갱신함
+    /// </summary>
+    /// <param name="newTarget">새로 조작할 캐릭터 (편성에서 빠지면 null)</param>
+    public void SetTarget(CharacterBase newTarget)
+    {
+        target = newTarget;
     }
 
     /// <summary>버튼 OnClick에 연결. 쿨다운이 다 찼으면 스킬을 사용한다</summary>

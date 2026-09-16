@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 드랍되거나 장착된 장비 개별 인스턴스. MonoBehaviour도 SO도 아닌 순수 C# 클래스
 EquipmentData(SO)는 여러 개체가 공유하는 고정 정보고, 실제로 몇% 옵션으로 떴는지는 개체마다 달라서
 그 값(rollPercent)만 따로 들고 다님
@@ -68,13 +69,6 @@ public sealed class EquippedItem
     // 원래 드랍 보너스% + 강화로 쌓인 보너스% 전부 합친 최종 값. 스탯 계산은 전부 이값을씀
     public float TotalRollPercent => rollPercent + enhanceBonusTotal;
 
-    // 이 장비를 현재 장착하고 있는 캐릭터
-    public CharacterBase EquippedBy { get; private set; }
-
-    // 장비가 현재 장착 중인지 확인
-    public bool IsEquipped => EquippedBy != null;
-
-
     /// <summary>
     /// 이 장비를 1강 강화한다. 재료 소모/성공 여부 판정은 호출하는 쪽(CharacterBase.TryEnhanceEquipped)이
     /// 담당하고, 여기서는 이미 강화하기로 확정된 순간의 랜덤 보너스 굴림 + 누적만 처리함
@@ -94,11 +88,5 @@ public sealed class EquippedItem
         enhanceLevel++;
         enhanceBonusTotal += addedRollPercent;
         return true;
-    }
-
-    // 장비를 장착한 캐릭터 정보 설정 또는 해제
-    public void SetEquippedBy(CharacterBase character)
-    {
-        EquippedBy = character;
     }
 }
