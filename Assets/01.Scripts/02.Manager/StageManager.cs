@@ -266,7 +266,7 @@ public sealed class StageManager : Singleton<StageManager>
             return;
         }
 
-        if (roster.PickStrongestBoss(stageNumber) == null)
+        if (roster.PickBossForStage(stageNumber) == null)
         {
             DebugLogger<StageManager>.LogWarning($"스테이지 {stageNumber}에 등장 가능한 보스가 없어 챌린지를 시작하지 않음 (roster의 bossMonsters 설정 확인)");
             return;
@@ -405,13 +405,15 @@ public sealed class StageManager : Singleton<StageManager>
                 return false;
             }
 
-            Monster prefab = roster.PickRandomNormalMonster(stageNumber);
-            if (prefab == null)
+            // 일반 몬스터는 파밍/챌린지 구분 없이 farmingMonsters 전체 중에서 무작위로 등장
+            if (farmingMonsters == null || farmingMonsters.Length == 0)
             {
-                DebugLogger<StageManager>.LogWarning($"스테이지 {stageNumber}에 등장 가능한 일반 몬스터가 없음 (roster의 normalMonsters 설정 확인)");
+                DebugLogger<StageManager>.LogWarning("파밍 몬스터 프리팹이 비어있어서 챌린지 웨이브에 등장시킬 몬스터가 없음");
                 await UniTask.Delay(TimeSpan.FromSeconds(roster.SpawnInterval), cancellationToken: token);
                 continue;
             }
+
+            Monster prefab = farmingMonsters[UnityEngine.Random.Range(0, farmingMonsters.Length)];
 
             // 챌린지는 진짜 전투이므로 harmless: false (실제 피해가 들어감)
             Monster monster = spawner.Spawn(prefab, stageNumber, harmless: false);
@@ -431,12 +433,12 @@ public sealed class StageManager : Singleton<StageManager>
     }
 
     /// <summary>
-    /// 이 스테이지에서 등장 가능한 가장 강한 보스를 소환하고 처치될 때까지 대기
+    /// 이 스테이지에 맞는 보스(로스터가 10스테이지 단위로 돌아가며 골라줌)를 소환하고 처치될 때까지 대기
     /// </summary>
     /// <returns>보스를 실제로 잡았으면 true. 보스가 없어서 시작도 못 했으면 false</returns>
     private async UniTask<bool> RunBossAsync(int stageNumber, CancellationToken token)
     {
-        Monster bossPrefab = roster.PickStrongestBoss(stageNumber);
+        Monster bossPrefab = roster.PickBossForStage(stageNumber);
         Monster boss = spawner.Spawn(bossPrefab, stageNumber, harmless: false);
         if (boss == null)
         {

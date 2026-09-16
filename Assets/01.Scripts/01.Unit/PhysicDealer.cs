@@ -96,4 +96,7 @@ public class PhysicDealer : CharacterBase
     protected override bool CanUseSkill2() => HasEnemyInRange();
 
     private bool HasEnemyInRange() => GetLowestHpEntity(EnemyLayer) != null;
+
+    public override string Skill1Name => "강타";
+    public override string Skill2Name => "휩쓸기";
 }
