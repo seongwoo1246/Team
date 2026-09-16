@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using Debug = DebugLogger<NoticeManager>;
-
+//담당자 - 정성우
 
 #region 공지사항 데이터 모델 ( 유니티JsonUtility 호환)
 [SelectionBase]

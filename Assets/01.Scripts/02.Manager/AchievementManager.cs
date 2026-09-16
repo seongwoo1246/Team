@@ -1,12 +1,11 @@
 ﻿
 using Firebase.Database;
-using Firebase.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using Debug = DebugLogger<AchievementManager>;
-
+//담당자 - 정성우
 
 
 

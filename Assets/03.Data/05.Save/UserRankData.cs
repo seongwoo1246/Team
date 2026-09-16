@@ -1,8 +1,9 @@
 ﻿using System;
+//담당자 - 정성우
 
-    /// <summary>
-    /// 랭크 카테고리 종류(탭 확장 필요시 Enum추가만 하면 됨)
-    /// </summary>
+/// <summary>
+/// 랭크 카테고리 종류(탭 확장 필요시 Enum추가만 하면 됨)
+/// </summary>
 public enum RankCategoty
 {
     Damage,  // 최고 데미지 랭킹

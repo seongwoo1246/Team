@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-
+//담당자 - 정성우
 
 /// <summary>
 /// 전체 우편함 팝업 패널 제어 스크립트 (패널UI한태 직접 붙여주는 스크립트)

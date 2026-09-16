@@ -1,7 +1,7 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
+//담당자 - 정성우
 
 /// <summary>
 /// 방치형 보상 받기위한 매니저로 보상 관련 담당 예정

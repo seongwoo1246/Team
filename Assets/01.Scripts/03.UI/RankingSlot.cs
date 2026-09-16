@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
+﻿
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
+//담당자 - 정성우
 public enum RankColor
 {
     Gold,
