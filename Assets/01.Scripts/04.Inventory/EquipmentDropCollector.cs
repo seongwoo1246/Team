@@ -1,4 +1,5 @@
-﻿/*
+﻿// 작성자: 김주연
+/*
 몬스터가 장비를 드랍하면(StageManager.EquipmentDropped) 그걸 실제 EquipmentInventory에 넣어주는 연결스크립트
 
 몬스터가 드랍하면 StageManager.EquipmentDropped까지는 이미 잘 올라가는데 그걸 받아서

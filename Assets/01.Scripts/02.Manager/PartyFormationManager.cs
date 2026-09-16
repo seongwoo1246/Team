@@ -1,0 +1,208 @@
+// 작성자: 김주연
+/*
+파티 편성(최대 3명) 관리. 5명(전사/메이지/힐러/팔라딘/궁수) 중 최대 3명을 골라 실제 전투 필드로 내보낸다
+
+편성이 바뀌면 한 번에 다 처리함:
+  1) 필드에서 뺀 캐릭터는 스프라이트/콜라이더를 끄고 멀리(벤치 위치로) 치움 - 전투에 물리적으로 안 끼어들게
+  2) 필드에 넣은 캐릭터는 정해진 슬롯 위치로 옮기고 스프라이트/콜라이더를 켬
+  3) StageManager.party를 지금 편성으로 갱신
+  4) 슬롯별 스킬 버튼(1/2/3번 슬롯 x 스킬1/2) 6개의 타겟을 그 슬롯 캐릭터로 갱신
+
+챌린지(전투) 진행 중에는 편성을 못 바꾸게 막음 - 웨이브 도중 캐릭터가 갑자기 사라지면 이상해지므로
+파밍 중이거나 대기 중일 때만 바꿀 수 있음
+*/
+
+using UnityEngine;
+
+/// <summary>
+/// 5명 중 3명을 골라 실전 파티를 구성하는 매니저. 캐릭터 화면의 "편성하기" 버튼이 ToggleFormation을 호출
+/// </summary>
+public sealed class PartyFormationManager : MonoBehaviour
+{
+    // 편성 가능한 최대 인원
+    private const int SLOT_COUNT = 3;
+
+    [Header("편성 가능한 캐릭터 5명")]
+    [Tooltip("전사/메이지/힐러/팔라딘/궁수 순서 상관없이 5명 전부")]
+    [SerializeField] private CharacterBase[] allCharacters;
+
+    [Header("필드 슬롯 위치 (3자리)")]
+    [Tooltip("편성된 캐릭터가 실제로 서 있을 위치 3개 (빈 오브젝트로 표시)")]
+    [SerializeField] private Transform[] fieldSlots;
+
+    [Tooltip("편성에서 빠진 캐릭터를 치워둘 위치 (화면 밖, RosterOnly 등)")]
+    [SerializeField] private Transform benchPosition;
+
+    [Header("연결")]
+    [SerializeField] private StageManager stageManager;
+
+    [Header("1번 슬롯 스킬 버튼 (스킬1, 스킬2 순서)")]
+    [SerializeField] private SkillButtonUI[] slot1SkillButtons;
+
+    [Header("2번 슬롯 스킬 버튼 (스킬1, 스킬2 순서)")]
+    [SerializeField] private SkillButtonUI[] slot2SkillButtons;
+
+    [Header("3번 슬롯 스킬 버튼 (스킬1, 스킬2 순서)")]
+    [SerializeField] private SkillButtonUI[] slot3SkillButtons;
+
+    // 슬롯별로 지금 배정된 캐릭터. 비어있으면 null
+    private readonly CharacterBase[] _formation = new CharacterBase[SLOT_COUNT];
+
+    // 편성이 바뀔 때마다 발생. 인자 = 새 편성(슬롯 순서). UI(편성 표시 텍스트 등)가 구독해서 갱신하는 용도
+    public event System.Action<CharacterBase[]> FormationChanged;
+
+    private void Start()
+    {
+        // 처음엔 인스펙터 순서대로 앞 3명을 기본 편성으로 시작 (지금까지의 전사/메이지/힐러 고정 편성과 동일)
+        for (int i = 0; i < SLOT_COUNT && i < allCharacters.Length; i++)
+        {
+            _formation[i] = allCharacters[i];
+        }
+
+        // StageManager.party는 이미 인스펙터에 기본 3명이 똑같이 연결돼있어서 여기선 안 건드림
+        // (Start() 호출 순서가 스크립트마다 달라서, 여기서 무리하게 맞추려다 오히려 꼬일 수 있음)
+        ApplyFieldPositions();
+        UpdateAllSkillButtons();
+    }
+
+    /// <summary>
+    /// 지정한 캐릭터를 편성에 넣거나 뺀다. 이미 편성돼있으면 빼고, 아니면 빈 슬롯에 넣는다
+    /// 캐릭터 화면의 "편성하기" 버튼 OnClick에 연결
+    /// </summary>
+    /// <param name="character">토글할 캐릭터</param>
+    public void ToggleFormation(CharacterBase character)
+    {
+        if (character == null)
+        {
+            return;
+        }
+
+        if (stageManager != null && stageManager.CurrentMode == StageMode.Challenge)
+        {
+            DebugLogger<PartyFormationManager>.LogWarning("챌린지 진행 중에는 파티 편성을 바꿀 수 없음");
+            return;
+        }
+
+        int existingSlot = System.Array.IndexOf(_formation, character);
+        if (existingSlot >= 0)
+        {
+            _formation[existingSlot] = null;
+        }
+        else
+        {
+            int emptySlot = System.Array.IndexOf(_formation, null);
+            if (emptySlot < 0)
+            {
+                DebugLogger<PartyFormationManager>.LogWarning($"파티가 이미 꽉 참(최대 {SLOT_COUNT}명) - 다른 캐릭터를 먼저 빼야 함");
+                return;
+            }
+
+            _formation[emptySlot] = character;
+        }
+
+        ApplyFieldPositions();
+
+        if (stageManager != null)
+        {
+            stageManager.SetParty((CharacterBase[])_formation.Clone());
+        }
+
+        UpdateAllSkillButtons();
+        FormationChanged?.Invoke((CharacterBase[])_formation.Clone());
+    }
+
+    /// <summary>지금 이 캐릭터가 편성에 들어가있는지</summary>
+    /// <param name="character">확인할 캐릭터</param>
+    public bool IsInFormation(CharacterBase character)
+    {
+        return character != null && System.Array.IndexOf(_formation, character) >= 0;
+    }
+
+    /// <summary>지금 편성 상태 그대로 복사본을 돌려준다 (슬롯 순서, 빈 슬롯은 null)</summary>
+    public CharacterBase[] GetFormation()
+    {
+        return (CharacterBase[])_formation.Clone();
+    }
+
+    /// <summary>
+    /// 편성 결과대로 5명 전부의 필드 위치/스프라이트/콜라이더를 맞춘다
+    /// (편성 안 된 캐릭터는 벤치 위치로 치우고 꺼둠, 편성된 캐릭터는 자기 슬롯 위치로 옮기고 켬)
+    /// </summary>
+    private void ApplyFieldPositions()
+    {
+        for (int i = 0; i < allCharacters.Length; i++)
+        {
+            CharacterBase character = allCharacters[i];
+            if (character == null)
+            {
+                continue;
+            }
+
+            SetFieldActive(character, false);
+        }
+
+        for (int slot = 0; slot < SLOT_COUNT; slot++)
+        {
+            CharacterBase character = _formation[slot];
+            if (character == null)
+            {
+                continue;
+            }
+
+            if (slot < fieldSlots.Length && fieldSlots[slot] != null)
+            {
+                character.transform.position = fieldSlots[slot].position;
+            }
+
+            SetFieldActive(character, true);
+        }
+    }
+
+    /// <summary>
+    /// 캐릭터를 실제로 필드에서 싸울 수 있는 상태로 켜거나(스프라이트/콜라이더 on), 벤치로 치운다(off + 이동)
+    /// </summary>
+    /// <param name="character">대상 캐릭터</param>
+    /// <param name="active">true면 필드 활성, false면 벤치로 치움</param>
+    private void SetFieldActive(CharacterBase character, bool active)
+    {
+        if (character.TryGetComponent(out SpriteRenderer spriteRenderer))
+        {
+            spriteRenderer.enabled = active;
+        }
+
+        if (character.TryGetComponent(out Collider2D collider2D))
+        {
+            collider2D.enabled = active;
+        }
+
+        // 꺼질 땐 벤치 위치로도 옮겨서, 콜라이더가 실수로 안 꺼진 경우에도 실전투와 물리적으로 안 겹치게 함
+        if (!active && benchPosition != null)
+        {
+            character.transform.position = benchPosition.position;
+        }
+    }
+
+    private void UpdateAllSkillButtons()
+    {
+        UpdateSkillButtons(slot1SkillButtons, _formation.Length > 0 ? _formation[0] : null);
+        UpdateSkillButtons(slot2SkillButtons, _formation.Length > 1 ? _formation[1] : null);
+        UpdateSkillButtons(slot3SkillButtons, _formation.Length > 2 ? _formation[2] : null);
+    }
+
+    /// <summary>슬롯 하나의 스킬 버튼들(스킬1, 스킬2)이 가리킬 캐릭터를 갱신</summary>
+    private void UpdateSkillButtons(SkillButtonUI[] buttons, CharacterBase character)
+    {
+        if (buttons == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < buttons.Length; i++)
+        {
+            if (buttons[i] != null)
+            {
+                buttons[i].SetTarget(character);
+            }
+        }
+    }
+}
