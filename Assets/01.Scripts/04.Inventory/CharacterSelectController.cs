@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class CharacterSelectController : MonoBehaviour
 {
@@ -6,6 +6,8 @@ public class CharacterSelectController : MonoBehaviour
     [SerializeField] private CharacterBase warrior;
     [SerializeField] private CharacterBase mage;
     [SerializeField] private CharacterBase healer;
+    [SerializeField] private CharacterBase paladin;
+    [SerializeField] private CharacterBase archer;
 
     [Header("장비 UI")]
     [SerializeField] private EquipmentInventoryController equipmentInventoryController;
@@ -30,6 +32,12 @@ public class CharacterSelectController : MonoBehaviour
 
                 case AttackType.Heal:
                     return healer;
+
+                case AttackType.Paladin:
+                    return paladin;
+
+                case AttackType.Archer:
+                    return archer;
             }
 
             return null;
@@ -58,5 +66,17 @@ public class CharacterSelectController : MonoBehaviour
         currentAttackType = AttackType.Heal;
         equipmentInventoryController.RefreshEquippedSlots();
         //characterEquipment.RefreshEquipmentSlots(currentAttackType);
+    }
+
+    public void SelectPaladin()
+    {
+        currentAttackType = AttackType.Paladin;
+        equipmentInventoryController.RefreshEquippedSlots();
+    }
+
+    public void SelectArcher()
+    {
+        currentAttackType = AttackType.Archer;
+        equipmentInventoryController.RefreshEquippedSlots();
     }
 }
