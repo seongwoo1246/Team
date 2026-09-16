@@ -172,7 +172,7 @@ public class NoticeManager : MonoBehaviour
     /// <param name="message"></param>
     private void ShowMaintenancePopup(string message)
     {
-    expansion:
+ 
         titleText.text = "시스템 점검 안내";
         contentText.text = message;
         if(noticeRawImage != null)  noticeRawImage.gameObject.SetActive(false);
