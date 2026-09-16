@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+// 작성자: 김주연
+using UnityEngine;
 
 /// <summary>
 /// 몬스터 기본 스탯 데이터. 프로젝트 창에서 우클릭 → Create → Game/Monster Stat Data 로 생성

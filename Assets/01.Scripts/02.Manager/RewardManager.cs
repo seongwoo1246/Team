@@ -13,7 +13,7 @@ public class RewardManager : Singleton<RewardManager>
     public TextMeshProUGUI GetPlayerExp;
     public TextMeshProUGUI GetPlayerReward;
     public TextMeshProUGUI GetUpgardMaterial;
-    private Button CloseRewardInfo;
+    [SerializeField] private Button CloseRewardInfo;
 
 
     // null 체크만 추가
