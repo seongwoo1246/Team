@@ -119,34 +119,33 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
     // 현재 레벨 기준 공격력
     public float AttackPower => _attackPower;
 
-    #region 정성우가 만진 부분
+    #region 애니메이터 와 함수설정
 
     protected Animator animator;
 
-    protected virtual void Start()
+    public virtual void Spon()
     {
-        animator = GetComponent<Animator>();
-    }
-
-    public virtual void Move()
-    {
-
+        animator.SetBool("IsDead", false);
     }
     public virtual void Attack()
     {
-
+        animator.SetTrigger("Attack");
     }
     public virtual void Dead()
     {
-
+        animator.SetBool("IsDead", true);
     }
-   
+   public virtual void Hit()
+    {
+        animator.SetTrigger("Hit");
+    }
 
     #endregion
 
 
     private void Awake()
     {
+        animator = GetComponent<Animator>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null)
@@ -166,7 +165,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
         _targetTf = null;
         _targetCollider = null;
         _isHarmless = false;
-
+        
         // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
         _isEnraged = false;
         if (_spriteRenderer != null)
@@ -423,7 +422,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
     }
 
     // 공격 직후 훅 (공격 모션, 사운드 등)
-    protected virtual void OnAttack() { }
+    protected virtual void OnAttack() { Attack(); }
 
     // IEntity
 
@@ -558,12 +557,12 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
     }
 
     // 등장 연출
-    protected virtual void OnSpawned() { }
+    protected virtual void OnSpawned() { Spon(); }
 
     /// <summary>피격 직후 훅 (피격 이펙트, 데미지 숫자 등)</summary>
     /// <param name="amount">실제로 받은 피해량</param>
-    protected virtual void OnDamaged(float amount) { }
+    protected virtual void OnDamaged(float amount) { Hit(); }
 
     // 사망 연출
-    protected virtual void OnDied() { }
+    protected virtual void OnDied() { Dead(); }
 }

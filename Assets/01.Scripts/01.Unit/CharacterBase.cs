@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 캐릭터(물리 딜러 / 마법 딜러 / 힐러)의 공통 부모
 
@@ -179,8 +179,46 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 스킬2를 실제로 쓸 수 있는지 (쿨다운 + CanUseSkill2 조건 둘 다 만족해야 함)
     public bool IsSkill2Usable => IsSkill2Ready && CanUseSkill2();
 
+    #region 애니메이터 와 함수설정
+
+    protected Animator animator;
+
+
+
+    public virtual void Spon()
+    {
+        animator.SetBool("isDeath", false);
+    }
+    public virtual void Move()
+    {
+        animator.SetBool("1_Move", true);
+    }
+    public virtual void Attack()
+    {
+        animator.SetBool("1_Move", false);
+        animator.SetTrigger("2_Attack");
+    }
+    public virtual void Dead()
+    {
+        animator.SetBool("isDeath", true);
+        animator.SetTrigger("4_Death");
+    }
+    public virtual void Hit()
+    {
+        animator.SetTrigger("3_Damage");
+    }
+    public virtual void Skill()
+    {
+        animator.SetTrigger("6_Other");
+    }
+
+
+    #endregion
+
     private void Awake()
     {
+        animator = GetComponent<Animator>();
+
         _allCharacters.Add(this);
 
         RecalculateStats();
@@ -398,6 +436,7 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     private void StartCombatLoops()
     {
+        Spon();
         CancellationToken token = this.GetCancellationTokenOnDestroy();
         RunAutoAttackLoop(token).Forget();
         RunAutoSkillLoopAsync(token).Forget();
@@ -475,16 +514,16 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
 
     // 공격 직전 훅. 기본은 아무것도 안함 (이펙트/사운드 추가용)
-    protected virtual void OnBeforeAttack() { }
+    protected virtual void OnBeforeAttack() { Attack(); }
 
     // 공격 직후 훅. 기본은 아무것도 안함 (쿨다운 연출 등)
     protected virtual void OnAfterAttack() { }
 
     // 스킬1 (짧은 쿨다운). 기본은 아무것도 안함 - 하위 클래스가 override
-    protected virtual void UseSkill1() { }
+    protected virtual void UseSkill1() { Skill(); }
 
     // 스킬2 (긴 쿨다운, 강력한 버전). 기본은 아무것도 안함 - 하위 클래스가 override
-    protected virtual void UseSkill2() { }
+    protected virtual void UseSkill2() { Skill(); }
 
     // 스킬1을 지금 쓸 수 있는 상황인지 (쿨다운 말고 추가 조건). 기본은 항상 true - 필요하면 하위 클래스가 override
     // 예: 부활 스킬은 "죽은 아군이 있을 때만" 쓸 수 있게 하위 클래스에서 이 함수를 override
@@ -542,10 +581,10 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     /// <summary>피해를 받은 직후 훅. (피격 이펙트, 넉백 등)</summary>
     /// <param name="amount">실제로 받은 피해량</param>
-    protected virtual void OnDamaged(float amount) { }
+    protected virtual void OnDamaged(float amount) { Hit(); }
 
     // 사망 처리 직후 훅. (사망 애니메이션, 드랍 등)
-    protected virtual void OnDied() { }
+    protected virtual void OnDied() { Dead(); }
 
     /// <summary>
     /// 사거리 안에서 주어진 레이어의 대상들을 찾아 체력이 가장 낮은 IEntity를 돌려줌 (막타 우선)
@@ -680,7 +719,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         RecalculateStats();
         _currentHP = _currentMaxHP;
         ResetSkillCooldowns();
-
+       
         if (!gameObject.activeSelf)
         {
             gameObject.SetActive(true);
