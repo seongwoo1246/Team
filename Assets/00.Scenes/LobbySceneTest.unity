@@ -348,7 +348,7 @@ Transform:
   m_GameObject: {fileID: 8228437011488734470}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -517.6554, y: -864.66974, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -1814,7 +1814,7 @@ Transform:
   m_GameObject: {fileID: 336954326403736401}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -42.655396, y: -1684.6697, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7132,6 +7132,7 @@ MonoBehaviour:
   skillSlot: 1
   cooldownFillImage: {fileID: 5906756282740760127}
   buttonImage: {fileID: 1579639111252791139}
+  nameText: {fileID: 0}
 --- !u!114 &1927362206685738802
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7168,6 +7169,7 @@ MonoBehaviour:
   skillSlot: 0
   cooldownFillImage: {fileID: 8296809242788136717}
   buttonImage: {fileID: 6601355411678805225}
+  nameText: {fileID: 0}
 --- !u!114 &1956876486563164457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9890,6 +9892,7 @@ MonoBehaviour:
   skillSlot: 1
   cooldownFillImage: {fileID: 5483427097572331456}
   buttonImage: {fileID: 1986272570998084151}
+  nameText: {fileID: 0}
 --- !u!224 &2689492159751403592
 RectTransform:
   m_ObjectHideFlags: 0
@@ -12618,7 +12621,7 @@ Transform:
   m_GameObject: {fileID: 1135965798496510518}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -517.6554, y: -864.66974, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -15554,6 +15557,7 @@ MonoBehaviour:
   skillSlot: 0
   cooldownFillImage: {fileID: 5487984175703766413}
   buttonImage: {fileID: 2749715473575380600}
+  nameText: {fileID: 0}
 --- !u!1 &4377758101098755740
 GameObject:
   m_ObjectHideFlags: 0
@@ -19753,6 +19757,7 @@ MonoBehaviour:
   skillSlot: 1
   cooldownFillImage: {fileID: 1815965939925222528}
   buttonImage: {fileID: 9182280860590087942}
+  nameText: {fileID: 0}
 --- !u!114 &5632321315790071274
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20325,7 +20330,7 @@ Transform:
   m_GameObject: {fileID: 7721277267321124942}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 550.106, y: 976.5813, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -23845,7 +23850,7 @@ Transform:
   m_GameObject: {fileID: 2207146409996685963}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 517.6554, y: 5864.67, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -24235,7 +24240,7 @@ Transform:
   m_GameObject: {fileID: 315136365080863020}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -517.6554, y: -864.66974, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -27669,6 +27674,7 @@ MonoBehaviour:
   skillSlot: 0
   cooldownFillImage: {fileID: 4837682291910165049}
   buttonImage: {fileID: 6692663431369200056}
+  nameText: {fileID: 0}
 --- !u!114 &8440850200331461040
 MonoBehaviour:
   m_ObjectHideFlags: 0

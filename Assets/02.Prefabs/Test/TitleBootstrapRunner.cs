@@ -13,7 +13,7 @@ public class TitleBootstrapRunner : MonoBehaviour
 
     private async UniTaskVoid Awake()
     {
-        var ct = this.destroyCancellationToken;
+        System.Threading.CancellationToken ct = this.destroyCancellationToken;
 
         // 1. Addressables 초기화
         await Addressables.InitializeAsync().ToUniTask(cancellationToken: ct);
