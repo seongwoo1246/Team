@@ -1,5 +1,6 @@
 ﻿/* 담당자 - 송태훈
  각 씬 별 데이터 캐싱 및 조회 총괄 매니저
+많은 수정이 필요함
  */
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ public class DataManager : Singleton<DataManager>, ILoadable
     public int LoadOrder => 2;
     private readonly Dictionary<System.Type, Dictionary<string, ScriptableObject>> _identifiedDataCache = new();
     private readonly Dictionary<System.Type, ScriptableObject> _singleDataCache = new();
+    private bool _isInitialized = false;
 
     protected override void Awake()
     {

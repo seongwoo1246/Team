@@ -21,7 +21,6 @@ public class AddressableManager : Singleton<AddressableManager>
     // 런타임에 Instantiate된 오브젝트 핸들 캐시 ( 풀링되지 않는 1회성 오브젝트용)
     private readonly Dictionary<GameObject, AsyncOperationHandle> instanceHandles = new();
     private List<IResourceLocation> _downloadLocations = new();
-    public int LoadOrder => 1;
 
     protected override void Awake()
     {
