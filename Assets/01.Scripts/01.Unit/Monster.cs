@@ -124,23 +124,21 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     #region 정성우가 만진 부분
 
     protected Animator animator;
-
-    protected virtual void Start()
-    {
-        animator = GetComponent<Animator>();
-    }
-
-    public virtual void Move()
-    {
-
-    }
     public virtual void Attack()
     {
-
+        animator.SetTrigger("Attack");
     }
     public virtual void Dead()
     {
-
+        animator.SetBool("IsDead",true);
+    }
+    public virtual void Spon()
+    {
+        animator.SetBool("IsDead", false);
+    }
+    public virtual void Hit()
+    {
+        animator.SetTrigger("Hit");
     }
    
 
@@ -149,6 +147,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
     private void Awake()
     {
+        animator = GetComponent<Animator>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null)
@@ -425,7 +424,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     }
 
     // 공격 직후 훅 (공격 모션, 사운드 등)
-    protected virtual void OnAttack() { }
+    protected virtual void OnAttack() { Attack(); }
 
     // IEntity
 
@@ -560,12 +559,12 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     }
 
     // 등장 연출
-    protected virtual void OnSpawned() { }
+    protected virtual void OnSpawned() { Spon(); }
 
     /// <summary>피격 직후 훅 (피격 이펙트, 데미지 숫자 등)</summary>
     /// <param name="amount">실제로 받은 피해량</param>
-    protected virtual void OnDamaged(float amount) { }
+    protected virtual void OnDamaged(float amount) { Hit(); }
 
     // 사망 연출
-    protected virtual void OnDied() { }
+    protected virtual void OnDied() { Dead(); }
 }

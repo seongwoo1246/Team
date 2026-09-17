@@ -188,48 +188,48 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     public virtual void Spon()
     {
-        animator.SetBool("isDeath", false);
-        BOWanimator.SetBool("isDeath", false);
+       if(animator != null) animator.SetBool("isDeath", false);
+       if(BOWanimator!=null) BOWanimator.SetBool("isDeath", false);
     }
     public virtual async void Move()
     {
-        animator.SetBool("1_Move", true);
-        BOWanimator.SetBool("1_Move", true);
+        if (animator != null) animator.SetBool("1_Move", true);
+        if (BOWanimator != null) BOWanimator.SetBool("1_Move", true);
         await UniTask.Delay(1000);
-        animator.SetBool("1_Move", false);
-        BOWanimator.SetBool("1_Move", false);
+        if (animator != null) animator.SetBool("1_Move", false);
+        if (BOWanimator != null) BOWanimator.SetBool("1_Move", false);
     }
     public virtual void Attack()
     {
-        animator.SetTrigger("2_Attack");
-        BOWanimator.SetTrigger("2_Attack");
+        if (animator != null) animator.SetTrigger("2_Attack");
+        if (BOWanimator != null) BOWanimator.SetTrigger("2_Attack");
 
     }
     public virtual void Dead()
     {
-        animator.SetBool("isDeath", true);
-        animator.SetTrigger("4_Death");
-        BOWanimator.SetBool("isDeath", true);
-        BOWanimator.SetTrigger("4_Death");
+        if (animator != null) animator.SetBool("isDeath", true);
+        if (animator != null) animator.SetTrigger("4_Death");
+        if (BOWanimator != null) BOWanimator.SetBool("isDeath", true);
+        if (BOWanimator != null) BOWanimator.SetTrigger("4_Death");
     }
     public virtual void Hit()
     {
-        animator.SetTrigger("3_Damage");
-        BOWanimator.SetTrigger("3_Damage");
+        if (animator != null) animator.SetTrigger("3_Damage");
+        if (BOWanimator != null) BOWanimator.SetTrigger("3_Damage");
     }
     public virtual void Skill()
     {
-        animator.SetTrigger("6_Other");
-        BOWanimator.SetTrigger("6_Other");
+        if (animator != null) animator.SetTrigger("6_Other");
+        if (BOWanimator != null) BOWanimator.SetTrigger("6_Other");
     }
 
 
     #endregion
 
-    private void Awake()
+    protected virtual void Awake()
     {
-        animator = GetComponent<Animator>();
-        BOWanimator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
+        BOWanimator = GetComponentInChildren<Animator>();
 
 
         _allCharacters.Add(this);
