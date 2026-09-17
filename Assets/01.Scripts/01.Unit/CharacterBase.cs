@@ -182,34 +182,45 @@ public class CharacterBase : MonoBehaviour, IEntity
     #region 애니메이터 와 함수설정
 
     protected Animator animator;
+    protected Animator BOWanimator;
 
 
 
     public virtual void Spon()
     {
         animator.SetBool("isDeath", false);
+        BOWanimator.SetBool("isDeath", false);
     }
-    public virtual void Move()
+    public virtual async void Move()
     {
         animator.SetBool("1_Move", true);
+        BOWanimator.SetBool("1_Move", true);
+        await UniTask.Delay(1000);
+        animator.SetBool("1_Move", false);
+        BOWanimator.SetBool("1_Move", false);
     }
     public virtual void Attack()
     {
-        animator.SetBool("1_Move", false);
         animator.SetTrigger("2_Attack");
+        BOWanimator.SetTrigger("2_Attack");
+
     }
     public virtual void Dead()
     {
         animator.SetBool("isDeath", true);
         animator.SetTrigger("4_Death");
+        BOWanimator.SetBool("isDeath", true);
+        BOWanimator.SetTrigger("4_Death");
     }
     public virtual void Hit()
     {
         animator.SetTrigger("3_Damage");
+        BOWanimator.SetTrigger("3_Damage");
     }
     public virtual void Skill()
     {
         animator.SetTrigger("6_Other");
+        BOWanimator.SetTrigger("6_Other");
     }
 
 
@@ -218,6 +229,8 @@ public class CharacterBase : MonoBehaviour, IEntity
     private void Awake()
     {
         animator = GetComponent<Animator>();
+        BOWanimator = GetComponent<Animator>();
+
 
         _allCharacters.Add(this);
 

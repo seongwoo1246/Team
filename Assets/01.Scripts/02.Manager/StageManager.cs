@@ -130,6 +130,8 @@ public sealed class StageManager : Singleton<StageManager>
     // 챌린지 진행 중 지금 몇 번째 웨이브인지 (1부터 시작). 파밍 중이거나 보스전이면 0
     public int CurrentWaveNumber => _currentWaveNumber;
 
+    //애니메이션 연출을 위한 참조
+    CharacterBase character;
     /// <summary>
     /// 파티 편성을 바꾼다. PartyFormationManager가 유저의 편성 변경을 반영할 때 호출함
     /// 챌린지(전투) 진행 중에는 PartyFormationManager 쪽에서 이미 막고 호출하지만,
@@ -204,6 +206,7 @@ public sealed class StageManager : Singleton<StageManager>
         // GoldWallet.Start()가 분당 골드/오프라인 보상을 계산하기 전에 값이 준비돼 있어야 하므로
         // Start가 아니라 Awake에서 로드함 (유니티는 모든 오브젝트의 Awake가 끝난 뒤에 Start를 부름)
         _maxClearedStage = PlayerPrefs.GetInt(MAX_CLEARED_STAGE_KEY, 0);
+        character = GetComponent<CharacterBase>();
     }
 
     private void Start()
@@ -362,8 +365,8 @@ public sealed class StageManager : Singleton<StageManager>
         int waveCount = roster.GetWaveCount(stageNumber);
         for (int waveIndex = 0; waveIndex < waveCount; waveIndex++)
         {
-            _currentWaveNumber = waveIndex + 1;
-
+            _currentWaveNumber = waveIndex + 1;           
+            character.Move();
             bool waveCleared = await RunWaveAsync(stageNumber, token);
             if (!waveCleared)
             {
