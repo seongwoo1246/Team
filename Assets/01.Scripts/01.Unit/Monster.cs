@@ -17,7 +17,7 @@ using UnityEngine;
 /// <summary>
 /// 스테이지에 등장하는 몬스터. 레벨에 따라 체력과 보상이 지수로 커짐
 /// </summary>
-public class Monster : MonoBehaviour, IEntity
+public class Monster : MonoBehaviour, IEntity, IPoolable
 {
     [Header("데이터")]
     // 이 몬스터의 기본 스탯 SO
@@ -158,7 +158,7 @@ public class Monster : MonoBehaviour, IEntity
         _currentHP = _maxHP;
     }
 
-    private void OnEnable()
+    public void OnSpawn()
     {
         // 풀링으로 다시 켜질때 체력을 가득 채움
         _currentHP = _maxHP;
@@ -180,6 +180,53 @@ public class Monster : MonoBehaviour, IEntity
 
         OnSpawned();
     }
+
+    public void OnDespawn()
+    {
+        // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
+        if (_attackCts != null)
+        {
+            _attackCts.Cancel();
+            _attackCts.Dispose();
+            _attackCts = null;
+        }
+    }
+
+
+
+    //private void OnEnable()
+    //{
+    //    // 풀링으로 다시 켜질때 체력을 가득 채움
+    //    _currentHP = _maxHP;
+    //    _target = null;
+    //    _targetTf = null;
+    //    _targetCollider = null;
+    //    _isHarmless = false;
+
+    //    // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
+    //    _isEnraged = false;
+    //    if (_spriteRenderer != null)
+    //    {
+    //        _spriteRenderer.color = _baseSpriteColor;
+    //    }
+
+    //    // 자동 공격 루프 시작 (이번 활성화 동안만 유효한 토큰)
+    //    _attackCts = new CancellationTokenSource();
+    //    RunAttackLoop(_attackCts.Token).Forget();
+
+    //    OnSpawned();
+    //}
+
+    //private void OnDisable()
+    //{
+    //    // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
+    //    if (_attackCts != null)
+    //    {
+    //        _attackCts.Cancel();
+    //        _attackCts.Dispose();
+    //        _attackCts = null;
+    //    }
+    //}
 
     private void FixedUpdate()
     {
@@ -275,17 +322,6 @@ public class Monster : MonoBehaviour, IEntity
         }
 
         return nearest;
-    }
-
-    private void OnDisable()
-    {
-        // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
-        if (_attackCts != null)
-        {
-            _attackCts.Cancel();
-            _attackCts.Dispose();
-            _attackCts = null;
-        }
     }
 
     /// <summary>
