@@ -13,13 +13,13 @@ MonoBehaviour:
   m_Name: StageRosterData
   m_EditorClassIdentifier: Assembly-CSharp::StageRosterData
   bossMonsters:
-  - monsterPrefab: {fileID: 2162109254367515413, guid: bf069e7077b7b3442b8883e22ee8543b, type: 3}
+  - monsterPrefab: {fileID: 424543754307544746, guid: 16be3324a98077844b92e9b03fe2846a, type: 3}
     unlockStage: 1
-  - monsterPrefab: {fileID: 2416589787680482672, guid: ef4c5309bd950a946971b1df9533ead1, type: 3}
+  - monsterPrefab: {fileID: 6891347835488417448, guid: e5369b755514d484ba50cf4ddc245e32, type: 3}
     unlockStage: 11
-  - monsterPrefab: {fileID: 8461180278936000148, guid: 3afa2588ef0b8db47b219fa014baccb4, type: 3}
+  - monsterPrefab: {fileID: 1790644029285178693, guid: 2ab7e76b41bcf9b41891f12fa0aff426, type: 3}
     unlockStage: 21
-  - monsterPrefab: {fileID: 6035923050067334024, guid: 466fac0ba230d9744ab268a68eabf081, type: 3}
+  - monsterPrefab: {fileID: 5878143937091581970, guid: 8ce0863686f297b47acc1989308256ca, type: 3}
     unlockStage: 31
   stagesPerBossRotation: 10
   baseWaveCount: 3
