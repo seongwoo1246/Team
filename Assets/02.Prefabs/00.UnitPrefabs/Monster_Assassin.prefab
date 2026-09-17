@@ -170,7 +170,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e01c28ae78016dd4aa574a972af10e31, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AssassinMonster
-  statData: {fileID: 11400000, guid: e36999ff0edc1714fb1cb86893fd72e5, type: 2}
+  statData: {fileID: 11400000, guid: 9401b99b46459a84da7349a1f26ba425, type: 2}
   level: 1
   bossHpMultiplier: 1
   attackInterval: 1.5
@@ -181,6 +181,10 @@ MonoBehaviour:
   aggroRange: 50
   equipmentDropChance: 0.001
   possibleDrops: []
+  enrageHpRatio: 0.3
+  enrageMultiplier: 1.5
+  enrageTintColor: {r: 1, g: 0.15, b: 0.15, a: 1}
+  enrageTintStrength: 0.6
 --- !u!1 &2823518067359865849
 GameObject:
   m_ObjectHideFlags: 0

@@ -402,7 +402,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e90e1e90138e11340bba1ff6c1dff899, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GoldenGoblin
-  statData: {fileID: 11400000, guid: e36999ff0edc1714fb1cb86893fd72e5, type: 2}
+  statData: {fileID: 11400000, guid: 755f4ca4094f8d24ba75aa41f4010f66, type: 2}
   level: 1
   bossHpMultiplier: 1
   attackInterval: 1.5
@@ -413,4 +413,8 @@ MonoBehaviour:
   aggroRange: 50
   equipmentDropChance: 0
   possibleDrops: []
+  enrageHpRatio: 0.3
+  enrageMultiplier: 1.5
+  enrageTintColor: {r: 1, g: 0.15, b: 0.15, a: 1}
+  enrageTintStrength: 0.6
   materialReward: 1
