@@ -17,7 +17,7 @@ using UnityEngine;
 /// <summary>
 /// 스테이지에 등장하는 몬스터. 레벨에 따라 체력과 보상이 지수로 커짐
 /// </summary>
-public class Monster : MonoBehaviour, IEntity, IPoolable
+public class Monster : MonoBehaviour, IEntity, IPoolObject
 {
     [Header("데이터")]
     // 이 몬스터의 기본 스탯 SO
@@ -119,33 +119,36 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
     // 현재 레벨 기준 공격력
     public float AttackPower => _attackPower;
 
-    #region 애니메이터 와 함수설정
+    public enumType PoolType => enumType.Cartoon_Monster;
+
+    #region 정성우가 만진 부분
 
     protected Animator animator;
 
-    public virtual void Spon()
+    protected virtual void Start()
     {
-        animator.SetBool("IsDead", false);
+        animator = GetComponent<Animator>();
+    }
+
+    public virtual void Move()
+    {
+
     }
     public virtual void Attack()
     {
-        animator.SetTrigger("Attack");
+
     }
     public virtual void Dead()
     {
-        animator.SetBool("IsDead", true);
+
     }
-   public virtual void Hit()
-    {
-        animator.SetTrigger("Hit");
-    }
+   
 
     #endregion
 
 
     private void Awake()
     {
-        animator = GetComponent<Animator>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null)
@@ -165,7 +168,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
         _targetTf = null;
         _targetCollider = null;
         _isHarmless = false;
-        
+
         // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
         _isEnraged = false;
         if (_spriteRenderer != null)
@@ -422,7 +425,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
     }
 
     // 공격 직후 훅 (공격 모션, 사운드 등)
-    protected virtual void OnAttack() { Attack(); }
+    protected virtual void OnAttack() { }
 
     // IEntity
 
@@ -557,12 +560,12 @@ public class Monster : MonoBehaviour, IEntity, IPoolable
     }
 
     // 등장 연출
-    protected virtual void OnSpawned() { Spon(); }
+    protected virtual void OnSpawned() { }
 
     /// <summary>피격 직후 훅 (피격 이펙트, 데미지 숫자 등)</summary>
     /// <param name="amount">실제로 받은 피해량</param>
-    protected virtual void OnDamaged(float amount) { Hit(); }
+    protected virtual void OnDamaged(float amount) { }
 
     // 사망 연출
-    protected virtual void OnDied() { Dead(); }
+    protected virtual void OnDied() { }
 }
