@@ -19,7 +19,7 @@ MonoBehaviour:
     m_Address: Assets/03.Data/00.UnitSO/GameConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels:
-    - LobbySceneTest_Data
+    - Static_Data
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
