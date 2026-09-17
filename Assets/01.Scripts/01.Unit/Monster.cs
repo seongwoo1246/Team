@@ -119,7 +119,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     // 현재 레벨 기준 공격력
     public float AttackPower => _attackPower;
 
-    public enumType PoolType => enumType.Cartoon_Monster;
+    string IPoolObject.PoolKey => statData.Id;
 
     #region 정성우가 만진 부분
 

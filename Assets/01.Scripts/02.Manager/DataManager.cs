@@ -18,6 +18,7 @@ public class DataManager : Singleton<DataManager>, ILoadable
     {
         isDDOL = true;
         base.Awake();
+        SceneLoadManager.Instance.RegisterLoadable(this);
     }
 
     public async UniTask OnSceneLoadCreate(SceneId scene)

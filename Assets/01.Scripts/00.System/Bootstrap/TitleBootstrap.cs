@@ -1,20 +1,19 @@
 ﻿// 담당자 - 송태훈
+using UnityEngine;
+
 public static class TitleBootstrap
 {
     public static void InitializeSingletons()
     {
         AddressableManager.Instance.Init();
-        var sceneLoader = SceneLoadManager.Instance;
-        sceneLoader.Init();
-
-        var dataMgr = DataManager.Instance;
-        dataMgr.Init();
         
-        var poolMgr = ObjectPoolManagerTest.Instance;
-        poolMgr.Init();
+        var s = SceneLoadManager.Instance;
 
-        sceneLoader.RegisterLoadable(dataMgr);
-        sceneLoader.RegisterLoadable(poolMgr);
+        var d = DataManager.Instance;
+        
+        var o = ObjectPoolManagerTest.Instance;
+
+        var g = GoldWallet.Instance;
 
         // Non-Mono
         UserManager.Instance.Init();

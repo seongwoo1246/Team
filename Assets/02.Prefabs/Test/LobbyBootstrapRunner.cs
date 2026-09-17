@@ -1,18 +1,27 @@
 ﻿// 담당자 - 송태훈
 using Cysharp.Threading.Tasks;
+using System.Linq;
 using UnityEngine;
 using UtilDebug = DebugLogger<LobbyBootstrapRunner>;
 public class LobbyBootstrapRunner : MonoBehaviour, ISceneBootstrap
 {
-    [SerializeField] private PartyFormationManager partyFormationManager;
-    public async UniTask OnSceneReadyAsync()
+    public UniTask OnSceneReadyAsync()
     {
-        UtilDebug.Log("[LobbyBootstrapRunner] 로비 씬 내부 컴포넌트 세팅 시작");
-        // 1. 각 필요한 시스템 서비스 등록 
-        SceneLoadManager.Instance.RegisterLoadable(partyFormationManager);
-
-        // 2. UI 및 Lobby 씬 오브젝트 부착
-
-        await UniTask.Yield();
+        // UI를 배치하는거 나중에 수정하던가?
+        throw new System.NotImplementedException();
     }
+
+    private async UniTaskVoid Awake()
+    {
+        var loadables = FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None).OfType<ILoadable>();
+        if(SceneLoadManager.Instance != null)
+        {
+            foreach(var loadable in loadables)
+            {
+                SceneLoadManager.Instance.RegisterLoadable(loadable);
+                UtilDebug.Log($"[Auto-Register] ILoadable 등록 완료: {loadable.GetType().Name} (Order: {loadable.LoadOrder})");
+            }
+        }
+    }
+
 }

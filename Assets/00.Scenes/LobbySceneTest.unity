@@ -4526,7 +4526,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3489708751798146720}
-  - component: {fileID: 7004324675007467482}
   - component: {fileID: 499205551030949712}
   - component: {fileID: 2953782522043710369}
   - component: {fileID: 1160852787118453767}
@@ -23873,25 +23872,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &7004324675007467482
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1135965798496510518}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: aa016ae44830ef1408042bd635de91ad, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::GoldWallet
-  isDDOL: 0
-  startGold: 0
-  baseGoldPerMinute: 10
-  tickInterval: 1
-  lastSeenSaveInterval: 30
-  maxOfflineHours: 12
-  clearBonusMinutes: 180
 --- !u!224 &7011016895804230716
 RectTransform:
   m_ObjectHideFlags: 0

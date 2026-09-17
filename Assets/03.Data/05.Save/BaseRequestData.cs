@@ -98,8 +98,8 @@ public class UserProfileRequest : BaseRequestData
     public float currentExp;
     public int currentStage;
     public long lastLoginTimestamp;
-    public long gold;
-    public long dia;
+    public double gold;
+    public double dia;
 
     // UpgradeSystem 연동 데이터
     public Dictionary<string, int> upgradeTrackLevels = new();

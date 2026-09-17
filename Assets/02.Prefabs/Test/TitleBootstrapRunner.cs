@@ -27,14 +27,14 @@ public class TitleBootstrapRunner : MonoBehaviour
         }
 
         IList<GameObject> prefabs = await Addressables.LoadAssetsAsync<GameObject>(locations,null).ToUniTask(cancellationToken: ct);
-
+         
         TitleBootstrapController bootstrapController = null;
 
         foreach (var prefab in prefabs)
         {
             var instance = Instantiate(prefab);
 
-            // SceneLoadManager는 생성 즉시 Awake에서 DDOL 처리됨[cite: 5, 17]
+            // SceneLoadManager는 생성 즉시 Awake에서 DDOL 처리됨
             if (instance.TryGetComponent<SceneLoadManager>(out _))
             {
                 continue;

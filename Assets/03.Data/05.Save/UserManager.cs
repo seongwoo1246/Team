@@ -15,8 +15,6 @@ public class UserManager : NonMonoSingleton<UserManager>
     private DatabaseReference rootRef;
     public UserInfo CurrentUser { get; private set; }
 
-    public int LoadOrder => throw new NotImplementedException();
-
     public override void Init()
     {
         base.Init();
@@ -172,18 +170,18 @@ public class UserManager : NonMonoSingleton<UserManager>
 
     #region [Facade API : 단일 도메인]
     // 골드 단일 갱신
-    public async UniTask<bool> UpdateGoldAsync(long newGold, CancellationToken ct =default)
+    public async UniTask<bool> UpdateGoldAsync(double newGold, CancellationToken ct =default)
     {
         if (CurrentUser == null) return false;
         CurrentUser.Profile.gold = newGold;
         return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newGold, ct);
     }
     // 다이아 단일 갱신
-    public async UniTask<bool> UpdateDiaAsync(long newDia, CancellationToken ct = default)
+    public async UniTask<bool> UpdateDiaAsync(double newDia, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
         CurrentUser.Profile.dia = newDia;
-        return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newDia, ct);
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("dia", newDia, ct);
     }
 
     /// <summary>

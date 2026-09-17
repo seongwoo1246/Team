@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 게임 전체 골드 보유량. 어디서든 GoldWallet.instance 로 접근
 골드는 방치형 특성상 아주 커지므로 double씀
@@ -19,15 +19,16 @@ using System.Globalization;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UtilDebug = DebugLogger<GoldWallet>;
 
 /// <summary>
 /// 골드 지갑 씬에 하나 두고 GoldWallet.instance 로 접근
 /// </summary>
-public class GoldWallet : Singleton<GoldWallet>
+public class GoldWallet : Singleton<GoldWallet>, ILoadable
 {
-    [Header("시작 골드")]
-    [Tooltip("게임 시작 시 보유 골드")]
-    [SerializeField] private double startGold = 0d;
+    //[Header("시작 골드")]
+    //[Tooltip("게임 시작 시 보유 골드")]
+    //[SerializeField] private double startGold = 0d;
 
     [Header("분당 골드")]
     [Tooltip("분당 기본 골드. 여기에 스테이지 클리어 배율 + 파티 장비(바지=골드획득) 보너스가 곱해져서 실제 지급량이 정해짐")]
@@ -56,7 +57,6 @@ public class GoldWallet : Singleton<GoldWallet>
     private const string BALANCE_KEY = "GoldWallet_Balance";
 
     private double _balance;
-
     // Start에서 구독할 때 캐싱해두고 OnDestroy에서 구독 해제할 때 이 캐시로만 접근한다.
     // StageManager.instance를 OnDestroy에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
     // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
@@ -66,29 +66,74 @@ public class GoldWallet : Singleton<GoldWallet>
     // 현재 보유 골드
     public double Balance => _balance;
 
+    #region 송태훈 수정 내용
+
+    private bool _isInitialized = false;
+    public int LoadOrder => 10;
+    private CancellationTokenSource _loopCts;
+    #endregion
+
     // 골드가 바뀔 때마다 발생 (인자 = 변경 후 잔액). UI 갱신용
     public event Action<double> BalanceChanged;
 
     protected override void Awake()
     {
+        isDDOL = true;
         base.Awake();
 
-        string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
-        if (!string.IsNullOrEmpty(savedBalance)
-            && double.TryParse(savedBalance, NumberStyles.Float, CultureInfo.InvariantCulture, out double loaded)
-            && loaded >= 0d)
-        {
-            _balance = loaded;
-        }
-        else
-        {
-            _balance = startGold;
-        }
+        //string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
+        //if (!string.IsNullOrEmpty(savedBalance)
+        //    && double.TryParse(savedBalance, NumberStyles.Float, CultureInfo.InvariantCulture, out long loaded)
+        //    && loaded >= 0d)
+        //{
+        //    _balance = loaded;
+        //}
+        //else
+        //{
+        //    _balance = startGold;
+        //}
     }
 
     private void Start()
     {
-        // StageManager의 _maxClearedStage 로드(Awake)가 전부 끝난 뒤에 계산해야 정확하므로 Start에서 처리
+        //// StageManager의 _maxClearedStage 로드(Awake)가 전부 끝난 뒤에 계산해야 정확하므로 Start에서 처리
+        //ApplyOfflineGold();
+
+        //_stageManager = StageManager.Instance;
+        //if (_stageManager != null)
+        //{
+        //    _stageManager.StageCleared += OnStageCleared;
+        //}
+
+        //RunPassiveIncomeLoop(this.GetCancellationTokenOnDestroy()).Forget();
+    }
+
+    #region 송태훈 수정 내용
+    public UniTask OnSceneLoadCreate(SceneId sncen)
+    {
+        return UniTask.CompletedTask;
+    }
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        if (_isInitialized) return;
+
+        UtilDebug.Log($"[{scene}] GoldWallet 초기화 및 UserInfo 매칭 시작");
+
+        UserInfo user = UserManager.Instance.CurrentUser;
+        if (user != null && user.Profile != null)
+        {
+            _balance = user.Profile.gold;
+            UtilDebug.Log($"서버 골드 동기화 완료: {_balance:N0}");
+        }
+        else
+        {
+            LoadFromPlayerPrefs();
+            UtilDebug.Log($"서버 유저 프로필 부재 - PlayerPrefs 캐시 사용: {_balance:N0}");
+        }
+        BalanceChanged?.Invoke(_balance);
+
         ApplyOfflineGold();
 
         _stageManager = StageManager.Instance;
@@ -96,14 +141,34 @@ public class GoldWallet : Singleton<GoldWallet>
         {
             _stageManager.StageCleared += OnStageCleared;
         }
+        _loopCts?.Cancel();
+        _loopCts = new CancellationTokenSource();
+        RunPassiveIncomeLoop(_loopCts.Token).Forget();
 
-        RunPassiveIncomeLoop(this.GetCancellationTokenOnDestroy()).Forget();
+        _isInitialized = true;
     }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        _loopCts?.Cancel();
+        _loopCts?.Dispose();
+        _loopCts = null;
+        if (_stageManager != null)
+        {
+            _stageManager.StageCleared -= OnStageCleared;
+            _stageManager = null;
+        }
+
+        Save();
+        _isInitialized = false;
+    }
+    #endregion
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
-
+        _loopCts?.Cancel();
+        _loopCts?.Dispose();
         if (_stageManager != null)
         {
             _stageManager.StageCleared -= OnStageCleared;
@@ -113,10 +178,7 @@ public class GoldWallet : Singleton<GoldWallet>
     }
 
     // 앱이 완전히 꺼질 때 (에디터 정지 포함은 아님 - 빌드 기준)
-    private void OnApplicationQuit()
-    {
-        Save();
-    }
+    private void OnApplicationQuit() => Save();
 
     // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 시각을 저장
     private void OnApplicationPause(bool isPaused)
@@ -133,15 +195,12 @@ public class GoldWallet : Singleton<GoldWallet>
     /// <param name="amount">추가할 양 (0 이하는 무시)</param>
     public void Add(double amount)
     {
-        if (amount <= 0d)
-        {
-            return;
-        }
+        if (amount <= 0d) return;
 
         _balance += amount;
         BalanceChanged?.Invoke(_balance);
+        SyncGoldToUserMemory();
     }
-
     /// <summary>
     /// 골드가 충분하면 차감하고 true, 부족하면 아무 것도 안 하고 false.
     /// </summary>
@@ -163,6 +222,7 @@ public class GoldWallet : Singleton<GoldWallet>
         BalanceChanged?.Invoke(_balance);
 
         Save();
+        SyncGoldToUserMemory();
         return true;
     }
 
@@ -228,6 +288,7 @@ public class GoldWallet : Singleton<GoldWallet>
     {
         double bonus = GetCurrentGoldPerMinute() * clearBonusMinutes;
         AddPassiveGold(bonus);
+        Save();
     }
 
     /// <summary>
@@ -249,13 +310,13 @@ public class GoldWallet : Singleton<GoldWallet>
             {
                 double reward = GetCurrentGoldPerMinute() * offlineMinutes;
                 AddPassiveGold(reward);
-                DebugLogger<GoldWallet>.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
+                UtilDebug.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
 
                 // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
                 // instance/필드 둘 다 null 체크하고 지나감 (없어도 골드 지급 자체는 이미 끝난 뒤라 안전함)
                 if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerReward != null)
                 {
-                    RewardManager.Instance.GetPlayerReward.text = reward.ToString();
+                    RewardManager.Instance.GetPlayerReward.text = ((long)reward).ToString();
                 }
             }
         }
@@ -263,6 +324,28 @@ public class GoldWallet : Singleton<GoldWallet>
         Save();
     }
 
+    #region 송태훈 추가 수정 부분
+    private void LoadFromPlayerPrefs()
+    {
+        string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
+        if (!string.IsNullOrEmpty(savedBalance)
+            && double.TryParse(savedBalance, NumberStyles.Integer, CultureInfo.InvariantCulture, out double loaded)
+            && loaded >= 0L)
+        {
+            _balance = loaded;
+        }
+        else _balance = 0L;
+    }
+
+    private void SyncGoldToUserMemory()
+    {
+        var user = UserManager.Instance.CurrentUser;
+        if (user != null && user.Profile != null)
+        {
+            user.Profile.gold = _balance;
+        }
+    }
+    #endregion
     /// <summary>
     /// 현재 보유 골드 + 지금 시각(UTC, 오프라인 보상 계산용)을 PlayerPrefs에 저장
     /// </summary>
