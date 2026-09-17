@@ -11,6 +11,7 @@ MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력을 계산함
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using JetBrains.Annotations;
 using UnityEngine;
 
 /// <summary>
@@ -117,6 +118,32 @@ public class Monster : MonoBehaviour, IEntity
 
     // 현재 레벨 기준 공격력
     public float AttackPower => _attackPower;
+
+    #region 정성우가 만진 부분
+
+    protected Animator animator;
+
+    protected virtual void Start()
+    {
+        animator = GetComponent<Animator>();
+    }
+
+    public virtual void Move()
+    {
+
+    }
+    public virtual void Attack()
+    {
+
+    }
+    public virtual void Dead()
+    {
+
+    }
+   
+
+    #endregion
+
 
     private void Awake()
     {
@@ -378,8 +405,13 @@ public class Monster : MonoBehaviour, IEntity
         float damage = Mathf.Max(0f, amount);
         _currentHP = Mathf.Max(0f, _currentHP - damage);
         OnDamaged(damage);
-        RankingUi damageRank = RankingUi.Instance;
-        damageRank.AddRecord(damageRank.DamageList, damage);
+
+        RankingUi damageRank = FindAnyObjectByType<RankingUi>();
+        if (damageRank != null)
+        {
+            damageRank.AddRecord(damageRank.DamageList, damage);
+        }
+
         CheckEnrage();
 
         if (_currentHP <= 0f)

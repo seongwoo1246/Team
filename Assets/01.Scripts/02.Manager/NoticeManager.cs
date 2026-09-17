@@ -47,16 +47,21 @@ public class NoticeManager : MonoBehaviour
     [Header("서버 config")]
     //여기서 공지가 저장된 json파일 주소를 호출
     //"http://yuor-sever.com/notice.json" 식으로 연결 해주기
-    [SerializeField] private string noticeJsonUrl = "";
+    [SerializeField] private string noticeJsonUrl;
 
     private NoticeData currentNoticeData;
     private Texture2D downloadedTexture;
 
     private async void Start()
     {
-        // 씬 시작시 토큰 생성(씬 파괴시 메모리 누수 방지)
-        var token = this.GetCancellationTokenOnDestroy();
-        await FetchAndShowNoticeAsync(token);
+        if(noticeJsonUrl !=null)
+        {
+            // 씬 시작시 토큰 생성(씬 파괴시 메모리 누수 방지)
+            var token = this.GetCancellationTokenOnDestroy();
+            await FetchAndShowNoticeAsync(token);
+        }
+       
+       
     }
   
     /// <summary>

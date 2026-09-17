@@ -156,4 +156,7 @@ public class Healer : CharacterBase
 
         return null;
     }
+
+    public override string Skill1Name => "전체 회복";
+    public override string Skill2Name => "부활";
 }

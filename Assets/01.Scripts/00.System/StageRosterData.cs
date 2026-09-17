@@ -36,13 +36,12 @@ public sealed class MonsterUnlockEntry
 [CreateAssetMenu(fileName = "StageRosterData", menuName = "Game/Stage Roster Data", order = 3)]
 public sealed class StageRosterData : ScriptableObject
 {
-    [Header("등장 몬스터 (일반)")]
-    [Tooltip("일반 웨이브에 등장할 몬스터들. unlockStage보다 낮은 스테이지에서는 등장하지 않음")]
-    [SerializeField] private List<MonsterUnlockEntry> normalMonsters = new List<MonsterUnlockEntry>();
-
     [Header("등장 보스")]
-    [Tooltip("스테이지 마지막에 등장할 보스들. 각 스테이지에서 unlockStage가 그 스테이지 이하인 것 중 가장 높은걸 씀")]
+    [Tooltip("등장 가능한 보스들. 스테이지에서 unlockStage가 그 스테이지 이하인 것들 중에서, 10스테이지 단위로 하나씩 돌아가며 등장함")]
     [SerializeField] private List<MonsterUnlockEntry> bossMonsters = new List<MonsterUnlockEntry>();
+
+    [Tooltip("보스가 몇 스테이지마다 바뀌는지 (예: 10 = 10스테이지마다 다음 보스로 교체)")]
+    [SerializeField] private int stagesPerBossRotation = 10;
 
     [Header("웨이브 수 계산")]
     [Tooltip("스테이지 1의 기본 웨이브 수")]
@@ -56,7 +55,7 @@ public sealed class StageRosterData : ScriptableObject
 
     [Header("웨이브 구성")]
     [Tooltip("웨이브 1개에 소환할 몬스터 수")]
-    [SerializeField] private int monstersPerWave = 5;
+    [SerializeField] private int monstersPerWave = 10;
 
     [Tooltip("몬스터 소환 간격 (초)")]
     [SerializeField] private float spawnInterval = 0.5f;
@@ -85,79 +84,31 @@ public sealed class StageRosterData : ScriptableObject
     }
 
     /// <summary>
-    /// 이 스테이지에서 등장 가능한 일반 몬스터 중 하나를 무작위로 고름
-    /// </summary>
-    /// <param name="stageNumber">스테이지 번호</param>
-    /// <returns>등장 가능한 몬스터가 없으면 null</returns>
-    public Monster PickRandomNormalMonster(int stageNumber)
-    {
-        return PickRandomUnlocked(normalMonsters, stageNumber);
-    }
-
-    /// <summary>
-    /// 이 스테이지에서 등장 가능한 보스 중 가장 강한(unlockStage가 가장 높은) 것을 고름
+    /// 이 스테이지에서 등장할 보스를 고른다. 그 스테이지까지 잠금 해제된 보스들 중에서
+    /// stagesPerBossRotation(기본 10) 스테이지 단위로 하나씩 순서대로 바뀜
     /// </summary>
     /// <param name="stageNumber">스테이지 번호</param>
     /// <returns>등장 가능한 보스가 없으면 null</returns>
-    public Monster PickStrongestBoss(int stageNumber)
+    public Monster PickBossForStage(int stageNumber)
     {
-        Monster best = null;
-        int bestUnlockStage = -1;
-
+        List<Monster> unlocked = new List<Monster>();
         for (int bossIndex = 0; bossIndex < bossMonsters.Count; bossIndex++)
         {
             MonsterUnlockEntry entry = bossMonsters[bossIndex];
-            if (entry.MonsterPrefab == null || entry.UnlockStage > stageNumber)
+            if (entry.MonsterPrefab != null && entry.UnlockStage <= stageNumber)
             {
-                continue;
-            }
-
-            if (entry.UnlockStage > bestUnlockStage)
-            {
-                bestUnlockStage = entry.UnlockStage;
-                best = entry.MonsterPrefab;
+                unlocked.Add(entry.MonsterPrefab);
             }
         }
 
-        return best;
-    }
-
-    /// <summary>
-    /// 후보 목록 중 이 스테이지에서 등장 가능한(unlockStage 조건을 만족하는) 것 하나를 무작위로 고름
-    /// </summary>
-    private Monster PickRandomUnlocked(List<MonsterUnlockEntry> pool, int stageNumber)
-    {
-        int unlockedCount = 0;
-        for (int entryIndex = 0; entryIndex < pool.Count; entryIndex++)
-        {
-            if (pool[entryIndex].MonsterPrefab != null && pool[entryIndex].UnlockStage <= stageNumber)
-            {
-                unlockedCount++;
-            }
-        }
-
-        if (unlockedCount == 0)
+        if (unlocked.Count == 0)
         {
             return null;
         }
 
-        int targetIndex = UnityEngine.Random.Range(0, unlockedCount);
-        int seenCount = 0;
-        for (int entryIndex = 0; entryIndex < pool.Count; entryIndex++)
-        {
-            if (pool[entryIndex].MonsterPrefab == null || pool[entryIndex].UnlockStage > stageNumber)
-            {
-                continue;
-            }
-
-            if (seenCount == targetIndex)
-            {
-                return pool[entryIndex].MonsterPrefab;
-            }
-
-            seenCount++;
-        }
-
-        return null;
+        int rotation = stagesPerBossRotation > 0 ? stagesPerBossRotation : 1;
+        int block = (Mathf.Max(1, stageNumber) - 1) / rotation;
+        int index = block % unlocked.Count;
+        return unlocked[index];
     }
 }

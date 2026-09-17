@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Video;
 using Debug = DebugLogger<ADManager>;
-
+//담당자 - 정성우
 
 
 /// <summary>

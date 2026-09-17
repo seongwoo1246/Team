@@ -493,6 +493,13 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 스킬2 버전. CanUseSkill1과 동일한 용도
     protected virtual bool CanUseSkill2() => true;
 
+    // 스킬 버튼에 표시할 이름. 기본값은 자리표시자 - 하위 클래스가 override해서 실제 스킬 이름을 채움
+    // (파티 편성이 바뀌면 SkillButtonUI가 이 값을 읽어서 버튼 텍스트를 그 캐릭터의 스킬 이름으로 갱신함)
+    public virtual string Skill1Name => "스킬1";
+
+    // 스킬2 버전. Skill1Name과 동일한 용도
+    public virtual string Skill2Name => "스킬2";
+
     /// <summary>
     /// 스킬1을 시도한다. 쿨다운이 다 찼고 CanUseSkill1() 조건도 만족하면 사용하고 true, 아니면 false
     /// 스킬 버튼 OnClick과 오토 스킬 루프 둘다 여기를 거쳐가는 유일한 진입점

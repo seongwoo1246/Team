@@ -131,4 +131,7 @@ public class MagicDealer : CharacterBase
     protected override bool CanUseSkill2() => HasEnemyInRange();
 
     private bool HasEnemyInRange() => GetLowestHpEntity(EnemyLayer) != null;
+
+    public override string Skill1Name => "파이어볼";
+    public override string Skill2Name => "메테오";
 }

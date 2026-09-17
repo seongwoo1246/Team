@@ -5,6 +5,7 @@
 
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// 캐릭터 1명 x 스킬 1개(스킬1 또는 스킬2)에 대응하는 버튼. Button의 OnClick에 OnClickUseSkill()을 연결해서 쓴다
@@ -28,6 +29,9 @@ public sealed class SkillButtonUI : MonoBehaviour
 
     [Tooltip("버튼 배경 이미지. 쿨다운은 다 찼는데 조건이 안 맞아 못 쓰는 상태(예: 부활 대상 없음)면 살짝 어둡게 표시하는 용도")]
     [SerializeField] private Image buttonImage;
+
+    [Tooltip("스킬 이름을 보여줄 텍스트. 편성이 바뀌어서 이 버튼이 다른 캐릭터를 가리키게 되면, 그 캐릭터의 실제 스킬 이름으로 갱신됨")]
+    [SerializeField] private TextMeshProUGUI nameText;
 
     // buttonImage의 원래 색 (Awake 시점 값을 기준으로 삼아서, 못 쓰는 상태일 때만 알파를 낮췄다가 되돌림)
     private Color _buttonFullColor;
@@ -75,6 +79,18 @@ public sealed class SkillButtonUI : MonoBehaviour
     public void SetTarget(CharacterBase newTarget)
     {
         target = newTarget;
+
+        if (nameText != null)
+        {
+            if (newTarget == null)
+            {
+                nameText.text = string.Empty;
+            }
+            else
+            {
+                nameText.text = skillSlot == SkillSlot.Skill1 ? newTarget.Skill1Name : newTarget.Skill2Name;
+            }
+        }
     }
 
     /// <summary>버튼 OnClick에 연결. 쿨다운이 다 찼으면 스킬을 사용한다</summary>
