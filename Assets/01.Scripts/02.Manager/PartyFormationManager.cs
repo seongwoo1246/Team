@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 파티 편성(최대 3명) 관리. 5명(전사/메이지/힐러/팔라딘/궁수) 중 최대 3명을 골라 실제 전투 필드로 내보낸다
 
@@ -12,15 +12,18 @@
 파밍 중이거나 대기 중일 때만 바꿀 수 있음
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UtilDebug = DebugLogger<PartyFormationManager>;
 
 /// <summary>
 /// 5명 중 3명을 골라 실전 파티를 구성하는 매니저. 캐릭터 화면의 "편성하기" 버튼이 ToggleFormation을 호출
 /// </summary>
-public sealed class PartyFormationManager : MonoBehaviour
+public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 {
     // 편성 가능한 최대 인원
     private const int SLOT_COUNT = 3;
+    private readonly System.Collections.Generic.List<CharacterBase> _spawnedCharacters = new();
 
     [Header("편성 가능한 캐릭터 5명")]
     [Tooltip("전사/메이지/힐러/팔라딘/궁수 순서 상관없이 5명 전부")]
@@ -48,22 +51,112 @@ public sealed class PartyFormationManager : MonoBehaviour
     // 슬롯별로 지금 배정된 캐릭터. 비어있으면 null
     private readonly CharacterBase[] _formation = new CharacterBase[SLOT_COUNT];
 
+    // DataManager, ObjectPoolMangerTest 이후
+    public int LoadOrder => 10;
+
     // 편성이 바뀔 때마다 발생. 인자 = 새 편성(슬롯 순서). UI(편성 표시 텍스트 등)가 구독해서 갱신하는 용도
     public event System.Action<CharacterBase[]> FormationChanged;
 
     private void Start()
     {
-        // 처음엔 인스펙터 순서대로 앞 3명을 기본 편성으로 시작 (지금까지의 전사/메이지/힐러 고정 편성과 동일)
-        for (int i = 0; i < SLOT_COUNT && i < allCharacters.Length; i++)
+        //// 처음엔 인스펙터 순서대로 앞 3명을 기본 편성으로 시작 (지금까지의 전사/메이지/힐러 고정 편성과 동일)
+        //for (int i = 0; i < SLOT_COUNT && i < allCharacters.Length; i++)
+        //{
+        //    _formation[i] = allCharacters[i];
+        //}
+
+        //// StageManager.party는 이미 인스펙터에 기본 3명이 똑같이 연결돼있어서 여기선 안 건드림
+        //// (Start() 호출 순서가 스크립트마다 달라서, 여기서 무리하게 맞추려다 오히려 꼬일 수 있음)
+        //ApplyFieldPositions();
+        //UpdateAllSkillButtons();
+    }
+
+    #region ILoadable 구현
+    /// <summary>
+    /// 씬 로드 단계에서 배치할 캐릭터 에셋 로드
+    /// </summary>
+    /// <param name="scene"></param>
+    /// <returns></returns>
+    public async UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        if (scene == SceneId.BootstrapScene || scene == SceneId.None) return;
+
+        System.Threading.CancellationToken ct = this.destroyCancellationToken;
+        UtilDebug.Log($"[{scene}] 캐릭터 에셋 로드 및 인스턴스화 시작");
+
+        var prefabs = await AddressableManager.Instance.LoadAssetsByLabelAsync<GameObject>("Character", ct);
+        if (prefabs == null || prefabs.Count == 0)
         {
-            _formation[i] = allCharacters[i];
+            UtilDebug.LogError("Character 라벨에 등록된 프리팹이 없습니다.");
+            return;
         }
 
-        // StageManager.party는 이미 인스펙터에 기본 3명이 똑같이 연결돼있어서 여기선 안 건드림
-        // (Start() 호출 순서가 스크립트마다 달라서, 여기서 무리하게 맞추려다 오히려 꼬일 수 있음)
+        _spawnedCharacters.Clear();
+        foreach (var prefab in prefabs)
+        {
+            GameObject charGo = Instantiate(prefab, transform);
+            if (charGo.TryGetComponent<CharacterBase>(out var characterComp))
+            {
+                _spawnedCharacters.Add(characterComp);
+                SetFieldActive(characterComp, false);
+            }
+        }
+        allCharacters = _spawnedCharacters.ToArray();
+    }
+
+    /// <summary>
+    /// 캐릭터 목록과 유저의 저장된 파티 슬롯을 받아 파티 구성
+    /// </summary>
+    /// <param name="scene"></param>
+    public void Init(SceneId scene)
+    {
+        if (scene == SceneId.BootstrapScene || scene == SceneId.None) return;
+        UtilDebug.Log($"[{scene}] 캐릭터 에셋 로드 및 인스턴스화 시작");
+
+        var user = UserManager.Instance.CurrentUser;
+        var charDict = user?.Characters?.characterDictionary;
+
+        for (int i = 0; i < SLOT_COUNT; i++) _formation[i] = null;
+
+        if (allCharacters != null)
+        {
+            foreach (var character in allCharacters)
+            {
+                if (charDict != null && charDict.TryGetValue(character.StatData.Id, out var saveData))
+                {
+                    if (saveData.partySlot >= 0 && saveData.partySlot < SLOT_COUNT)
+                    {
+                        _formation[saveData.partySlot] = character;
+                    }
+                }
+            }
+
+            // Fallback (비어있으면 앞 3명) - 방어코드 리펙토링하면 없앨 수 있음
+            if (_formation[0] == null && _formation[1] == null && _formation[2] == null)
+            {
+                for (int i = 0; i < SLOT_COUNT && i < allCharacters.Length; i++)
+                {
+                    _formation[i] = allCharacters[i];
+                }
+            }
+        }
+
+
         ApplyFieldPositions();
         UpdateAllSkillButtons();
     }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        // 씬 전환 시 필요하다면 캐릭터 인스턴스 파괴 및 정리
+        foreach (var charBase in _spawnedCharacters)
+        {
+            if (charBase != null) Destroy(charBase.gameObject);
+        }
+        _spawnedCharacters.Clear();
+    }
+    #endregion
+
 
     /// <summary>
     /// 지정한 캐릭터를 편성에 넣거나 뺀다. 이미 편성돼있으면 빼고, 아니면 빈 슬롯에 넣는다
@@ -79,7 +172,7 @@ public sealed class PartyFormationManager : MonoBehaviour
 
         if (stageManager != null && stageManager.CurrentMode == StageMode.Challenge)
         {
-            DebugLogger<PartyFormationManager>.LogWarning("챌린지 진행 중에는 파티 편성을 바꿀 수 없음");
+            UtilDebug.LogWarning("챌린지 진행 중에는 파티 편성을 바꿀 수 없음");
             return;
         }
 
@@ -93,7 +186,7 @@ public sealed class PartyFormationManager : MonoBehaviour
             int emptySlot = System.Array.IndexOf(_formation, null);
             if (emptySlot < 0)
             {
-                DebugLogger<PartyFormationManager>.LogWarning($"파티가 이미 꽉 참(최대 {SLOT_COUNT}명) - 다른 캐릭터를 먼저 빼야 함");
+                UtilDebug.LogWarning($"파티가 이미 꽉 참(최대 {SLOT_COUNT}명) - 다른 캐릭터를 먼저 빼야 함");
                 return;
             }
 

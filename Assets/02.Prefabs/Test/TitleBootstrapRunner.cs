@@ -13,9 +13,6 @@ public class TitleBootstrapRunner : MonoBehaviour
 
     private async UniTaskVoid Awake()
     {
-        Application.targetFrameRate = 60;
-        Screen.sleepTimeout = SleepTimeout.NeverSleep;
-
         var ct = this.destroyCancellationToken;
 
         // 1. Addressables 초기화

@@ -34,7 +34,7 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
 
     private void EnsureRoot()
     {
-        if(_pools == null)
+        if (_pools == null)
         {
             _poolRoot = new GameObject("Pool_Root").transform;
             _poolRoot.SetParent(transform);
@@ -44,39 +44,44 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     #region ILoadable 구현 (Addressables Label 자동 풀링)
     public async UniTask OnSceneLoadCreate(SceneId scene)
     {
-        if(_isInitialized) return;
-        EnsureRoot();
-        System.Threading.CancellationToken ct = this.destroyCancellationToken;
-        const string poolLabel = "Init_Pool"; // Poolable 컨벤션 : Init_Pool
+        //if (_isInitialized) return;
+        //EnsureRoot();
+        //System.Threading.CancellationToken ct = this.destroyCancellationToken;
+        //const string poolLabel = "Init_Pool"; // Poolable 컨벤션 : Init_Pool
 
-        UtilDebug.Log($"[{scene}] 라벨('{poolLabel}') 기반 오브젝트 풀 자동 Warmup 시작");
+        //UtilDebug.Log($"[{scene}] 라벨('{poolLabel}') 기반 오브젝트 풀 자동 Warmup 시작");
 
-        // 1. 라벨에 해당하는 모든 프리팹 로드
-        var prefabs = await AddressableManager.Instance.LoadAssetsByLabelAsync<GameObject>(poolLabel, ct);
-        if (prefabs == null || prefabs.Count == 0)
-        {
-            UtilDebug.Log($"[{scene}] 등록할 풀 에셋이 없습니다. (Label: {poolLabel})");
-            _isInitialized = true;
-            return;
-        }
+        //// 1. 라벨에 해당하는 모든 프리팹 로드
+        //var prefabs = await AddressableManager.Instance.LoadAssetsByLabelAsync<GameObject>(poolLabel, ct);
+        //if (prefabs == null || prefabs.Count == 0)
+        //{
+        //    UtilDebug.Log($"[{scene}] 등록할 풀 에셋이 없습니다. (Label: {poolLabel})");
+        //    return;
+        //}
 
-        // 2. 프리팹의 IPoolObject 컴포넌트를 탐색하여 자동 풀 등록
-        foreach (var prefabGo in prefabs)
-        {
-            if (prefabGo.TryGetComponent<IPoolObject>(out var poolObj))
-            {
-                RegisterPool((Component)poolObj, poolObj.PoolType, poolObj.InitialSize);
-            }
-            else
-            {
-                UtilDebug.LogWarning($"프리팹 '{prefabGo.name}'에 IPoolObject 구현체가 없어 풀 등록에서 제외되었습니다.");
-            }
-        }
+        //// 2. 프리팹의 IPoolObject 컴포넌트를 탐색하여 자동 풀 등록
+        //foreach (var prefabGo in prefabs)
+        //{
+        //    if (prefabGo.TryGetComponent<IPoolObject>(out var poolObj))
+        //    {
+        //        RegisterPool((Component)poolObj, poolObj.PoolType, poolObj.InitialSize);
+        //    }
+        //    else
+        //    {
+        //        UtilDebug.LogWarning($"프리팹 '{prefabGo.name}'에 IPoolObject 구현체가 없어 풀 등록에서 제외되었습니다.");
+        //    }
+        //}
 
-        UtilDebug.Log($"[{scene}] 오브젝트 풀 Warmup 완료 (현재 등록된 풀 개수: {_pools.Count})");
+        //UtilDebug.Log($"[{scene}] 오브젝트 풀 Warmup 완료 (현재 등록된 풀 개수: {_pools.Count})");
+        await UniTask.Yield();
     }
 
-    public void Init(SceneId scene) => UtilDebug.Log($"[{scene}] ObjectPoolManagerTest 초기화 완료");
+    public void Init(SceneId scene)
+    {
+        if (_isInitialized) return;
+        _isInitialized = true;
+        UtilDebug.Log($"[{scene}] ObjectPoolManagerTest 초기화 완료");
+    }
 
     public void OnSceneDestory(SceneId scene)
     {   /* 모든 풀은 계속 전역으로 유지되므로 씬 전환 시 파괴하지 않음 */ }
@@ -147,7 +152,7 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
             return;
         }
 
-        if(poolObj is CompPool<T> pool)
+        if (poolObj is CompPool<T> pool)
         {
             pool.Return(obj);
             return;
@@ -164,7 +169,7 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     /// </summary>
     private void OnDestroy()
     {
-        foreach(var pool in _pools.Values)
+        foreach (var pool in _pools.Values)
         {
             pool.Clear();
         }
@@ -197,7 +202,7 @@ public class CompPool<T> : IPool where T : Component, IPoolable
     {
         T obj = _inactive.Count > 0 ? _inactive.Pop() : CreateNew();
         obj.gameObject.SetActive(true);
-        obj.OnSpawn(); 
+        obj.OnSpawn();
         return obj;
     }
 

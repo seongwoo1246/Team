@@ -76,6 +76,31 @@ public class UserManager : NonMonoSingleton<UserManager>
         try
         {
             UserInfo newUserData = new UserInfo(uid, nickname);
+            var warriorData = new CharacterSaveData
+            {
+                characterId = "char_warrior",
+                isUnlocked = true,
+                partySlot = 0
+            };
+
+            var mageData = new CharacterSaveData
+            {
+                characterId = "char_mage",
+                isUnlocked = true,
+                partySlot = 1
+            };
+
+            var healerData = new CharacterSaveData
+            {
+                characterId = "char_healer",
+                isUnlocked = true,
+                partySlot = 2
+            };
+
+            newUserData.Characters.characterDictionary[warriorData.characterId] = warriorData;
+            newUserData.Characters.characterDictionary[mageData.characterId] = mageData;
+            newUserData.Characters.characterDictionary[healerData.characterId] = healerData;
+            newUserData.Inventory.Data.consumables["Material"] = 1;
 
             // 1. 순수 JSON 문자열 직렬화
             string profileJson = JsonConvert.SerializeObject(newUserData.Profile);
@@ -146,10 +171,19 @@ public class UserManager : NonMonoSingleton<UserManager>
     #endregion
 
     #region [Facade API : 단일 도메인]
+    // 골드 단일 갱신
     public async UniTask<bool> UpdateGoldAsync(long newGold, CancellationToken ct =default)
     {
         if (CurrentUser == null) return false;
+        CurrentUser.Profile.gold = newGold;
         return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newGold, ct);
+    }
+    // 다이아 단일 갱신
+    public async UniTask<bool> UpdateDiaAsync(long newDia, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        CurrentUser.Profile.dia = newDia;
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newDia, ct);
     }
 
     /// <summary>
@@ -201,6 +235,120 @@ public class UserManager : NonMonoSingleton<UserManager>
     #region [Facade API : 복합 도메인 트랜잭션]
     // ex) 장비 판매 트랜잭션 : 착용 해제 + 인벤토리 제거 + 골드 증가
     // 이러한 트랜잭션 가능
+
+    /// <summary>
+    /// 파티 슬롯 일괄 갱신 (3자리 슬롯 인덱스 전체 매핑)
+    /// </summary>
+    public async UniTask<bool> UpdateAllPartySlotAsync(Dictionary<string, int> slotMap, CancellationToken ct = default)
+    {
+        if(CurrentUser == null) return false;
+        var updates = new Dictionary<string, object>();
+        foreach(var kvp in slotMap)
+        {
+            string charId = kvp.Key;
+            int slotIndex = kvp.Value;
+            if(CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+            {
+                charData.partySlot = slotIndex;
+                updates[$"{StringConsts.UserConstants.Characters}/{CurrentUser.UID}/{charId}/partySlot"] = slotIndex;
+            }
+        }
+
+        try
+        {
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            // 씬 전환 등으로 정상 취소된 경우 조용히 false 반환
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"파티 슬롯 동기화 실패: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 장비 장착 트랜잭션: 대상 슬롯 장착 및 기존 장착자 해제 원자적 처리
+    /// </summary>
+    public async UniTask<bool> SwapEquipmentTransactionAsync(string targetCharId, EquipmentSlot slot, string newInstanceId, string previousOwnerCharId = null, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+
+        string slotKey = slot.ToString();
+        var updates = new Dictionary<string, object>();
+        string uid = CurrentUser.UID;
+
+        // 1. 기존 착용 캐릭터가 있었다면 해당 캐릭터 슬롯에서 제거
+        if (!string.IsNullOrEmpty(previousOwnerCharId) && previousOwnerCharId != targetCharId)
+        {
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(previousOwnerCharId, out var prevChar))
+            {
+                prevChar.equippedItems.Remove(slotKey);
+                updates[$"{StringConsts.UserConstants.Characters}/{uid}/{previousOwnerCharId}/{EquippedSlotMap}/{slotKey}"] = null;
+            }
+        }
+
+        // 2. 대상 캐릭터 슬롯에 새 instanceId 지정
+        if (CurrentUser.Characters.characterDictionary.TryGetValue(targetCharId, out var targetChar))
+        {
+            targetChar.equippedItems[slotKey] = newInstanceId;
+            updates[$"{StringConsts.UserConstants.Characters}/{uid}/{targetCharId}/{EquippedSlotMap}/{slotKey}"] = newInstanceId;
+        }
+
+        try
+        {
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"장비 장착 트랜잭션 실패: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 장비 강화 트랜잭션: 재료 차감 + 장비 강화 수치 동시 갱신
+    /// </summary>
+    public async UniTask<bool> EnhanceEquipmentTransactionAsync(string instanceId, int newLevel, float newBonus, string materialItemId, int remainingMaterialCount, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+
+        string uid = CurrentUser.UID;
+        var updates = new Dictionary<string, object>
+    {
+        { $"{Inventories}/{uid}/{Equipments}/{instanceId}/enhanceLevel", newLevel },
+        { $"{Inventories}/{uid}/{Equipments}/{instanceId}/totalEnhanceBonus", newBonus },
+        { $"{Inventories}/{uid}/{Consumables}/{materialItemId}", remainingMaterialCount }
+    };
+
+        // 로컬 메모리 상태 갱신
+        if (CurrentUser.Inventory.Data.equipments.TryGetValue(instanceId, out var equip))
+        {
+            equip.enhanceLevel = newLevel;
+            equip.totalEnhanceBonus = newBonus;
+        }
+        CurrentUser.Inventory.Data.consumables[materialItemId] = remainingMaterialCount;
+
+        try
+        {
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"장비 강화 트랜잭션 실패: {ex.Message}");
+            return false;
+        }
+    }
     #endregion
 
     #region [Check API : 닉네임 중복 검사]

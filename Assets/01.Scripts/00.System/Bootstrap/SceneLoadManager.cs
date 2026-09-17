@@ -101,11 +101,11 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
             if (loadingView != null)
                 await loadingView.UpdateSliderSmoothAsync(0.5f, 0.2f, this.destroyCancellationToken);
 
-            // 5. 새 씬 매니저 순차 초기화 ( 오름차순 )
-            await LTSManagerInitAsync(nextScene);
-
             // 6. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기
             await LTSBootstrapRunnerAsync(nextScene);
+
+            // 5. 새 씬 매니저 순차 초기화 ( 오름차순 )
+            await LTSManagerInitAsync(nextScene);
 
             _currentScene = nextScene;
             if (loadingView != null)
@@ -114,6 +114,7 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
                 await UniTask.Delay(100, cancellationToken: this.destroyCancellationToken);
                 await loadingView.FadeAsync(0f, 0.25f, this.destroyCancellationToken);
             }
+            UtilDebug.LogError("씬 전환 완료");
         }
         catch (System.OperationCanceledException)
         {
