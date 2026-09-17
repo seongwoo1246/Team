@@ -487,7 +487,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5620fbb8e0f16b429ff510368c8fed0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterHealthBar
-  target: {fileID: 0}
+  target: {fileID: 5839973327763017662}
   backgroundRenderer: {fileID: 2731910367527770149}
   fillBar: {fileID: 1885555742912972709}
   fillRenderer: {fileID: 6969581285885956509}
