@@ -258,9 +258,10 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     /// <param name="active">true면 필드 활성, false면 벤치로 치움</param>
     private void SetFieldActive(CharacterBase character, bool active)
     {
-        if (character.TryGetComponent(out SpriteRenderer spriteRenderer))
+        Renderer[] renderers = character.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < renderers.Length; i++)
         {
-            spriteRenderer.enabled = active;
+            renderers[i].enabled = active;
         }
 
         if (character.TryGetComponent(out Collider2D collider2D))
