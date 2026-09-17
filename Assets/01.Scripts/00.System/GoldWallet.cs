@@ -69,7 +69,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     #region 송태훈 수정 내용
 
     private bool _isInitialized = false;
-    public int LoadOrder => 10;
+    public int LoadOrder => 15;
     private CancellationTokenSource _loopCts;
     #endregion
 

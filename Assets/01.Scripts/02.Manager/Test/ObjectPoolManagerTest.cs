@@ -45,14 +45,14 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     public async UniTask OnSceneLoadCreate(SceneId scene)
     {
         if (_isInitialized) return;
-        EnsureRoot();
+
         System.Threading.CancellationToken ct = this.destroyCancellationToken;
         const string poolLabel = "Init_Pool"; // Poolable 컨벤션 : Init_Pool
 
         UtilDebug.Log($"[{scene}] 라벨('{poolLabel}') 기반 오브젝트 풀 자동 Warmup 시작");
 
         // 1. 라벨에 해당하는 모든 프리팹 로드
-        var prefabs = await AddressableManager.Instance.LoadAssetsByLabelAsync<GameObject>(poolLabel, ct);
+        var prefabs = await AddressableManager.Instance.LoadAssetsByLabelAsync<GameObject>(poolLabel, ct, true);
         if (prefabs == null || prefabs.Count == 0)
         {
             UtilDebug.Log($"[{scene}] 등록할 풀 에셋이 없습니다. (Label: {poolLabel})");
@@ -96,8 +96,6 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
             UtilDebug.LogWarning($"이미 등록된 풀입니다: {key}");
             return;
         }
-
-        EnsureRoot();
 
         Transform poolFolder = new GameObject($"Pool_{key}").transform;
         poolFolder.SetParent(_poolRoot);

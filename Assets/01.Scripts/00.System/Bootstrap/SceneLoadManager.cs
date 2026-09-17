@@ -148,7 +148,7 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
     private async UniTask MemoryCleanupAsync()
     {
         ServiceLocator.ClearSceneLocalServices();
-        AddressableManager.Instance.ReleaseAll();
+        AddressableManager.Instance.ReleaseSceneAssets();
         await Resources.UnloadUnusedAssets().ToUniTask(cancellationToken: this.destroyCancellationToken);
         System.GC.Collect();
     }

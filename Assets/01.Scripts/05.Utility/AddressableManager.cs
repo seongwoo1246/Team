@@ -2,25 +2,23 @@
  Cloudflare CDN 연동 카탈로그/패치 관리 및 Addresaable 에셋 수명 주기 총괄 매니저
  */
 using Cysharp.Threading.Tasks;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
-using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.ResourceManagement.ResourceLocations;
-using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 using UtilDebug = DebugLogger<AddressableManager>;
 
 public class AddressableManager : Singleton<AddressableManager>
 {
-    // 로드된 에셋 핸들 캐시 ( 프리팹 원본, 텍스처, SO 등 )
-    private readonly Dictionary<string, AsyncOperationHandle> assetHandles = new();
+    // 게임 전역 유지 에셋 핸들 캐시 (오브젝트 풀 프리팹, 전역 사운드/공용 UI 등)
+    private readonly Dictionary<string, AsyncOperationHandle> _globalAssetHandles = new();
+    // 씬 전환 시 언로드되는 씬 종속 에셋 핸들 캐시 (특정 씬 전용 리소스, SO 데이터 등)
+    private readonly Dictionary<string, AsyncOperationHandle> _sceneAssetHandles = new();
     // 런타임에 Instantiate된 오브젝트 핸들 캐시 ( 풀링되지 않는 1회성 오브젝트용)
     private readonly Dictionary<GameObject, AsyncOperationHandle> instanceHandles = new();
-    private List<IResourceLocation> _downloadLocations = new();
+    private List<UnityEngine.ResourceManagement.ResourceLocations.IResourceLocation> _downloadLocations = new();
 
     protected override void Awake()
     {
@@ -53,7 +51,7 @@ public class AddressableManager : Singleton<AddressableManager>
 
         // 다운로드 용량 산출
         var allkeys = new HashSet<object>();
-        foreach(IResourceLocator locator in Addressables.ResourceLocators)
+        foreach(UnityEngine.AddressableAssets.ResourceLocators.IResourceLocator locator in Addressables.ResourceLocators)
         {
             foreach(object key in locator.Keys)
             {
@@ -61,9 +59,9 @@ public class AddressableManager : Singleton<AddressableManager>
             }
         }
         var locationsHandle = Addressables.LoadResourceLocationsAsync(allkeys, Addressables.MergeMode.Union);
-        IList<IResourceLocation> locations = await locationsHandle.ToUniTask(cancellationToken: ct);
+        IList<UnityEngine.ResourceManagement.ResourceLocations.IResourceLocation> locations = await locationsHandle.ToUniTask(cancellationToken: ct);
 
-        _downloadLocations = new List<IResourceLocation>(locations);
+        _downloadLocations = new List<UnityEngine.ResourceManagement.ResourceLocations.IResourceLocation>(locations);
         Addressables.Release(locationsHandle);
 
         if (_downloadLocations.Count == 0)
@@ -79,7 +77,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// CheckTotalDownloadSizeAsync에서 감지된 모든 원격 의존성 에셋 번들 일괄 다운로드
     /// </summary>
-    public async UniTask<bool> DownloadAllDependenciesAsync(Action<float> onProgress = null ,CancellationToken ct = default)
+    public async UniTask<bool> DownloadAllDependenciesAsync(System.Action<float> onProgress = null ,CancellationToken ct = default)
     {
         if (_downloadLocations == null || _downloadLocations.Count == 0)
             return true;
@@ -106,7 +104,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// 등록된 씬을 비동기로 로드 - Login, Lobby
     /// </summary>
-    public async UniTask<SceneInstance> LoadSceneAsync(string sceneAddress, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true)
+    public async UniTask<UnityEngine.ResourceManagement.ResourceProviders.SceneInstance> LoadSceneAsync(string sceneAddress, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true)
     {
         var handle = Addressables.LoadSceneAsync(sceneAddress, mode, activateOnLoad);
         return await handle.ToUniTask();
@@ -115,11 +113,13 @@ public class AddressableManager : Singleton<AddressableManager>
 
     #region ObjectPool 연동을 위한 프리팹 및 에셋 로드
     /// <summary>
-    /// 프리팹 / 텍스처 / 오디오 등 메모리 원본 단일 에셋을 로드하고 핸들을 보관
+    /// 단일 에셋 로드 ( isGlobal : true 일 경우 씬 전역 에셋으로 씬 전환 시 언로드 x )
     /// </summary>
-    public async UniTask<T> LoadAssetAsync<T>(string key, CancellationToken ct = default) where T : UnityEngine.Object
+    public async UniTask<T> LoadAssetAsync<T>(string key, CancellationToken ct = default, bool isGlobal = false) where T : UnityEngine.Object
     {
-        if(assetHandles.TryGetValue(key, out var existingHandle))
+        Dictionary<string,AsyncOperationHandle> targetDict = isGlobal ? _globalAssetHandles : _sceneAssetHandles;
+
+        if(targetDict.TryGetValue(key, out var existingHandle))
             return (T)existingHandle.Result;
 
         var handle = Addressables.LoadAssetAsync<T>(key);
@@ -127,7 +127,7 @@ public class AddressableManager : Singleton<AddressableManager>
 
         if(handle.Status == AsyncOperationStatus.Succeeded)
         {
-            assetHandles[key] = handle;
+            targetDict[key] = handle;
             return result;
         }
 
@@ -135,14 +135,22 @@ public class AddressableManager : Singleton<AddressableManager>
         return null;
     }
 
-    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, CancellationToken ct = default, Action<T> callback = null) where T : UnityEngine.Object
+    /// <summary>
+    /// Label 단위 일괄 에셋 로드 ( 풀링 에셋 로드 isGlobal : true )
+    /// </summary>
+    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, CancellationToken ct = default, bool isGlobal = false, System.Action<T> callback = null) where T : UnityEngine.Object
     {
+        Dictionary<string, AsyncOperationHandle> targetDict = isGlobal ? _globalAssetHandles : _sceneAssetHandles;
+
+        if(targetDict.TryGetValue(label, out var existingHandle))
+            return (IList<T>)existingHandle.Result;
+
         var handle = Addressables.LoadAssetsAsync<T>(label, callback);
         var result = await handle.ToUniTask(cancellationToken: ct);
 
         if(handle.Status == AsyncOperationStatus.Succeeded)
         {
-            assetHandles[label] = handle;
+            targetDict[label] = handle;
             return result;
         }
 
@@ -150,9 +158,9 @@ public class AddressableManager : Singleton<AddressableManager>
         return null;
     }
 
-    public async UniTask<T> LoadPrefabComponentAsync<T>(string key, CancellationToken ct = default)
+    public async UniTask<T> LoadPrefabComponentAsync<T>(string key, CancellationToken ct = default, bool isGlobal = false)
     {
-        GameObject go = await LoadAssetAsync<GameObject>(key, ct);
+        GameObject go = await LoadAssetAsync<GameObject>(key, ct, isGlobal);
         if (go != null && go.TryGetComponent<T>(out var comp))
             return comp;
 
@@ -211,28 +219,48 @@ public class AddressableManager : Singleton<AddressableManager>
     }
 
     /// <summary>
-    /// 에셋을 내림
+    /// 특정 애셋 개별 해제
     /// </summary>
     /// <param name="key"></param>
     public void ReleaseAsset(string key)
     {
-        if(assetHandles.TryGetValue(key, out var handle))
+        if(_sceneAssetHandles.TryGetValue(key, out var sceneHandle))
+        {
+            Addressables.Release(sceneHandle);
+            _sceneAssetHandles.Remove(key);
+            return;
+        }
+
+        if(_globalAssetHandles.TryGetValue(key, out var handle))
         {
             Addressables.Release(handle);
-            assetHandles.Remove(key);
+            _globalAssetHandles.Remove(key);
         }
     }
 
     /// <summary>
-    /// 캐시된 모든 원본 에셋과 인스턴스 핸들을 강제 정리
+    /// 씬 전환 시 호출 ( 전역 프리팹을 보존하고 씬 에셋만 해제 )
+    /// </summary>
+    public void ReleaseSceneAssets()
+    {
+        ReleaseAllInstance();   
+        foreach(var handle in _sceneAssetHandles.Values)
+        {
+            Addressables.Release(handle);
+        }
+        _sceneAssetHandles.Clear();
+    }
+
+    /// <summary>
+    /// 전체 강제 정리
     /// </summary>
     public void ReleaseAll()
     {
         ReleaseAllInstance();
 
-        foreach (var handle in assetHandles.Values)
+        foreach (var handle in _globalAssetHandles.Values)
             Addressables.Release(handle);
-        assetHandles.Clear();
+        _globalAssetHandles.Clear();
     }
     #endregion
 }

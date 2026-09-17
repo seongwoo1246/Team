@@ -14,7 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Remote_Group
   m_GUID: e3cf36a5337fd264b8ab347f12116a25
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: bbba7d03fd626f54d9fa45b4450eca3f
+    m_Address: Assets/02.Prefabs/External/Test/Monster
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ca0855d2d4130f143bbacddb7a7b23f0
+    m_Address: Assets/02.Prefabs/External/Test/Character
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
   m_SchemaSet:
