@@ -14,73 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Remote_Group
   m_GUID: e3cf36a5337fd264b8ab347f12116a25
-  m_SerializeEntries:
-  - m_GUID: 0a7bac833a4f7664fbef5a0de0427b15
-    m_Address: Assets/02.Prefabs/Test/Char_Healer.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1c7320b1c838cb145b37371a3818c6c2
-    m_Address: Assets/02.Prefabs/Test/Monster_Assassin.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2bf527848acaf4943baa7305bd0ee154
-    m_Address: Assets/02.Prefabs/Test/Char_Archer.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 40fccf84f34557d43bba7f791e381fb8
-    m_Address: Assets/02.Prefabs/Test/Char_Warrior.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 73a4037e106bc7c45bac1a10b4cdced8
-    m_Address: Assets/02.Prefabs/Test/Monster_Golem.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: b1423b88ed652064295cb91a254e5f14
-    m_Address: Assets/02.Prefabs/Test/Monster_GoldenGoblin.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bf5409b527db3fb408e659f4d86b0999
-    m_Address: Assets/02.Prefabs/Test/Monster_BossOrc.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: bf96ea72b76c8684492865724aaec66d
-    m_Address: Assets/02.Prefabs/Test/Monster_Slime.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c49e8b312d408a144bed6a41b01a5893
-    m_Address: Assets/02.Prefabs/Test/Char_Mage.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d322e203a3a8e434db6c3de149e28092
-    m_Address: Assets/02.Prefabs/Test/Monster_Bat.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d86f29c2d7079d14fa07eeced37b744f
-    m_Address: Assets/02.Prefabs/Test/Char_Paladin.prefab
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
   m_SchemaSet:
