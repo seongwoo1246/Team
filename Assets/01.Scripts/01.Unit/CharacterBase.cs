@@ -547,6 +547,11 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     protected virtual void DoAttackCycle()
     {
+        if (GetLowestHpEntity(enemyLayer) == null)
+        {
+            return;
+        }
+
         OnBeforeAttack();
         PerformAttack();
         OnAfterAttack();
