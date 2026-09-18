@@ -58,7 +58,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     public event Action<int> MaterialCountChanged;
 
     #region 추가 작업
-    public int LoadOrder => 20;
+    public int LoadOrder => 18;
     private bool _isInitialized = false;
     private System.Threading.CancellationTokenSource _loopCts;
     #endregion
@@ -143,20 +143,6 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         }
     }
     #endregion
-
-    private void Start()
-    {
-        //ApplyOfflineTime();
-
-        //_stageManager = StageManager.Instance;
-        //if (_stageManager != null)
-        //{
-        //    _stageManager.StageCleared += OnStageCleared;
-        //}
-
-        //RunPassiveTimeLoop(this.GetCancellationTokenOnDestroy()).Forget();
-    }
-
     protected override void OnDestroy()
     {
         base.OnDestroy();
@@ -188,21 +174,6 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         SaveAccumulatedSecond();
         _isInitialized = false;
     }
-
-    // 앱이 완전히 꺼질 때 (빌드 기준) - GameManager에서 관리
-    //private void OnApplicationQuit()
-    //{
-    //    SaveAccumulatedSecond();
-    //}
-
-    // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 저장 - GameManager에서 관리
-    //private void OnApplicationPause(bool isPaused)
-    //{
-    //    if (isPaused)
-    //    {
-    //        Save();
-    //    }
-    //}
 
     /// <summary>
     /// 재료를 더한다 (황금 고블린 처치, 보스 클리어 등에서 호출)
@@ -279,7 +250,6 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         {
             await UniTask.Delay(TimeSpan.FromSeconds(tickInterval), cancellationToken: token);
             AccumulateSeconds(tickInterval);
-            //SaveLastSeenNow();
         }
     }
 
@@ -300,40 +270,8 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         }
     }
 
-    /// <summary> 
-    /// 마지막으로 저장해둔 시각과 지금 시각을 비교해서, 꺼져있던 시간만큼 누적시간에 더한다
-    /// (AccumulateSeconds 자체가 한 번에 1개까지만 지급하므로 여기서 따로 상한을둘 필요는 없음)
-    /// 서버의 lastLoginTimeStamp 기준으로 정산하기 때문에 미사용을 변경
-    /// </summary>
-    private void ApplyOfflineTime()
-    {
-        //string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
-        //int materialCountBeforeOffline = _materialCount;
-
-        //if (!string.IsNullOrEmpty(savedText)
-        //    && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
-        //{
-        //    double elapsedSeconds = (DateTime.UtcNow - lastSeen).TotalSeconds;
-        //    if (elapsedSeconds > 0d)
-        //    {
-        //        AccumulateSeconds((float)elapsedSeconds);
-        //    }
-        //}
-
-        //SaveLastSeenNow();
-
-        //// AccumulateSeconds가 한 번 호출로 최대 1개까지만 지급하므로, 여기서 늘어난 만큼(0 또는 1)이 오프라인 지급분
-        //int grantedByOffline = _materialCount - materialCountBeforeOffline;
-
-        //// RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
-        //// instance/필드 둘 다 null 체크하고 지나감 (없어도 재료 지급 자체는 이미 끝난 뒤라 안전함)
-        //if (grantedByOffline > 0 && RewardManager.Instance != null && RewardManager.Instance.GetUpgardMaterial != null)
-        //{
-        //    RewardManager.Instance.GetUpgardMaterial.text = grantedByOffline.ToString();
-        //}
-    }
-
     /// <summary>
+    /// 기존 담당자 "김주연" 코드에서 서버 데이터로 연동
     /// 서버 lastLoginTimeStamp와 현재 UTC 시간을 비교하여 오프라인 누적 시간을 정산
     /// </summary>
     private void ApplyOfflineTimeFromServer()
@@ -376,16 +314,4 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         PlayerPrefs.Save();
     }
 
-    //private void SaveLastSeenNow() // PlayerPrefs 미사용으로 변경
-    //{
-    //    PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
-    //}
-
-    //private void Save() // PlayerPrefs 미사용으로 변경
-    //{
-    //    PlayerPrefs.SetInt(MATERIAL_COUNT_KEY, _materialCount);
-    //    PlayerPrefs.SetFloat(ACCUMULATED_SECONDS_KEY, _accumulatedSeconds);
-    //    SaveLastSeenNow();
-    //    PlayerPrefs.Save();
-    //}
 }

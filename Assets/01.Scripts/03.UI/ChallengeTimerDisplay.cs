@@ -33,12 +33,14 @@ public sealed class ChallengeTimerDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.StageCleared += OnStageCleared;
             _stageManager.StageFailed += OnStageFailed;
             _stageManager.ChallengeStarted += OnChallengeStarted;
         }
+        else
+            DebugLogger<ChallengeTimerDisplay>.LogError("초기화 순서 문제");
     }
 
     private void OnDisable()
@@ -78,7 +80,12 @@ public sealed class ChallengeTimerDisplay : MonoBehaviour
 
         bool isChallengeMode;
 
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager) && _stageManager.CurrentMode == StageMode.Challenge)
+        if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        {
+            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
+            
+        }
+        if( _stageManager != null && _stageManager.CurrentMode == StageMode.Challenge)
         {
             isChallengeMode = true;
         }

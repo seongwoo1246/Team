@@ -17,6 +17,8 @@ public static class TitleBootstrap
 
         MaterialWallet materialWallet = MaterialWallet.Instance;
 
+        PlayerLevelSystem playerLevelSystem = PlayerLevelSystem.Instance;
+
         // Non-Mono
         UserManager.Instance.Init();
     }

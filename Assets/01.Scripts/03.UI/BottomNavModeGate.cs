@@ -7,8 +7,10 @@ StageManager.ModeChanged를 구독해서 모드가 바뀔 때만 두 버튼의 i
 (예전엔 파밍 시작 이벤트가 없어서 매 프레임 Update에서 CurrentMode를 폴링했었음)
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
+using UtilDebug = DebugLogger<BottomNavModeGate>;
 
 /// <summary>
 /// StageManager.CurrentMode를 봐서 Challenge/Lobby 버튼의 interactable을 맞춰준다
@@ -32,8 +34,11 @@ public sealed class BottomNavModeGate : MonoBehaviour
         {
             _stageManager.ModeChanged += OnModeChanged;
         }
-
-        ApplyCurrentMode();
+        else
+        {
+            UtilDebug.LogError("서비스 초기화 순서 문제");
+        }
+            ApplyCurrentMode();
     }
 
     private void OnDisable()
@@ -41,6 +46,10 @@ public sealed class BottomNavModeGate : MonoBehaviour
         if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ModeChanged -= OnModeChanged;
+        }
+        else
+        {
+            UtilDebug.LogError("서비스 초기화 순서 문제");
         }
     }
 
@@ -53,6 +62,7 @@ public sealed class BottomNavModeGate : MonoBehaviour
     {
         if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
+            UtilDebug.LogError("서비스 초기화 순서 문제");
             return;
         }
 

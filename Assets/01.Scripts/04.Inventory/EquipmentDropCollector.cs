@@ -25,6 +25,8 @@ public sealed class EquipmentDropCollector : MonoBehaviour
         {
             _stageManager.EquipmentDropped += OnEquipmentDropped;
         }
+        else
+            DebugLogger<EquipmentDropCollector>.LogError("서비스 초기화 순서 문제");
     }
 
     private void OnDisable()

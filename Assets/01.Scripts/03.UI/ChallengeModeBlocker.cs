@@ -28,7 +28,8 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
         {
             _stageManager.ModeChanged += OnModeChanged;
         }
-
+        else
+            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
         // 이 오브젝트가 모드 전환보다 늦게 켜졌을 수도 있으니, 구독 직후 현재 모드를 한 번 반영한다
         ApplyCurrentMode();
     }
@@ -38,7 +39,8 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
         if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ModeChanged -= OnModeChanged;
-        }
+        }else
+            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
     }
 
     /// <summary>모드가 바뀌면(파밍 ↔ 챌린지) 가림막 상태를 다시 맞춘다</summary>
@@ -53,6 +55,7 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
     {
         if (blockerRoot == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
+            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
             return;
         }
 

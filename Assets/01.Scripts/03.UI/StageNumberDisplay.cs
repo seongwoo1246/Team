@@ -34,7 +34,8 @@ public sealed class StageNumberDisplay : MonoBehaviour
             _stageManager.ChallengeStarted += OnChallengeStarted;
             _stageManager.ModeChanged += OnModeChanged;
         }
-
+        else
+            DebugLogger<StageNumberDisplay>.LogError("서비스 초기화 순서 문제");
         ApplyCurrentState();
     }
 

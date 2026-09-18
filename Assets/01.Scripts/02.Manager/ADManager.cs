@@ -51,7 +51,7 @@ public class ADManager : Singleton<ADManager>
        
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         //메모리 누수방지용 토큰취소
         adCancellationTokenSource? .Cancel();

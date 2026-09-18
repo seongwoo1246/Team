@@ -11,7 +11,6 @@ MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력을 계산함
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using JetBrains.Annotations;
 using UnityEngine;
 
 /// <summary>
@@ -126,18 +125,22 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     protected Animator animator;
     public virtual void Attack()
     {
+        if (animator == null) return;
         animator.SetTrigger("Attack");
     }
     public virtual void Dead()
     {
+        if (animator == null) return;
         animator.SetBool("IsDead",true);
     }
     public virtual void Spon()
     {
+        if (animator == null) return;
         animator.SetBool("IsDead", false);
     }
     public virtual void Hit()
     {
+        if (animator == null) return;
         animator.SetTrigger("Hit");
     }
    
@@ -147,7 +150,8 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
     private void Awake()
     {
-        animator = GetComponent<Animator>();
+        // Animator가 루트가 아니라 자식(bone_main 등)에 붙어있는 프리팹이 있어서 자식까지 찾는다
+        animator = GetComponentInChildren<Animator>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null)
@@ -192,43 +196,6 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             _attackCts = null;
         }
     }
-
-
-
-    //private void OnEnable()
-    //{
-    //    // 풀링으로 다시 켜질때 체력을 가득 채움
-    //    _currentHP = _maxHP;
-    //    _target = null;
-    //    _targetTf = null;
-    //    _targetCollider = null;
-    //    _isHarmless = false;
-
-    //    // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
-    //    _isEnraged = false;
-    //    if (_spriteRenderer != null)
-    //    {
-    //        _spriteRenderer.color = _baseSpriteColor;
-    //    }
-
-    //    // 자동 공격 루프 시작 (이번 활성화 동안만 유효한 토큰)
-    //    _attackCts = new CancellationTokenSource();
-    //    RunAttackLoop(_attackCts.Token).Forget();
-
-    //    OnSpawned();
-    //}
-
-    //private void OnDisable()
-    //{
-    //    // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
-    //    if (_attackCts != null)
-    //    {
-    //        _attackCts.Cancel();
-    //        _attackCts.Dispose();
-    //        _attackCts = null;
-    //    }
-    //}
-
     private void FixedUpdate()
     {
         if (IsDead)
@@ -441,7 +408,12 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
         float damage = Mathf.Max(0f, amount);
         _currentHP = Mathf.Max(0f, _currentHP - damage);
-        OnDamaged(damage);
+
+        bool willDie = _currentHP <= 0f;
+        if (!willDie)
+        {
+            OnDamaged(damage);
+        }
 
         RankingUi damageRank = FindAnyObjectByType<RankingUi>();
         if (damageRank != null)
@@ -451,7 +423,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
         CheckEnrage();
 
-        if (_currentHP <= 0f)
+        if (willDie)
         {
             Die();
             GameEvents.TriggerOnEnemyKilled();
@@ -508,7 +480,15 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     public virtual void Die()
     {
         _currentHP = 0f;
-        OnDied();
+        OnDied(); // 죽는 애니메이션 트리거
+        DieAfterDelayAsync().Forget();
+    }
+
+   
+    private async UniTaskVoid DieAfterDelayAsync()
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: this.GetCancellationTokenOnDestroy());
+
         TryDropEquipment();
         Died?.Invoke(this);
         gameObject.SetActive(false);
@@ -524,7 +504,6 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     {
         Died = null;
         EquipmentDropped = null;
-        gameObject.SetActive(false);
     }
 
     /// <summary>
