@@ -180,7 +180,7 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 스킬2를 실제로 쓸 수 있는지 (쿨다운 + CanUseSkill2 조건 둘 다 만족해야 함)
     public bool IsSkill2Usable => IsSkill2Ready && CanUseSkill2();
 
-    #region 애니메이터 와 함수설정
+    #region 애니메이터 와 함수설정 (사운드 추가)
 
     protected Animator animator;
     protected Animator BOWanimator;
@@ -189,11 +189,13 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     public virtual void Spon()
     {
+        SoundManager.Instance.playSFX("코인획득2");
        if(animator != null) animator.SetBool("isDeath", false);
        if(BOWanimator!=null) BOWanimator.SetBool("isDeath", false);
     }
     public virtual async void Move()
     {
+        SoundManager.Instance.playSFX("걷는소리");
         if (animator != null) animator.SetBool("1_Move", true);
         if (BOWanimator != null) BOWanimator.SetBool("1_Move", true);
         await UniTask.Delay(1000);
@@ -202,12 +204,14 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
     public virtual void Attack()
     {
+        SoundManager.Instance.playSFX("공격소리");
         if (animator != null) animator.SetTrigger("2_Attack");
         if (BOWanimator != null) BOWanimator.SetTrigger("2_Attack");
 
     }
     public virtual void Dead()
     {
+        SoundManager.Instance.playSFX("캐릭터사망");
         if (animator != null) animator.SetBool("isDeath", true);
         if (animator != null) animator.SetTrigger("4_Death");
         if (BOWanimator != null) BOWanimator.SetBool("isDeath", true);
@@ -215,11 +219,14 @@ public class CharacterBase : MonoBehaviour, IEntity
     }
     public virtual void Hit()
     {
+        
+        SoundManager.Instance.playSFX("또잉");
         if (animator != null) animator.SetTrigger("3_Damage");
         if (BOWanimator != null) BOWanimator.SetTrigger("3_Damage");
     }
     public virtual void Skill()
     {
+        SoundManager.Instance.playSFX("스킬소리");
         if (animator != null) animator.SetTrigger("6_Other");
         if (BOWanimator != null) BOWanimator.SetTrigger("6_Other");
     }

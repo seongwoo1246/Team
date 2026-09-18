@@ -37,14 +37,19 @@ public class SoundManager : Singleton<SoundManager>
 
     private void Start()
     {
-        playBGM("고요한전장",true);
+      
 
         InittializeDictionary();
 
         SetBGMVolume(PlayerPrefs.GetFloat("BGMSound", 0.5f));
         SetSFXVolume(PlayerPrefs.GetFloat("SFXSound", 0.5f));
-    }
 
+        playBGM("불꽃속산길1");
+      
+
+
+    }
+  
 
     /// <summary>
     /// 시작할 때 리스트를 딕셔너리로 바꿔주는 작업
@@ -170,18 +175,20 @@ public class SoundManager : Singleton<SoundManager>
     /// <param name="newSound">바꿔줄 노래</param>
     /// <param name="fadeTime">페이드 하는 시간</param>
     /// <returns></returns>
-    public async UniTask FadeSound(SoundData newSound , float fadeTime)
+    public async UniTask FadeSound(string newSound , float fadeTime)
     {
-        if(FadeOutSource.clip == newSound.clip)
+        if (FadeOutSource.clip.name == newSound)
         {
             return;
         }
+        if (bgmDict.TryGetValue(newSound, out AudioClip bgm))
+        {
 
-        // 새로운 소스에 클립 할당 및 재생 시작 
-        FadeInSource.clip = newSound.clip;
-        FadeInSource.volume = 0f;
-        FadeInSource.Play();
-
+            // 새로운 소스에 클립 할당 및 재생 시작 
+            FadeInSource.clip = bgm;
+            FadeInSource.volume = 0f;
+            FadeInSource.Play();
+        }
         float time = 0f;
         float startVloume = FadeOutSource.volume;
 

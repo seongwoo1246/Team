@@ -107,7 +107,18 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
             // 6. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기
             await LTSBootstrapRunnerAsync(nextScene);
 
+            #region 사운드를 위해서 넣은 함수들
+            if(SoundManager.Instance !=null)
+            {
+                switch(nextScene)
+                {
+                    case SceneId.BootstrapScene:await SoundManager.Instance.FadeSound("불꽃속산길1",3f);  break;
 
+                    case SceneId.LobbySceneTest: await SoundManager.Instance.FadeSound("픽셀풍노래1",3f); break;
+                }
+            }
+
+            #endregion
             _currentScene = nextScene;
             if (loadingView != null)
             {
