@@ -77,6 +77,8 @@ public class MagicDealer : CharacterBase
     // 공격 직전 훅. 폭발 이펙트가 지정돼 있으면 재생
     protected override void OnBeforeAttack()
     {
+        base.OnBeforeAttack(); // 공격 애니메이션 트리거 (다른 캐릭터랑 동일하게)
+
         if (explosionEffect != null)
         {
             explosionEffect.Play();
