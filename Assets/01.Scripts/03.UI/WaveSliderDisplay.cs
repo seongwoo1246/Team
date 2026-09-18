@@ -42,6 +42,8 @@ public sealed class WaveSliderDisplay : MonoBehaviour
         {
             _stageManager.ChallengeStarted += OnChallengeStarted;
         }
+        else
+            DebugLogger<WaveSliderDisplay>.LogError("서비스 초기화 순서 문제");
     }
 
     private void OnDisable()
