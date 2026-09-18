@@ -50,7 +50,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     private readonly CharacterBase[] _formation = new CharacterBase[SLOT_COUNT];
 
     // UpgradeSystem 보다 무조건 뒤에
-    public int LoadOrder => 20;
+    public int LoadOrder => 9;
 
     // 편성이 바뀔 때마다 발생. 인자 = 새 편성(슬롯 순서). UI(편성 표시 텍스트 등)가 구독해서 갱신하는 용도
     public event System.Action<CharacterBase[]> FormationChanged;
@@ -124,7 +124,14 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
                 }
             }
         }
-
+        if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        { 
+            UtilDebug.LogError("서비스 등록 순서 초기화");
+        }
+        if (_stageManager != null)
+        {
+            _stageManager.SetParty((CharacterBase[])_formation.Clone());
+        }
 
         ApplyFieldPositions();
         UpdateAllSkillButtons();
@@ -155,7 +162,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
             return;
         }
 
-        if(!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         { UtilDebug.LogError("서비스 등록 순서 초기화"); }
         if (_stageManager != null && _stageManager.CurrentMode == StageMode.Challenge)
         {
@@ -163,7 +170,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
             return;
         }
 
-            int existingSlot = System.Array.IndexOf(_formation, character);
+        int existingSlot = System.Array.IndexOf(_formation, character);
         if (existingSlot >= 0)
         {
             _formation[existingSlot] = null;
