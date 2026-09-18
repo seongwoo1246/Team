@@ -10,3 +10,11 @@ public interface ISceneBootstrap
 {
     Cysharp.Threading.Tasks.UniTask OnSceneReadyAsync();
 }
+
+public interface ISyncable
+{
+    /// <summary>
+    /// 현재 데이터를 서버에 저장할 최신 메모리로 갱신
+    /// </summary>
+    void SyncToUserMemory();
+}

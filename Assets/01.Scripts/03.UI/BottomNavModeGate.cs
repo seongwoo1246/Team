@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 MainUI 하단 네비게이션의 Challenge / Lobby 버튼이, 이미 그 모드에 들어가있을 때는
 다시 눌러도 의미 없으니(챌린지 재시작/파밍 재시작 낭비) 눌리지 않게 막아주는 스크립트
@@ -24,12 +24,11 @@ public sealed class BottomNavModeGate : MonoBehaviour
 
     // OnEnable에서 캐싱해두고 그 뒤로는 이 캐시만 씀 (씬 종료 시 .instance 재호출로
     // Singleton<T>가 새 오브젝트를 만들어버리는 문제를 피하기 위함)
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ModeChanged += OnModeChanged;
         }
@@ -39,7 +38,7 @@ public sealed class BottomNavModeGate : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ModeChanged -= OnModeChanged;
         }
@@ -52,7 +51,7 @@ public sealed class BottomNavModeGate : MonoBehaviour
 
     private void ApplyCurrentMode()
     {
-        if (_stageManager == null)
+        if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             return;
         }

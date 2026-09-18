@@ -158,6 +158,7 @@ public class UpgradeSystem : MonoBehaviour, ILoadable
         // 서버 비동기저장 요청 - 송태훈
         int newLevel = _levels[(int)track];
         UserManager.Instance.UpgradeTrackLevelAsync(track, newLevel, this.destroyCancellationToken).Forget();
+        UserManager.Instance.UpdateGoldAsync(GoldWallet.Instance.Balance, this.destroyCancellationToken).Forget();
 
         return true;
     }
