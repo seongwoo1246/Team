@@ -15,6 +15,12 @@ MonoBehaviour:
   m_GroupName: Reomte_Data
   m_GUID: 1046ae78855a49647ae166b0b02637a5
   m_SerializeEntries:
+  - m_GUID: 096c7446f81d95042be716c78e5d213f
+    m_Address: Assets/03.Data/00.UnitSO/Characters
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 237ce0e805d117f4ea84389a615a97e1
     m_Address: Assets/03.Data/00.UnitSO/Monsters
     m_ReadOnly: 0

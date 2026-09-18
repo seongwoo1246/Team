@@ -120,9 +120,13 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         { 
             _stageManager.StageCleared += OnStageCleared;
         }
+        else
+        {
+            UtilDebug.LogError("서비스 초기화 순서 문제");
+        }
 
-        // 누적 시간 루프 가동
-        _loopCts?.Cancel();
+            // 누적 시간 루프 가동
+            _loopCts?.Cancel();
         _loopCts = new System.Threading.CancellationTokenSource();
         RunPassiveTimeLoop(_loopCts.Token).Forget();
 

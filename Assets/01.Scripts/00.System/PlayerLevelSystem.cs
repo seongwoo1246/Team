@@ -66,6 +66,7 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable,
 
     protected override void Awake()
     {
+        isDDOL = true;
         base.Awake();
         SceneLoadManager.Instance.RegisterLoadable(this);
         GameManager.Instance.RegisterSyncable(this);

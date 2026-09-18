@@ -155,13 +155,15 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
             return;
         }
 
-        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager) && _stageManager.CurrentMode == StageMode.Challenge)
+        if(!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        { UtilDebug.LogError("서비스 등록 순서 초기화"); }
+        if (_stageManager != null && _stageManager.CurrentMode == StageMode.Challenge)
         {
             UtilDebug.LogWarning("챌린지 진행 중에는 파티 편성을 바꿀 수 없음");
             return;
         }
 
-        int existingSlot = System.Array.IndexOf(_formation, character);
+            int existingSlot = System.Array.IndexOf(_formation, character);
         if (existingSlot >= 0)
         {
             _formation[existingSlot] = null;

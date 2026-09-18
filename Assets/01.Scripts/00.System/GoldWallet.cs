@@ -115,7 +115,11 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
         {
             stageMng.StageCleared += OnStageCleared;
         }
-        _loopCts?.Cancel();
+        else
+        {
+            UtilDebug.LogError("초기화 순서 문제");
+        }
+            _loopCts?.Cancel();
         _loopCts = new CancellationTokenSource();
         RunPassiveIncomeLoop(_loopCts.Token).Forget();
 
@@ -238,12 +242,9 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
     {
         if (!ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
         {
+            UtilDebug.LogError("서비스 초기화 순서 문제 - 등록 안댐");
             return baseGoldPerMinute;
         }
-        //if (StageManager.Instance == null)
-        //{
-        //    return baseGoldPerMinute;
-        //}
 
         double stageMultiplier = stageMng.ClearGoldMultiplier;
         double equipmentBonus = stageMng.PartyEquipmentGoldBonusRatio;

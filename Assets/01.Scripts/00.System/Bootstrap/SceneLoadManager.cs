@@ -134,13 +134,22 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
         }
         catch (System.Exception ex)
         {
-            UtilDebug.LogError($"씬 전환 중 오류 발생 : {ex.Message}");
-            loadingView.ForceHide();
+            // MonoBehaviour 파괴에 따른 토큰 예외 무시 및 방어
+            if (ex.Message.Contains("DestroyCancellation"))
+            {
+                UtilDebug.LogWarning("씬 전환 중 오브젝트 파괴로 인한 비동기 토큰 취소 감지");
+            }
+            else
+            {
+                UtilDebug.LogError($"씬 전환 중 오류 발생 : {ex.Message}");
+            }
+            loadingView?.ForceHide();
         }
         finally
         {
             isLoading = false;
         }
+
     }
     private void NotifySceneDestroyToLoadables(SceneId sceneId)
     {
@@ -178,7 +187,13 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
             if (loadingView != null)
             {
                 float stepProgress = 0.5f + (0.35f * ((float)(i + 1) / sortedLoadables.Count));
-                await loadingView.UpdateSliderSmoothAsync(stepProgress, 0.05f, this.destroyCancellationToken);
+                try
+                {
+                    // UI 슬라이더 연출 중단이 전체 매니저 초기화를 끊지 않도록 방어
+                    await loadingView.UpdateSliderSmoothAsync(stepProgress, 0.05f, this.destroyCancellationToken);
+                }
+                catch (System.OperationCanceledException) { }
+                catch (System.Exception ex) when (ex.Message.Contains("DestroyCancellation")) { }
             }
         }
 

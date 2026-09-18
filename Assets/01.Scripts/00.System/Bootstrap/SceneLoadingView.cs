@@ -39,18 +39,37 @@ public class SceneLoadingView : MonoBehaviour
 
     public async UniTask UpdateSliderSmoothAsync(float targetValue, float duration, System.Threading.CancellationToken ct)
     {
-        if (progressSlider == null) return;
+        if (this == null || progressSlider == null || ct.IsCancellationRequested) return;
 
-        float startValue = progressSlider.value;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        try
         {
-            elapsed += Time.unscaledDeltaTime;
-            progressSlider.value = Mathf.Lerp(startValue, targetValue, elapsed / duration);
-            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            float startValue = progressSlider.value;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                // 오브젝트가 도중에 파괴되었거나 토큰 취소 시 안전 탈출
+                if (this == null || progressSlider == null || ct.IsCancellationRequested) return;
+
+                elapsed += Time.unscaledDeltaTime;
+                progressSlider.value = Mathf.Lerp(startValue, targetValue, elapsed / duration);
+
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+            }
+
+            if (this != null && progressSlider != null)
+            {
+                progressSlider.value = targetValue;
+            }
         }
-        progressSlider.value = targetValue;
+        catch (System.OperationCanceledException)
+        {
+            // 씬 전환/오브젝트 파괴로 인한 작업 취소 시 정상 종료 처리
+        }
+        catch (System.Exception ex) when (ex.Message.Contains("DestroyCancellation"))
+        {
+            // UniTask 내부 토큰 파괴 예외 방어
+        }
     }
 
     public void ForceHide()
