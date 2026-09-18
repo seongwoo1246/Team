@@ -127,21 +127,37 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     {
         if (animator == null) return;
         animator.SetTrigger("Attack");
+        if(SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("적공격소리");
+        }
     }
     public virtual void Dead()
     {
         if (animator == null) return;
         animator.SetBool("IsDead",true);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("적죽는소리");
+        }
     }
     public virtual void Spon()
     {
         if (animator == null) return;
         animator.SetBool("IsDead", false);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("또잉");
+        }
     }
     public virtual void Hit()
     {
         if (animator == null) return;
         animator.SetTrigger("Hit");
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("공격소리");
+        }
     }
    
 
