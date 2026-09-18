@@ -21,7 +21,8 @@ public class SoundManager : Singleton<SoundManager>
 {
 
     [Header("Audio Sources")]
-    [SerializeField] private AudioSource bgmSource;
+    [SerializeField] private AudioSource FadeOutSource;
+    [SerializeField] private AudioSource FadeInSource;
     [SerializeField] private AudioSource sfxSource;
 
     [Header("오디오 소스 리스트")]
@@ -36,7 +37,7 @@ public class SoundManager : Singleton<SoundManager>
 
     private void Start()
     {
-       
+        playBGM("고요한전장",true);
 
         InittializeDictionary();
 
@@ -76,9 +77,9 @@ public class SoundManager : Singleton<SoundManager>
     {
         if(bgmDict.TryGetValue(soundName, out AudioClip bgm))
         {
-            bgmSource.clip = bgm;
-            bgmSource.loop = loop;
-            bgmSource.Play();
+            FadeOutSource.clip = bgm;
+            FadeOutSource.loop = loop;
+            FadeOutSource.Play();
         }
         else
         {
@@ -105,16 +106,16 @@ public class SoundManager : Singleton<SoundManager>
 
     public void StopBGM()
     {
-        bgmSource.Stop();
+        FadeOutSource.Stop();
     }
 
 
     public void SetBGMVolume(float volume)
     {
         volume = Mathf.Clamp01(volume);
-        if(bgmSource != null)
+        if(FadeOutSource != null)
         {
-            bgmSource.volume = volume;
+            FadeOutSource.volume = volume;
         }
 
 
@@ -139,13 +140,13 @@ public class SoundManager : Singleton<SoundManager>
 
     public void MuteOnOffBGM()
     {
-        if(bgmSource.mute == false)
+        if(FadeOutSource.mute == false)
         {
-            bgmSource.mute = true;
+            FadeOutSource.mute = true;
         }
-        else if(bgmSource.mute == true)
+        else if(FadeOutSource.mute == true)
         {
-            bgmSource.mute = false;
+            FadeOutSource.mute = false;
         }
 
     }
@@ -160,6 +161,53 @@ public class SoundManager : Singleton<SoundManager>
             sfxSource.mute = false;
         }
 
+    }
+
+
+    /// <summary>
+    /// 노래를 교환 할 때 일어나는 함수 다음 노래로 페이드 인아웃을 통한 노래 교체
+    /// </summary>
+    /// <param name="newSound">바꿔줄 노래</param>
+    /// <param name="fadeTime">페이드 하는 시간</param>
+    /// <returns></returns>
+    public async UniTask FadeSound(SoundData newSound , float fadeTime)
+    {
+        if(FadeOutSource.clip == newSound.clip)
+        {
+            return;
+        }
+
+        // 새로운 소스에 클립 할당 및 재생 시작 
+        FadeInSource.clip = newSound.clip;
+        FadeInSource.volume = 0f;
+        FadeInSource.Play();
+
+        float time = 0f;
+        float startVloume = FadeOutSource.volume;
+
+        while(time < fadeTime)
+        {
+            time += Time.deltaTime;
+            float t = time / fadeTime;
+
+            //기존 BGM 페이드 아웃 새 BGM 페이드 인 
+            FadeOutSource.volume = Mathf.Lerp(startVloume, 0f, t);
+            FadeInSource.volume = Mathf.Lerp(0f, 1f, t);
+
+            await UniTask.Yield();
+
+        }
+
+        //기존 BGM 정지
+        FadeOutSource.Stop();
+        FadeOutSource.volume = 1f;
+
+        //노래 스왑
+        var temp = FadeOutSource;
+        FadeOutSource = FadeInSource;
+        FadeInSource = temp;
+
+        
     }
 
    
