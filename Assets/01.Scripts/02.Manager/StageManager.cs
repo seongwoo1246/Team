@@ -191,22 +191,19 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         ServiceLocator.Register<StageManager>(this, ServiceLifetime.Local);
         SceneLoadManager.Instance.RegisterLoadable(this);
         GameManager.Instance.RegisterSyncable(this);
-
-        //// GoldWallet.Start()가 분당 골드/오프라인 보상을 계산하기 전에 값이 준비돼 있어야 하므로
-        //// Start가 아니라 Awake에서 로드함 (유니티는 모든 오브젝트의 Awake가 끝난 뒤에 Start를 부름)
-        //_maxClearedStage = PlayerPrefs.GetInt(MAX_CLEARED_STAGE_KEY, 0);
-        //character = GetComponent<CharacterBase>();
     }
 
     #region ILoadable + ISyncable 구현부 - 송태훈
     public UniTask OnSceneLoadCreate(SceneId scene)
     {
+        // DataManger에서 StageRosterData SO 로드
         roster = DataManager.Instance.GetSingle<StageRosterData>();
         if (roster == null)
         {
             UtilDebug.LogError($"StageRosterData를 DataManager에서 찾을 수 없습니다.");
         }
 
+        // 파밍 모드 몬스터를 MonsterStatData SO 로드하여 Key(string)값 획득
         _farmingMonsterKeys.Clear();
         foreach(var stat in DataManager.Instance.GetAllData<MonsterStatData>())
         {
