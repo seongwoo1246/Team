@@ -16,3 +16,4 @@ MonoBehaviour:
   nameKr: "\uAC11\uC637"
   slot: 1
   allowedAttackType: 0
+  icon: {fileID: 21300000, guid: da78d280ae42e5c49a9e377210b48b82, type: 3}
