@@ -8,22 +8,24 @@ StageManager.ModeChanged를 구독해서 모드가 바뀔 때만 blockerRoot를 
 (매프레임 폴링하던걸 이벤트 방식으로 바꿈)
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
 /// StageManager.CurrentMode를 봐서 blockerRoot를 챌린지 모드일 때만 활성화한다
 /// </summary>
-public sealed class ChallengeModeBlocker : MonoBehaviour
+public sealed class ChallengeModeBlocker : MonoBehaviour, ILoadable
 {
     [Tooltip("챌린지 모드일 때 켤 가림막 오브젝트 (까만 Image, raycastTarget 켜져있어야 클릭도 막힘)")]
     [SerializeField] private GameObject blockerRoot;
 
+    public int LoadOrder => 40;
     // OnEnable에서 캐싱해두고 그 뒤로는 이 캐시만씀 (씬종료 시 .instance 재호출로
     // Singleton<T>가 새 오브젝트를 만들어버리는 문제를 피하기 위함)
     //private StageManager _stageManager;
-    private void Start()
+    private void Awake()
     {
-        TryBindStageManager();
+        SceneLoadManager.Instance.RegisterLoadable(this);
     }
 
     private void OnEnable()
@@ -33,11 +35,21 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
 
     private void OnDisable()
     {
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        {
-            _stageManager.ModeChanged -= OnModeChanged;
-        }else
-            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
+        UnbindStageManager();
+    }
+
+
+    public UniTask OnSceneLoadCreate(SceneId scene)=> UniTask.CompletedTask;
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        TryBindStageManager();
+        ApplyCurrentMode();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindStageManager();
     }
 
     private void TryBindStageManager()
@@ -47,6 +59,14 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
             stageMng.ModeChanged -= OnModeChanged;
             stageMng.ModeChanged += OnModeChanged;
             ApplyCurrentMode();
+        }
+    }
+
+    private void UnbindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
+        {
+            stageMng.ModeChanged -= OnModeChanged;
         }
     }
 
@@ -60,12 +80,15 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
     /// <summary>현재 모드가 챌린지면 가림막을 켜고, 파밍이면 끈다</summary>
     private void ApplyCurrentMode()
     {
-        if (blockerRoot == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        {
-            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
-            return;
-        }
+        if (blockerRoot == null) return;
 
-        blockerRoot.SetActive(_stageManager.CurrentMode == StageMode.Challenge);
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        {
+            blockerRoot.SetActive(_stageManager.CurrentMode == StageMode.Challenge);
+        }
+        else
+        {
+            blockerRoot.SetActive(false);
+        }
     }
 }

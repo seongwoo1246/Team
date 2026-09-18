@@ -58,7 +58,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 
     [Header("황금 고블린 (특별 강화재료)")]
     [Tooltip("황금 고블린 프리팹. 파밍 중 아주 낮은 확률로 일반 몬스터랑 별개로 추가 스폰됨 (마릿수 상한과 무관)")]
-    [SerializeField] private Monster goldenGoblinPrefab;
+    [field: SerializeField] public Monster goldenGoblinPrefab { get; private set; }
 
     [Tooltip("파밍 소환 틱마다 황금 고블린이 스폰될 확률 (0~1). 아주 낮게 잡을 것 (예: 0.001 = 0.1%)")]
     [SerializeField] private float goldenGoblinSpawnChance = 0.001f;
