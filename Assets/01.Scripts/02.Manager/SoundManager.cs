@@ -33,6 +33,11 @@ public class SoundManager : Singleton<SoundManager>
     private Dictionary<string,AudioClip>bgmDict = new Dictionary<string,AudioClip>();
     private Dictionary<string,AudioClip>sfxDict = new Dictionary<string,AudioClip>();
 
+    protected override void Awake()
+    {
+        isDDOL = true;
+        base.Awake();
+    }
    
 
     private void Start()
