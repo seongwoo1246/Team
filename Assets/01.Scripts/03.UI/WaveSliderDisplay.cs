@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 챌린지 스테이지 진입 시, 웨이브 진행을 슬라이더로 보여준다. 모든 스테이지가 3웨이브 고정이라
 (StageRosterData에서 웨이브 수 증가를 꺼둠) 슬라이더도 3개 고정 정지 지점(1웨이브/2웨이브/3웨이브=보스)으로
@@ -34,12 +34,11 @@ public sealed class WaveSliderDisplay : MonoBehaviour
 
     // OnEnable에서 캐싱해두고 그 뒤로는 이 캐시만 씀 (씬 종료 시 .instance 재호출로
     // Singleton<T>가 새 오브젝트를 만들어버리는 문제를 피하기 위함)
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ChallengeStarted += OnChallengeStarted;
         }
@@ -47,7 +46,7 @@ public sealed class WaveSliderDisplay : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ChallengeStarted -= OnChallengeStarted;
         }
@@ -62,7 +61,7 @@ public sealed class WaveSliderDisplay : MonoBehaviour
 
     private void Update()
     {
-        if (waveSlider == null || _stageManager == null)
+        if (waveSlider == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             return;
         }

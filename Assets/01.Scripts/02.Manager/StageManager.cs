@@ -23,24 +23,29 @@ _maxClearedStage는 PlayerPrefs에 저장해서 앱을 다시 켜도 배율/오�
 특별 강화재료를 확정 지급함(GoldenGoblin.OnDied). 챌린지 보스 클리어 시 재료 지급은 MaterialWallet이
 여기(StageCleared)를 직접 구독해서 처리하므로 이 클래스는 그쪽은 몰라도됨
 */
+/* 공동 작업자 - 송태훈
+ */
 
+using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UtilDebug = DebugLogger<StageManager>;
 
 /// <summary>
 /// 스테이지 흐름(파밍 ↔ 챌린지)을 관리하는 매니저. 씬에 하나 두고 StageManager.instance로 접근
+/// 싱글톤은 DDOL의 원칙으로 계속 파괴 및 생성을 반복하면 안 됨. 그로인해 싱글톤을 해재하고 서비스로 변경
 /// </summary>
-public sealed class StageManager : Singleton<StageManager>
+public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 {
+    #region SerializeField variable
     [Header("스포너")]
     [Tooltip("몬스터를 실제로 소환할 스포너")]
     [SerializeField] private MonsterSpawner spawner;
 
     [Header("파밍 설정")]
-    [Tooltip("메인 화면에서 무작위로 소환할 몬스터 프리팹들")]
-    [SerializeField] private Monster[] farmingMonsters;
+    [Tooltip("메인 화면에서 무작위로 소환할 몬스터 프리팹들")] // 수정 진행
+    private readonly System.Collections.Generic.List<string> _farmingMonsterKeys = new();
 
     [Tooltip("파밍 몬스터 소환 간격 (초)")]
     [SerializeField] private float farmingSpawnInterval = 1f;
@@ -60,7 +65,7 @@ public sealed class StageManager : Singleton<StageManager>
 
     [Header("챌린지 스테이지")]
     [Tooltip("스테이지 번호별 웨이브 구성/등장 몬스터/보스를 계산해주는 로스터")]
-    [SerializeField] private StageRosterData roster;
+    [field: SerializeField] public StageRosterData roster { get; private set; }
 
     [Header("파티")]
     [Tooltip("파밍 복귀 시 전원 부활시키고, 챌린지 중 전멸 여부를 판정할 파티 캐릭터들")]
@@ -73,11 +78,9 @@ public sealed class StageManager : Singleton<StageManager>
     [Header("클리어 보상")]
     [Tooltip("클리어한 스테이지 1개당 파밍 골드 획득 배율 증가율 (복리). 0.03 = 스테이지당 ×1.03배씩 누적")]
     [SerializeField] private double goldMultiplierPerClearedStage = 0.03d;
+    #endregion
 
-    // 지금까지 클리어한 최대 스테이지 번호를 저장해두는 PlayerPrefs 키
-    // (이게 없으면 앱을 다시 켤 때마다 ClearGoldMultiplier/파밍 몬스터 레벨이 전부 초기화돼버림)
-    private const string MAX_CLEARED_STAGE_KEY = "StageManager_MaxClearedStage";
-
+    #region MyRegion
     // 현재 진행 모드
     private StageMode _currentMode = StageMode.Farming;
 
@@ -130,29 +133,6 @@ public sealed class StageManager : Singleton<StageManager>
     // 챌린지 진행 중 지금 몇 번째 웨이브인지 (1부터 시작). 파밍 중이거나 보스전이면 0
     public int CurrentWaveNumber => _currentWaveNumber;
 
-    //애니메이션 연출을 위한 참조
-    CharacterBase character;
-    /// <summary>
-    /// 파티 편성을 바꾼다. PartyFormationManager가 유저의 편성 변경을 반영할 때 호출함
-    /// 챌린지(전투) 진행 중에는 PartyFormationManager 쪽에서 이미 막고 호출하지만,
-    /// 혹시 몰라 여기도 그냥 배열만 바꿔 끼우고 끝냄 - 진행 중이던 웨이브 로직엔 영향 없음
-    /// </summary>
-    /// <param name="members">새 파티 구성원</param>
-    public void SetParty(CharacterBase[] members)
-    {
-        party = members;
-    }
-
-    /// <summary>
-    /// 지정한 스테이지의 총 웨이브 수를 돌려준다 (보스 제외). roster가 없으면 0
-    /// 웨이브 진행 표시 UI(WaveProgressDisplay)가 점을 몇 개 그릴지 정할때씀
-    /// </summary>
-    /// <param name="stageNumber">확인할 스테이지 번호</param>
-    public int GetWaveCountForStage(int stageNumber)
-    {
-        return roster != null ? roster.GetWaveCount(stageNumber) : 0;
-    }
-
     // 클리어한 최대 스테이지에 비례한 영구 골드 배율 (복리). 1.0 = 기본(아직 클리어한 스테이지 없음)
     // 파밍 몬스터 레벨도 maxClearedStage로 지수 성장하기 때문에, 이 배율도 선형이 아니라 복리로 둬야
     // 스테이지가 쌓여도 괜찮음
@@ -198,29 +178,124 @@ public sealed class StageManager : Singleton<StageManager>
             return Mathf.Max(0f, challengeTimeLimit - (Time.time - _challengeStartTime));
         }
     }
+    #endregion
 
-    protected override void Awake()
+    #region 추가 변수 - 송태훈
+    public int LoadOrder => 10;
+    private bool _isInitialized = false;
+    #endregion
+
+    
+    private void Awake()
     {
-        base.Awake();
+        ServiceLocator.Register<StageManager>(this, ServiceLifetime.Local);
+        SceneLoadManager.Instance.RegisterLoadable(this);
+        GameManager.Instance.RegisterSyncable(this);
 
-        // GoldWallet.Start()가 분당 골드/오프라인 보상을 계산하기 전에 값이 준비돼 있어야 하므로
-        // Start가 아니라 Awake에서 로드함 (유니티는 모든 오브젝트의 Awake가 끝난 뒤에 Start를 부름)
-        _maxClearedStage = PlayerPrefs.GetInt(MAX_CLEARED_STAGE_KEY, 0);
-        character = GetComponent<CharacterBase>();
+        //// GoldWallet.Start()가 분당 골드/오프라인 보상을 계산하기 전에 값이 준비돼 있어야 하므로
+        //// Start가 아니라 Awake에서 로드함 (유니티는 모든 오브젝트의 Awake가 끝난 뒤에 Start를 부름)
+        //_maxClearedStage = PlayerPrefs.GetInt(MAX_CLEARED_STAGE_KEY, 0);
+        //character = GetComponent<CharacterBase>();
     }
 
-    private void Start()
+    #region ILoadable + ISyncable 구현부 - 송태훈
+    public UniTask OnSceneLoadCreate(SceneId scene)
     {
+        roster = DataManager.Instance.GetSingle<StageRosterData>();
+        if (roster == null)
+        {
+            UtilDebug.LogError($"StageRosterData를 DataManager에서 찾을 수 없습니다.");
+        }
+
+        _farmingMonsterKeys.Clear();
+        foreach(var stat in DataManager.Instance.GetAllData<MonsterStatData>())
+        {
+            if(stat.Kind == MonsterKind.Normal)
+            {
+                _farmingMonsterKeys.Add(stat.Id);
+            }
+        }
+
+        return UniTask.CompletedTask;
+    }
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+
+        // 서버 프로필에서 클리어 스테이지 동기화
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        _maxClearedStage = (profile != null && profile.currentStage > 0) ? profile.currentStage : 1;
+
+        UtilDebug.Log($"[{scene}] StageManager 초기화 완료 (최고 스테이지: {_maxClearedStage})");
         EnterFarming();
+        _isInitialized = true;
     }
 
-    protected override void OnDestroy()
+    public void OnSceneDestory(SceneId scene)
     {
-        base.OnDestroy();
-        _flowCts?.Cancel();
-        _flowCts?.Dispose();
+        CleanUp();
     }
 
+    public void SyncToUserMemory()
+    {
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        if (profile != null)
+        {
+            profile.currentStage = _maxClearedStage;
+        }
+    }
+    #endregion
+
+    private void OnDestroy()
+    {
+        ServiceLocator.Unregister<StageManager>();
+        if (SceneLoadManager.Instance != null)
+            SceneLoadManager.Instance.UnregisterLoadable(this);
+        if(GameManager.Instance != null)
+            GameManager.Instance.UnregisterSyncable(this);
+
+        CleanUp();
+    }
+
+    private void CleanUp()
+    {
+        if (_flowCts != null)
+        {
+            _flowCts.Cancel();
+            _flowCts.Dispose();
+            _flowCts = null;
+        }
+        if (spawner != null)
+        {
+            spawner.DespawnAll();
+        }
+
+        SyncToUserMemory();
+        _isInitialized = false;
+    }
+
+
+    /// <summary>
+    /// 파티 편성을 바꾼다. PartyFormationManager가 유저의 편성 변경을 반영할 때 호출함
+    /// 챌린지(전투) 진행 중에는 PartyFormationManager 쪽에서 이미 막고 호출하지만,
+    /// 혹시 몰라 여기도 그냥 배열만 바꿔 끼우고 끝냄 - 진행 중이던 웨이브 로직엔 영향 없음
+    /// </summary>
+    /// <param name="members">새 파티 구성원</param>
+    public void SetParty(CharacterBase[] members)
+    {
+        party = members;
+    }
+
+    /// <summary>
+    /// 지정한 스테이지의 총 웨이브 수를 돌려준다 (보스 제외). roster가 없으면 0
+    /// 웨이브 진행 표시 UI(WaveProgressDisplay)가 점을 몇 개 그릴지 정할때씀
+    /// </summary>
+    /// <param name="stageNumber">확인할 스테이지 번호</param>
+    public int GetWaveCountForStage(int stageNumber)
+    {
+        return roster != null ? roster.GetWaveCount(stageNumber) : 0;
+    }
     /// <summary>
     /// 메인 화면 파밍 모드로 진입한다. 체력 관리 없이 무한 사냥하며 골드를 번다
     /// 챌린지 실패(전멸/시간초과) 시 자동으로 호출되고, 챌린지 클리어 후에는
@@ -265,13 +340,13 @@ public sealed class StageManager : Singleton<StageManager>
     {
         if (roster == null || stageNumber < 1)
         {
-            DebugLogger<StageManager>.LogWarning($"잘못된 챌린지 진입 요청 (stageNumber: {stageNumber})");
+            UtilDebug.LogWarning($"잘못된 챌린지 진입 요청 (stageNumber: {stageNumber})");
             return;
         }
 
         if (roster.PickBossForStage(stageNumber) == null)
         {
-            DebugLogger<StageManager>.LogWarning($"스테이지 {stageNumber}에 등장 가능한 보스가 없어 챌린지를 시작하지 않음 (roster의 bossMonsters 설정 확인)");
+            UtilDebug.LogWarning($"스테이지 {stageNumber}에 등장 가능한 보스가 없어 챌린지를 시작하지 않음 (roster의 bossMonsters 설정 확인)");
             return;
         }
 
@@ -295,7 +370,8 @@ public sealed class StageManager : Singleton<StageManager>
         _flowCts = new CancellationTokenSource();
         _currentWaveNumber = 0;
 
-        spawner.DespawnAll();
+        if (spawner != null)
+            spawner.DespawnAll();
     }
 
     /// <summary>
@@ -304,9 +380,9 @@ public sealed class StageManager : Singleton<StageManager>
     /// <param name="token">챌린지 진입 등으로 파밍을 멈출 때 쓰는 취소 토큰</param>
     private async UniTaskVoid RunFarmingLoopAsync(CancellationToken token)
     {
-        if (farmingMonsters == null || farmingMonsters.Length == 0)
+        if (_farmingMonsterKeys == null || _farmingMonsterKeys.Count == 0)
         {
-            DebugLogger<StageManager>.LogWarning("파밍 몬스터 프리팹이 비어있음");
+            UtilDebug.LogWarning("파밍 몬스터 프리팹이 비어있음");
             return;
         }
 
@@ -314,12 +390,12 @@ public sealed class StageManager : Singleton<StageManager>
 
         while (!token.IsCancellationRequested)
         {
-            if (_aliveInFarming < maxFarmingMonsterCount)
+            if (_aliveInFarming < maxFarmingMonsterCount && _farmingMonsterKeys.Count > 0)
             {
-                Monster prefab = farmingMonsters[UnityEngine.Random.Range(0, farmingMonsters.Length)];
+                string pickedKey = _farmingMonsterKeys[UnityEngine.Random.Range(0, _farmingMonsterKeys.Count)];
                 int level = Mathf.Max(farmingMonsterLevel, _maxClearedStage);
                 // 파밍은 캐릭터 체력을 관리하지 않으므로 harmless: true로 소환 (공격은 하되 실제 피해 없음)
-                Monster monster = spawner.Spawn(prefab, level, harmless: true);
+                Monster monster = spawner.Spawn(pickedKey, level, harmless: true);
                 if (monster != null)
                 {
                     _aliveInFarming++;
@@ -340,11 +416,6 @@ public sealed class StageManager : Singleton<StageManager>
     /// </summary>
     private void TrySpawnGoldenGoblin()
     {
-        if (goldenGoblinPrefab == null)
-        {
-            return;
-        }
-
         if (UnityEngine.Random.value > goldenGoblinSpawnChance)
         {
             return;
@@ -352,7 +423,7 @@ public sealed class StageManager : Singleton<StageManager>
 
         int level = Mathf.Max(farmingMonsterLevel, _maxClearedStage);
         // 황금 고블린도 파밍 중이므로 harmless: true (실제 피해는 안 줌)
-        spawner.Spawn(goldenGoblinPrefab, level, harmless: true);
+        spawner.Spawn("Monster_GoldenGoblin", level, harmless: true);
     }
 
     /// <summary>
@@ -365,8 +436,9 @@ public sealed class StageManager : Singleton<StageManager>
         int waveCount = roster.GetWaveCount(stageNumber);
         for (int waveIndex = 0; waveIndex < waveCount; waveIndex++)
         {
-            _currentWaveNumber = waveIndex + 1;           
-            character.Move();
+            _currentWaveNumber = waveIndex + 1;
+            
+            TriggerPartyMoveAnimation();
             bool waveCleared = await RunWaveAsync(stageNumber, token);
             if (!waveCleared)
             {
@@ -381,14 +453,32 @@ public sealed class StageManager : Singleton<StageManager>
         bool bossDefeated = await RunBossAsync(stageNumber, token);
         if (bossDefeated)
         {
+
+            // 이 부분 RankingUI의 gameObject.SetActive가 false여서 실행 안될건데?
             RankingUi clearTimeRank = RankingUi.Instance;
-            clearTimeRank.AddRecord(clearTimeRank.ClearTimeList, MathF.Max(0, (Time.time - _challengeStartTime)));
+            RankingUi.Instance.AddRecord(clearTimeRank.ClearTimeList, MathF.Max(0, (Time.time - _challengeStartTime)));
             GameEvents.TriggerOnStageCleared();
-            OnStageCleared(stageNumber); 
+            OnStageCleared(stageNumber);
         }
         else if (IsPartyWiped() || IsTimeUp())
         {
             HandleChallengeFailure(stageNumber);
+        }
+    }
+
+    /// <summary>
+    /// 임시 방편 Wave 이동 애니메이션
+    /// </summary>
+    private void TriggerPartyMoveAnimation()
+    {
+        if (party == null) return;
+        for(int i=0; i< party.Length; i++)
+        {
+            CharacterBase member = party[i];
+            if(member !=null && !member.IsDead)
+            {
+                member.Move();
+            }
         }
     }
 
@@ -409,17 +499,17 @@ public sealed class StageManager : Singleton<StageManager>
             }
 
             // 일반 몬스터는 파밍/챌린지 구분 없이 farmingMonsters 전체 중에서 무작위로 등장
-            if (farmingMonsters == null || farmingMonsters.Length == 0)
+            if (_farmingMonsterKeys == null || _farmingMonsterKeys.Count == 0)
             {
-                DebugLogger<StageManager>.LogWarning("파밍 몬스터 프리팹이 비어있어서 챌린지 웨이브에 등장시킬 몬스터가 없음");
+                UtilDebug.LogWarning("파밍 몬스터 프리팹이 비어있어서 챌린지 웨이브에 등장시킬 몬스터가 없음");
                 await UniTask.Delay(TimeSpan.FromSeconds(roster.SpawnInterval), cancellationToken: token);
                 continue;
             }
 
-            Monster prefab = farmingMonsters[UnityEngine.Random.Range(0, farmingMonsters.Length)];
+            string poolKey = _farmingMonsterKeys[UnityEngine.Random.Range(0, _farmingMonsterKeys.Count)];
 
             // 챌린지는 진짜 전투이므로 harmless: false (실제 피해가 들어감)
-            Monster monster = spawner.Spawn(prefab, stageNumber, harmless: false);
+            Monster monster = spawner.Spawn(poolKey, stageNumber, harmless: false);
             if (monster != null)
             {
                 _aliveInWave++;
@@ -442,10 +532,10 @@ public sealed class StageManager : Singleton<StageManager>
     private async UniTask<bool> RunBossAsync(int stageNumber, CancellationToken token)
     {
         Monster bossPrefab = roster.PickBossForStage(stageNumber);
-        Monster boss = spawner.Spawn(bossPrefab, stageNumber, harmless: false);
+        Monster boss = spawner.Spawn(bossPrefab.StatData.Id, stageNumber, harmless: false);
         if (boss == null)
         {
-            DebugLogger<StageManager>.LogWarning($"스테이지 {stageNumber}에서 등장 가능한 보스가 없음 - 클리어 처리하지 않음");
+            UtilDebug.LogWarning($"스테이지 {stageNumber}에서 등장 가능한 보스가 없음 - 클리어 처리하지 않음");
             return false;
         }
 
@@ -587,7 +677,7 @@ public sealed class StageManager : Singleton<StageManager>
     private void HandleChallengeFailure(int stageNumber)
     {
         string reason = IsPartyWiped() ? "파티 전멸" : "제한 시간 초과";
-        DebugLogger<StageManager>.LogWarning($"{reason}로 스테이지 {stageNumber} 실패");
+        UtilDebug.LogWarning($"{reason}로 스테이지 {stageNumber} 실패");
 
         RestartFlow();
         RevivePartyIfNeeded();
@@ -601,6 +691,7 @@ public sealed class StageManager : Singleton<StageManager>
     /// 클리어 순간 보너스도 GoldWallet이 StageCleared를 직접 구독해서 알아서 지급함)
     /// 여기서 자동으로 파밍 복귀하지 않는다 - 몬스터는 이미 다 처리된 상태라 위험은 없고
     /// 클리어 화면에서 UI가 ContinueToNextStage / EnterFarming 중 하나를 호출할 때까지 대기
+    /// 추가 사항 - 서버 RTDB 스테이지 갱신 / 서버로 하기 때문에 PlayerPrefs 미사용
     /// </summary>
     /// <param name="stageNumber">방금 클리어한 스테이지 번호</param>
     private void OnStageCleared(int stageNumber)
@@ -608,8 +699,13 @@ public sealed class StageManager : Singleton<StageManager>
         if (stageNumber > _maxClearedStage)
         {
             _maxClearedStage = stageNumber;
-            PlayerPrefs.SetInt(MAX_CLEARED_STAGE_KEY, _maxClearedStage);
-            PlayerPrefs.Save();
+            SyncToUserMemory();
+        }
+        // 서버 RTDB 스테이지 갱신
+        var user = UserManager.Instance.CurrentUser;
+        if (user != null&& user.Profile != null)
+        {
+            UserManager.Instance.UpdateCurrentStageAsync(_maxClearedStage, this.destroyCancellationToken).Forget();
         }
 
         StageCleared?.Invoke(stageNumber);

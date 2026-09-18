@@ -6,14 +6,18 @@ public static class TitleBootstrap
     public static void InitializeSingletons()
     {
         AddressableManager.Instance.Init();
-        
-        var s = SceneLoadManager.Instance;
 
-        var d = DataManager.Instance;
-        
-        var o = ObjectPoolManagerTest.Instance;
+        SceneLoadManager sceneMng = SceneLoadManager.Instance;
 
-        var g = GoldWallet.Instance;
+        DataManager dataMng = DataManager.Instance;
+
+        ObjectPoolManagerTest ObjectMng = ObjectPoolManagerTest.Instance;
+
+        GoldWallet goldWallet = GoldWallet.Instance;
+
+        MaterialWallet materialWallet = MaterialWallet.Instance;
+
+        PlayerLevelSystem playerLevelSystem = PlayerLevelSystem.Instance;
 
         // Non-Mono
         UserManager.Instance.Init();

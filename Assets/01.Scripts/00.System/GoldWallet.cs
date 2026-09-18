@@ -15,7 +15,6 @@
 */
 
 using System;
-using System.Globalization;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -24,7 +23,7 @@ using UtilDebug = DebugLogger<GoldWallet>;
 /// <summary>
 /// 골드 지갑 씬에 하나 두고 GoldWallet.instance 로 접근
 /// </summary>
-public class GoldWallet : Singleton<GoldWallet>, ILoadable
+public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
 {
     //[Header("시작 골드")]
     //[Tooltip("게임 시작 시 보유 골드")]
@@ -61,7 +60,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     // StageManager.instance를 OnDestroy에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
     // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
     // (Unity가 "Some objects were not cleaned up when closing the scene" 경고를 띄우는 원인)
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     // 현재 보유 골드
     public double Balance => _balance;
@@ -69,7 +68,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     #region 송태훈 수정 내용
 
     private bool _isInitialized = false;
-    public int LoadOrder => 15;
+    public int LoadOrder => 14;
     private CancellationTokenSource _loopCts;
     #endregion
 
@@ -80,35 +79,11 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     {
         isDDOL = true;
         base.Awake();
-
-        //string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
-        //if (!string.IsNullOrEmpty(savedBalance)
-        //    && double.TryParse(savedBalance, NumberStyles.Float, CultureInfo.InvariantCulture, out long loaded)
-        //    && loaded >= 0d)
-        //{
-        //    _balance = loaded;
-        //}
-        //else
-        //{
-        //    _balance = startGold;
-        //}
+        SceneLoadManager.Instance.RegisterLoadable(this);
+        GameManager.Instance.RegisterSyncable(this);
     }
 
-    private void Start()
-    {
-        //// StageManager의 _maxClearedStage 로드(Awake)가 전부 끝난 뒤에 계산해야 정확하므로 Start에서 처리
-        //ApplyOfflineGold();
-
-        //_stageManager = StageManager.Instance;
-        //if (_stageManager != null)
-        //{
-        //    _stageManager.StageCleared += OnStageCleared;
-        //}
-
-        //RunPassiveIncomeLoop(this.GetCancellationTokenOnDestroy()).Forget();
-    }
-
-    #region 송태훈 수정 내용
+    #region ILoadable 구현부 + ISyncable- 송태훈
     public UniTask OnSceneLoadCreate(SceneId sncen)
     {
         return UniTask.CompletedTask;
@@ -129,17 +104,16 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
         }
         else
         {
-            LoadFromPlayerPrefs();
+            _balance = 0d;
             UtilDebug.Log($"서버 유저 프로필 부재 - PlayerPrefs 캐시 사용: {_balance:N0}");
         }
         BalanceChanged?.Invoke(_balance);
 
-        ApplyOfflineGold();
+        ApplyOfflineGoldFromServer();
 
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
         {
-            _stageManager.StageCleared += OnStageCleared;
+            stageMng.StageCleared += OnStageCleared;
         }
         _loopCts?.Cancel();
         _loopCts = new CancellationTokenSource();
@@ -150,44 +124,56 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
 
     public void OnSceneDestory(SceneId scene)
     {
-        _loopCts?.Cancel();
-        _loopCts?.Dispose();
-        _loopCts = null;
-        if (_stageManager != null)
-        {
-            _stageManager.StageCleared -= OnStageCleared;
-            _stageManager = null;
-        }
+        CleanUp();
+    }
 
-        Save();
-        _isInitialized = false;
+    public void SyncToUserMemory()
+    {
+        var profile = UserManager.Instance.CurrentUser?.Profile; 
+        if (profile != null)
+        {
+            profile.gold = _balance;
+        }
     }
     #endregion
 
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        _loopCts?.Cancel();
-        _loopCts?.Dispose();
-        if (_stageManager != null)
-        {
-            _stageManager.StageCleared -= OnStageCleared;
-        }
-
-        Save();
+        CleanUp();
     }
 
-    // 앱이 완전히 꺼질 때 (에디터 정지 포함은 아님 - 빌드 기준)
-    private void OnApplicationQuit() => Save();
-
-    // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 시각을 저장
-    private void OnApplicationPause(bool isPaused)
+    
+    private void CleanUp()
     {
-        if (isPaused)
+        if (!_isInitialized) return;
+        if (_loopCts != null)
         {
-            Save();
+            _loopCts?.Cancel();
+            _loopCts?.Dispose();
+            _loopCts = null;
         }
+
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
+        {
+            stageMng.StageCleared -= OnStageCleared;
+        }
+
+        SyncToUserMemory();
+        _isInitialized = false;
     }
+
+    // 앱이 완전히 꺼질 때 (에디터 정지 포함은 아님 - 빌드 기준) - GameManager가 총괄 관리
+    //private void OnApplicationQuit() => Save();
+
+    // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 시각을 저장 - GameManager가 총괄 관리
+    //private void OnApplicationPause(bool isPaused)
+    //{
+    //    if (isPaused)
+    //    {
+    //        Save();
+    //    }
+    //}
 
     /// <summary>
     /// 골드를 그대로 추가한다. GoldGain 강화 배율이 적용 안 된 순수 원시값을 더할 때 사용
@@ -221,7 +207,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
         _balance -= amount;
         BalanceChanged?.Invoke(_balance);
 
-        Save();
+        //Save(); // - 사용 안함
         SyncGoldToUserMemory();
         return true;
     }
@@ -233,8 +219,16 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     /// <param name="baseAmount">배율 적용 전 골드</param>
     private void AddPassiveGold(double baseAmount)
     {
-        double multiplier = UpgradeSystem.Instance != null ? UpgradeSystem.Instance.GetGoldMultiplier() : 1d;
-        Add(baseAmount * multiplier);
+        if(ServiceLocator.TryGet<UpgradeSystem>(out var upgradeSystem))
+        {
+            double multiplier = upgradeSystem != null ? upgradeSystem.GetGoldMultiplier() : 1d;
+            Add(baseAmount * multiplier);
+        }
+        else
+        {
+            Add(baseAmount);
+        }
+
     }
 
     /// <summary>
@@ -242,13 +236,17 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     /// </summary>
     private double GetCurrentGoldPerMinute()
     {
-        if (StageManager.Instance == null)
+        if (!ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
         {
             return baseGoldPerMinute;
         }
+        //if (StageManager.Instance == null)
+        //{
+        //    return baseGoldPerMinute;
+        //}
 
-        double stageMultiplier = StageManager.Instance.ClearGoldMultiplier;
-        double equipmentBonus = StageManager.Instance.PartyEquipmentGoldBonusRatio;
+        double stageMultiplier = stageMng.ClearGoldMultiplier;
+        double equipmentBonus = stageMng.PartyEquipmentGoldBonusRatio;
         return baseGoldPerMinute * stageMultiplier * (1d + equipmentBonus);
     }
 
@@ -261,21 +259,12 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     /// <param name="token">파괴 시 루프를 멈추는 취소 토큰</param>
     private async UniTaskVoid RunPassiveIncomeLoop(CancellationToken token)
     {
-        float timeSinceLastSave = 0f;
-
         while (!token.IsCancellationRequested)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(tickInterval), cancellationToken: token);
 
             double perTick = GetCurrentGoldPerMinute() * (tickInterval / 60d);
             AddPassiveGold(perTick);
-
-            timeSinceLastSave += tickInterval;
-            if (timeSinceLastSave >= lastSeenSaveInterval)
-            {
-                timeSinceLastSave = 0f;
-                Save();
-            }
         }
     }
 
@@ -288,53 +277,76 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     {
         double bonus = GetCurrentGoldPerMinute() * clearBonusMinutes;
         AddPassiveGold(bonus);
-        Save();
+        //Save(); // - 사용 안함
     }
 
     /// <summary>
     /// 마지막으로 저장해둔 시각과 지금 시각을 비교해서, 꺼져있던 시간만큼(최대 maxOfflineHours까지)
     /// 분당 골드를 한 번에 지급한다. 저장된 시각이 없으면(첫 실행) 지급 없이 지금 시각만 저장해둔다
+    /// 추가사항 - 서버 동기화로 인해 PlayerPrefs 미사용
     /// </summary>
     private void ApplyOfflineGold()
     {
-        string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
+        //string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
 
-        if (!string.IsNullOrEmpty(savedText)
-            && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
-        {
-            double elapsedSeconds = (DateTime.UtcNow - lastSeen).TotalSeconds;
-            double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxOfflineHours * 3600d));
-            double offlineMinutes = cappedSeconds / 60d;
+        //if (!string.IsNullOrEmpty(savedText)
+        //    && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
+        //{
+        //    double elapsedSeconds = (DateTime.UtcNow - lastSeen).TotalSeconds;
+        //    double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxOfflineHours * 3600d));
+        //    double offlineMinutes = cappedSeconds / 60d;
 
-            if (offlineMinutes > 0d)
-            {
-                double reward = GetCurrentGoldPerMinute() * offlineMinutes;
-                AddPassiveGold(reward);
-                UtilDebug.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
+        //    if (offlineMinutes > 0d)
+        //    {
+        //        double reward = GetCurrentGoldPerMinute() * offlineMinutes;
+        //        AddPassiveGold(reward);
+        //        UtilDebug.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
 
-                // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
-                // instance/필드 둘 다 null 체크하고 지나감 (없어도 골드 지급 자체는 이미 끝난 뒤라 안전함)
-                if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerReward != null)
-                {
-                    RewardManager.Instance.GetPlayerReward.text = ((long)reward).ToString();
-                }
-            }
-        }
+        //        // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
+        //        // instance/필드 둘 다 null 체크하고 지나감 (없어도 골드 지급 자체는 이미 끝난 뒤라 안전함)
+        //        if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerReward != null)
+        //        {
+        //            RewardManager.Instance.GetPlayerReward.text = ((long)reward).ToString();
+        //        }
+        //    }
+        //}
 
-        Save();
+        //Save();
     }
 
     #region 송태훈 추가 수정 부분
-    private void LoadFromPlayerPrefs()
+    private void ApplyOfflineGoldFromServer()
     {
-        string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
-        if (!string.IsNullOrEmpty(savedBalance)
-            && double.TryParse(savedBalance, NumberStyles.Integer, CultureInfo.InvariantCulture, out double loaded)
-            && loaded >= 0L)
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        if (profile == null || profile.lastLoginTimestamp <= 0) return;
+
+        long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long lastLogin = profile.lastLoginTimestamp;
+
+        // 밀리초 단위 보정 (13자리 이상일 경우)
+        if (lastLogin > 100000000000L)
         {
-            _balance = loaded;
+            lastLogin /= 1000L;
         }
-        else _balance = 0L;
+
+        long elapsedSeconds = nowSeconds - lastLogin;
+        if (elapsedSeconds <= 0) return;
+
+        // 최대 인정 시간 제한
+        double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxOfflineHours * 3600d));
+        double offlineMinutes = cappedSeconds / 60d;
+
+        if (offlineMinutes > 0d)
+        {
+            double reward = GetCurrentGoldPerMinute() * offlineMinutes;
+            AddPassiveGold(reward);
+            UtilDebug.Log($"서버 기준 오프라인 골드 지급 완료: {offlineMinutes:F1}분치 ({reward:N0} 골드)");
+
+            if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerReward != null)
+            {
+                RewardManager.Instance.GetPlayerReward.text = ((long)reward).ToString();
+            }
+        }
     }
 
     private void SyncGoldToUserMemory()
@@ -351,8 +363,8 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     /// </summary>
     private void Save()
     {
-        PlayerPrefs.SetString(BALANCE_KEY, _balance.ToString("R", CultureInfo.InvariantCulture));
-        PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
-        PlayerPrefs.Save();
+        //PlayerPrefs.SetString(BALANCE_KEY, _balance.ToString("R", CultureInfo.InvariantCulture));
+        //PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+        //PlayerPrefs.Save();
     }
 }

@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 파밍/챌린지 스테이지에서 몬스터를 실제로 소환하는 스포너.
 
@@ -6,12 +6,17 @@ ObjcetPoolManager는 enumType(Cartoon/Pixel/Item/Particle) 하나당 프리팹 �
 스테이지마다 서로 다른 몬스터 프리팹을 여러 개 쓰는 우리 상황엔 안맞음
 그래서 프리팹별로 자체 스택 풀을 갖는 경량풀을 여기서 직접 관리
 */
+/* 공동 작성자 - 송태훈
+ 
+ */
+
 
 using System.Collections.Generic;
 using UnityEngine;
+using UtilDebug = DebugLogger<MonsterSpawner>;
 
 /// <summary>
-/// 몬스터 프리팹을 받아 소환하고, 죽으면 프리팹별 풀로 되돌리는 스포너
+/// ObjectPoolMangerTest를 기반으로 몬스터를 스폰 및 관리하는 스포너
 /// </summary>
 public sealed class MonsterSpawner : MonoBehaviour
 {
@@ -19,37 +24,40 @@ public sealed class MonsterSpawner : MonoBehaviour
     [Tooltip("몬스터가 소환될 지점들. 여러 개면 그중 무작위 위치에 소환한다")]
     [SerializeField] private Transform[] spawnPoints;
 
-    // 프리팹별 비활성 풀
-    private readonly Dictionary<Monster, Stack<Monster>> _pools = new Dictionary<Monster, Stack<Monster>>();
+    // 현재 필드에 활성화된 몬스터 집합 (모드 전환 시 일괄 회수용)
+    private readonly HashSet<Monster> _activeMonsters = new();
 
-    // 활성화된 인스턴스가 어떤 프리팹에서 나왔는지 (죽었을 때 되돌릴 풀을 찾기 위함)
-    private readonly Dictionary<Monster, Monster> _instanceToPrefab = new Dictionary<Monster, Monster>();
-
-    // 현재 필드에 살아있는 인스턴스들 (모드 전환 시 강제 회수용)
-    private readonly HashSet<Monster> _active = new HashSet<Monster>();
 
     /// <summary>
-    /// 몬스터 한 마리를 소환하고 레벨을 지정 죽으면 자동으로 풀에 반환
+    /// 전역 풀(ObjectPoolManagerTest)에서 몬스터를 꺼내어 배치
     /// </summary>
     /// <param name="prefab">소환할 몬스터 프리팹</param>
     /// <param name="level">몬스터 레벨 (보통 스테이지 번호)</param>
     /// <param name="harmless">true면 공격은 하되 캐릭터에게 실제 피해를 주지 않음 (파밍 모드용)</param>
     /// <returns>소환된 몬스터. prefab이 비어있으면 null</returns>
-    public Monster Spawn(Monster prefab, int level, bool harmless = false)
+    public Monster Spawn(string poolKey, int level, bool harmless = false)
     {
-        if (prefab == null)
+        if (poolKey == string.Empty)
         {
+            UtilDebug.LogWarning("스폰하려는 프리팹 ID 또는 StatData가 유효하지 않습니다.");
             return null;
         }
 
-        Monster monster = GetFromPool(prefab);
-        _instanceToPrefab[monster] = prefab;
-        _active.Add(monster);
+        Monster monster = ObjectPoolManagerTest.Instance.Spawn<Monster>(poolKey);
 
+        if (monster == null)
+        {
+            UtilDebug.LogError($"오브젝트 풀에서 몬스터를 스폰하지 못했습니다: {poolKey}");
+            return null;
+        }
+
+        _activeMonsters.Add(monster);
+
+        // 위치 및 스탯 설정
         monster.transform.position = GetSpawnPosition();
-        monster.gameObject.SetActive(true);
         monster.SetLevel(level);
         monster.SetHarmless(harmless);
+
         monster.Died += OnMonsterDied;
 
         return monster;
@@ -61,45 +69,23 @@ public sealed class MonsterSpawner : MonoBehaviour
     /// </summary>
     public void DespawnAll()
     {
-        if (_active.Count == 0)
-        {
-            return;
-        }
+        if (_activeMonsters.Count == 0) return;
 
-        List<Monster> snapshot = new List<Monster>(_active);
-        _active.Clear();
+        // 컬렉션 수정 충돌 방지를 위한 스냅샷 생성
+        List<Monster> snapshot = new List<Monster>(_activeMonsters);
+        _activeMonsters.Clear();
 
         for (int monsterIndex = 0; monsterIndex < snapshot.Count; monsterIndex++)
         {
             Monster monster = snapshot[monsterIndex];
-            if (monster == null)
-            {
-                continue;
-            }
+            if (monster == null) continue;
 
             // Despawn()이 Died 구독을 전부 비우므로, 풀 반환은 여기서 직접 해준다
+            monster.Died -= OnMonsterDied;
             monster.Despawn();
+
             ReturnToPool(monster);
         }
-    }
-
-    /// <summary>
-    /// 풀에서 재사용 가능한 인스턴스를 꺼내거나, 없으면 새로 만듬
-    /// </summary>
-    private Monster GetFromPool(Monster prefab)
-    {
-        if (!_pools.TryGetValue(prefab, out Stack<Monster> pool))
-        {
-            pool = new Stack<Monster>();
-            _pools[prefab] = pool;
-        }
-
-        if (pool.Count > 0)
-        {
-            return pool.Pop();
-        }
-
-        return Instantiate(prefab, transform);
     }
 
     /// <summary>
@@ -108,8 +94,10 @@ public sealed class MonsterSpawner : MonoBehaviour
     /// </summary>
     private void OnMonsterDied(Monster monster)
     {
+        if(monster == null) return;
+
         monster.Died -= OnMonsterDied;
-        _active.Remove(monster);
+        _activeMonsters.Remove(monster);
         ReturnToPool(monster);
     }
 
@@ -118,10 +106,10 @@ public sealed class MonsterSpawner : MonoBehaviour
     /// </summary>
     private void ReturnToPool(Monster monster)
     {
-        if (_instanceToPrefab.TryGetValue(monster, out Monster prefab) && _pools.TryGetValue(prefab, out Stack<Monster> pool))
-        {
-            pool.Push(monster);
-        }
+        if(monster == null || monster.StatData == null) return;
+
+        string poolKey = monster.StatData.Id;
+        ObjectPoolManagerTest.Instance.Despawn(poolKey, monster);
     }
 
     /// <summary>

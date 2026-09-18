@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 챌린지 남은 시간을 화면에 보여주는 UI. 파밍 중에는 숨겨져 있다가 챌린지에 들어가면 나타남!
 스테이지 클리어 후(선택 화면 대기 중)에는 시간이 의미 없으니 멈춰서 숨긴다.
@@ -29,22 +29,23 @@ public sealed class ChallengeTimerDisplay : MonoBehaviour
     // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
     // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
     // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.StageCleared += OnStageCleared;
             _stageManager.StageFailed += OnStageFailed;
             _stageManager.ChallengeStarted += OnChallengeStarted;
         }
+        else
+            DebugLogger<ChallengeTimerDisplay>.LogError("초기화 순서 문제");
     }
 
     private void OnDisable()
     {
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.StageCleared -= OnStageCleared;
             _stageManager.StageFailed -= OnStageFailed;
@@ -77,7 +78,21 @@ public sealed class ChallengeTimerDisplay : MonoBehaviour
             return;
         }
 
-        bool isChallengeMode = _stageManager != null && _stageManager.CurrentMode == StageMode.Challenge;
+        bool isChallengeMode;
+
+        if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        {
+            DebugLogger<ChallengeModeBlocker>.LogError("서비스 초기화 순서 문제");
+            
+        }
+        if( _stageManager != null && _stageManager.CurrentMode == StageMode.Challenge)
+        {
+            isChallengeMode = true;
+        }
+        else
+        {
+            isChallengeMode = false;
+        }
 
         if (isChallengeMode != _wasChallengeMode)
         {

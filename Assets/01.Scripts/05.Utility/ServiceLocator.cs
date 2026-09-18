@@ -8,7 +8,7 @@ using UtilDebug = DebugLogger;
 public interface ILoadable
 {
     int LoadOrder { get; }
-    UniTask OnSceneLoadCreate(SceneId sncen);
+    UniTask OnSceneLoadCreate(SceneId scene);
     void Init(SceneId scene);
 
     void OnSceneDestory(SceneId scene);

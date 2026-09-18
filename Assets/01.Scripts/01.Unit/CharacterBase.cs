@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UtilDebug = DebugLogger<CharacterBase>;
 
 /// <summary>
 /// 캐릭터 공통 기반 클래스. 프리팹에 붙여 사용하며, 하위 클래스가 공격 방식을 정의
@@ -241,7 +242,15 @@ public class CharacterBase : MonoBehaviour, IEntity
     private void Start()
     {
         // 파티 강화 시스템 구독 (트랙이 오르면 스탯 재계산)
-        _upgradeSystem = UpgradeSystem.Instance;
+        if(ServiceLocator.TryGet<UpgradeSystem>(out UpgradeSystem service))
+        {
+            _upgradeSystem = service;
+        }
+        else
+        {
+            UtilDebug.LogError($"{statData.name} : UpgradeSystem 등록 실패");
+        }
+
         if (_upgradeSystem != null)
         {
             _upgradeSystem.TrackUpgraded += OnTrackUpgraded;

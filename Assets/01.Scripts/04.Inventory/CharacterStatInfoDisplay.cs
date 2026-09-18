@@ -35,7 +35,10 @@ public sealed class CharacterStatInfoDisplay : MonoBehaviour
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
+        if(ServiceLocator.TryGet<StageManager>(out StageManager stageManager))
+        {
+            this._stageManager = stageManager;
+        }
 
         _lastCharacter = null;
         _lastGoldBonus = double.NegativeInfinity;

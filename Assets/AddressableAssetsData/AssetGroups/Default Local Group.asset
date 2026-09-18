@@ -21,13 +21,13 @@ MonoBehaviour:
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19601760a450ca247bcd1c70cb5470ab
-    m_Address: Assets/02.Prefabs/Test/SceneLoadManager.prefab
+    m_Address: Assets/02.Prefabs/External/Test/SceneLoadManager.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
     - Bootstrap_Local
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d0010ac64045a794c9deb61280230c03
-    m_Address: Assets/02.Prefabs/Test/BootstrapContext.prefab
+    m_Address: Assets/02.Prefabs/External/Test/BootstrapContext.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
     - Bootstrap_Local

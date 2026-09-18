@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using Debug = DebugLogger<SoundManager>;
 //담당자 - 정성우
-
+/*
+ 효과음, BGM등 소리를 담당 하는 매니저 
+ */
 
 [Serializable]
 public struct SoundData

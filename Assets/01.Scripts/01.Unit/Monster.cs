@@ -11,7 +11,6 @@ MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력을 계산함
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using JetBrains.Annotations;
 using UnityEngine;
 
 /// <summary>
@@ -192,43 +191,6 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             _attackCts = null;
         }
     }
-
-
-
-    //private void OnEnable()
-    //{
-    //    // 풀링으로 다시 켜질때 체력을 가득 채움
-    //    _currentHP = _maxHP;
-    //    _target = null;
-    //    _targetTf = null;
-    //    _targetCollider = null;
-    //    _isHarmless = false;
-
-    //    // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
-    //    _isEnraged = false;
-    //    if (_spriteRenderer != null)
-    //    {
-    //        _spriteRenderer.color = _baseSpriteColor;
-    //    }
-
-    //    // 자동 공격 루프 시작 (이번 활성화 동안만 유효한 토큰)
-    //    _attackCts = new CancellationTokenSource();
-    //    RunAttackLoop(_attackCts.Token).Forget();
-
-    //    OnSpawned();
-    //}
-
-    //private void OnDisable()
-    //{
-    //    // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
-    //    if (_attackCts != null)
-    //    {
-    //        _attackCts.Cancel();
-    //        _attackCts.Dispose();
-    //        _attackCts = null;
-    //    }
-    //}
-
     private void FixedUpdate()
     {
         if (IsDead)
@@ -511,7 +473,6 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
         OnDied();
         TryDropEquipment();
         Died?.Invoke(this);
-        gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -524,7 +485,6 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     {
         Died = null;
         EquipmentDropped = null;
-        gameObject.SetActive(false);
     }
 
     /// <summary>

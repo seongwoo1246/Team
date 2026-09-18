@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 챌린지 스테이지 진입 시, 타이머 밑에 지금 몇 스테이지인지 보여주는 텍스트
 ChallengeTimerDisplay랑 표시 규칙(챌린지 모드일 때만 보임) 동일하게 맞춤
@@ -25,23 +25,23 @@ public sealed class StageNumberDisplay : MonoBehaviour
     // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
     // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
     // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ChallengeStarted += OnChallengeStarted;
             _stageManager.ModeChanged += OnModeChanged;
         }
-
+        else
+            DebugLogger<StageNumberDisplay>.LogError("서비스 초기화 순서 문제");
         ApplyCurrentState();
     }
 
     private void OnDisable()
     {
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ChallengeStarted -= OnChallengeStarted;
             _stageManager.ModeChanged -= OnModeChanged;
@@ -67,7 +67,7 @@ public sealed class StageNumberDisplay : MonoBehaviour
     /// </summary>
     private void ApplyCurrentState()
     {
-        if (stageNumberText == null || _stageManager == null)
+        if (stageNumberText == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             return;
         }

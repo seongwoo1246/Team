@@ -15,11 +15,29 @@ MonoBehaviour:
   m_GroupName: Reomte_Data
   m_GUID: 1046ae78855a49647ae166b0b02637a5
   m_SerializeEntries:
+  - m_GUID: 237ce0e805d117f4ea84389a615a97e1
+    m_Address: Assets/03.Data/00.UnitSO/Monsters
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 40584281492375e438a541b1b1c16eeb
     m_Address: Assets/03.Data/00.UnitSO/GameConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels:
-    - LobbySceneTest_Data
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ce0c2888b35095b4eaea0da4487cabfe
+    m_Address: Assets/03.Data/00.UnitSO/Stages/StageRosterData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fa0657beab8e79c469345952b7d4b94a
+    m_Address: Assets/03.Data/00.UnitSO/Level/PlayerLevelConfig.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
