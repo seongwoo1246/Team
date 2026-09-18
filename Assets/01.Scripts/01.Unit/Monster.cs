@@ -125,18 +125,22 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     protected Animator animator;
     public virtual void Attack()
     {
+        if (animator == null) return;
         animator.SetTrigger("Attack");
     }
     public virtual void Dead()
     {
+        if (animator == null) return;
         animator.SetBool("IsDead",true);
     }
     public virtual void Spon()
     {
+        if (animator == null) return;
         animator.SetBool("IsDead", false);
     }
     public virtual void Hit()
     {
+        if (animator == null) return;
         animator.SetTrigger("Hit");
     }
    
@@ -146,7 +150,8 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
     private void Awake()
     {
-        animator = GetComponent<Animator>();
+        // Animator가 루트가 아니라 자식(bone_main 등)에 붙어있는 프리팹이 있어서 자식까지 찾는다
+        animator = GetComponentInChildren<Animator>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null)
@@ -403,7 +408,12 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
         float damage = Mathf.Max(0f, amount);
         _currentHP = Mathf.Max(0f, _currentHP - damage);
-        OnDamaged(damage);
+
+        bool willDie = _currentHP <= 0f;
+        if (!willDie)
+        {
+            OnDamaged(damage);
+        }
 
         RankingUi damageRank = FindAnyObjectByType<RankingUi>();
         if (damageRank != null)
@@ -413,7 +423,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
         CheckEnrage();
 
-        if (_currentHP <= 0f)
+        if (willDie)
         {
             Die();
             GameEvents.TriggerOnEnemyKilled();
@@ -470,9 +480,18 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     public virtual void Die()
     {
         _currentHP = 0f;
-        OnDied();
+        OnDied(); // 죽는 애니메이션 트리거
+        DieAfterDelayAsync().Forget();
+    }
+
+   
+    private async UniTaskVoid DieAfterDelayAsync()
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: this.GetCancellationTokenOnDestroy());
+
         TryDropEquipment();
         Died?.Invoke(this);
+        gameObject.SetActive(false);
     }
 
     /// <summary>
