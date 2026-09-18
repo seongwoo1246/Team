@@ -109,7 +109,7 @@ public class UserProfileRequest : BaseRequestData
         this.nickname = nickname;
         this.accountLevel = 1;
         this.currentStage = 1;
-        this.lastLoginTimestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        this.lastLoginTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         this.gold = 0;
         this.dia = 0;
 

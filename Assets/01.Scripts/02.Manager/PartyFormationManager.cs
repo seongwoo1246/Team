@@ -13,6 +13,7 @@
 */
 
 using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
 using UtilDebug = DebugLogger<PartyFormationManager>;
 
@@ -161,6 +162,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     /// <summary>
     /// 지정한 캐릭터를 편성에 넣거나 뺀다. 이미 편성돼있으면 빼고, 아니면 빈 슬롯에 넣는다
     /// 캐릭터 화면의 "편성하기" 버튼 OnClick에 연결
+    /// 파티 편성 변경 시 서버에 전송 - 송태훈
     /// </summary>
     /// <param name="character">토글할 캐릭터</param>
     public void ToggleFormation(CharacterBase character)
@@ -202,6 +204,15 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 
         UpdateAllSkillButtons();
         FormationChanged?.Invoke((CharacterBase[])_formation.Clone());
+
+        var slotMap = new Dictionary<string, int>();
+        for (int i = 0; i < allCharacters.Length; i++)
+        {
+            CharacterBase charcterbase = allCharacters[i];
+            int slotIndex = System.Array.IndexOf(_formation, charcterbase);
+            slotMap[character.StatData.Id] = slotIndex; // 편성에 없으면 -1, 있으면 0~2
+        }
+        UserManager.Instance.UpdateAllPartySlotAsync(slotMap, this.destroyCancellationToken).Forget();
     }
 
     /// <summary>지금 이 캐릭터가 편성에 들어가있는지</summary>

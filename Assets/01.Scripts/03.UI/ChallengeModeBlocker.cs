@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 챌린지 모드 중엔 골드 확인/강화를 못하게 막는 스크립트. blockerRoot(까만 이미지)를
 챌린지 모드일 때만 켜서 그밑에 있는 Party_Panel(골드 텍스트 + 강화 카드들)을
@@ -20,12 +20,11 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
 
     // OnEnable에서 캐싱해두고 그 뒤로는 이 캐시만씀 (씬종료 시 .instance 재호출로
     // Singleton<T>가 새 오브젝트를 만들어버리는 문제를 피하기 위함)
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ModeChanged += OnModeChanged;
         }
@@ -36,7 +35,7 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.ModeChanged -= OnModeChanged;
         }
@@ -52,7 +51,7 @@ public sealed class ChallengeModeBlocker : MonoBehaviour
     /// <summary>현재 모드가 챌린지면 가림막을 켜고, 파밍이면 끈다</summary>
     private void ApplyCurrentMode()
     {
-        if (blockerRoot == null || _stageManager == null)
+        if (blockerRoot == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             return;
         }

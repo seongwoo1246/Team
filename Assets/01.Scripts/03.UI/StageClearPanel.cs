@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 스테이지 클리어 시 뜨는 선택 화면. 다음 스테이지 / 파밍으로 버튼을 눌러 진행 방향을 고름
 StageManager는 클리어해도 자동으로 아무 데도 안 가고 대기만 하므로, 이 패널이 그 대기 상태의 UI
@@ -21,12 +21,11 @@ public sealed class StageClearPanel : MonoBehaviour
     // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
     // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
     // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
-    private StageManager _stageManager;
+    //private StageManager _stageManager;
 
     private void OnEnable()
     {
-        _stageManager = StageManager.Instance;
-        if (_stageManager != null)
+        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.StageCleared += OnStageCleared;
             _stageManager.ChallengeStarted += OnChallengeStarted;
@@ -37,7 +36,7 @@ public sealed class StageClearPanel : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_stageManager != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
             _stageManager.StageCleared -= OnStageCleared;
             _stageManager.ChallengeStarted -= OnChallengeStarted;
@@ -62,9 +61,9 @@ public sealed class StageClearPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.Instance != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
-            StageManager.Instance.ContinueToNextStage(_clearedStageNumber);
+            _stageManager.ContinueToNextStage(_clearedStageNumber);
         }
     }
 
@@ -73,9 +72,9 @@ public sealed class StageClearPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.Instance != null)
+        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
         {
-            StageManager.Instance.EnterFarming();
+            _stageManager.EnterFarming();
         }
     }
 

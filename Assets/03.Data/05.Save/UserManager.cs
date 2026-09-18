@@ -191,6 +191,12 @@ public class UserManager : NonMonoSingleton<UserManager>
     #endregion
 
     #region [Facade API : 단일 도메인]
+    public async UniTask<bool> UpdateCurrentStageAsync(int clearStage, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        CurrentUser.Profile.currentStage = clearStage;
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("currentStage", clearStage, ct);
+    }
     // 골드 단일 갱신
     public async UniTask<bool> UpdateGoldAsync(double newGold, CancellationToken ct =default)
     {

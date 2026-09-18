@@ -14,9 +14,26 @@ Data.Id(문자열) + RollPercent + EnhanceLevel + EnhanceBonusTotal 정도만 �
 enhanceLevel(몇 강인지) + enhanceBonusTotal(누적 % 합) 두값으로만 관리함
 (세이브이슈)
 */
+/* 공동 작성사 - 송태훈
+ 
+ */
+
 
 using System;
 using UnityEngine;
+
+public enum DropType
+{
+    Gold, Material, Equipment
+}
+public struct DropReward
+{
+    public DropType Type;
+    public int Amount;
+    public EquipmentData EquipData;
+}
+
+
 
 /// <summary>
 /// 장비 1개의 실제 인스턴스 (어떤 EquipmentData인지 + 몇 %로 떴는지 + 강화로 쌓인 보너스)
@@ -30,6 +47,10 @@ public sealed class EquippedItem
     // 강화 1회당 랜덤으로 붙는 보너스 범위 (%)
     private const float ENHANCE_ROLL_MIN = 1f;
     private const float ENHANCE_ROLL_MAX = 3f;
+
+
+    [Tooltip("서버 인벤토리 고유 식별자(GUID)")] // 송태훈
+    [SerializeField] private string instanceId;
 
     [Tooltip("이 인스턴스가 어떤 장비인지 (고정 정보)")]
     [SerializeField] private EquipmentData data;
@@ -50,10 +71,25 @@ public sealed class EquippedItem
     /// <param name="rollPercent">이번에 뜬 랜덤 보너스 (1~10 사이, %)</param>
     public EquippedItem(EquipmentData data, float rollPercent)
     {
+        this.instanceId = Guid.NewGuid().ToString();
         this.data = data;
         this.rollPercent = rollPercent;
     }
 
+    /// <summary>
+    /// 서버 EquipmentSaveDTO 복원용 생성자
+    /// </summary>
+    public EquippedItem(string instanceId, EquipmentData data, EquipmentSaveDTO dto)
+    {
+        this.instanceId = instanceId;
+        this.data = data;
+        this.rollPercent = dto.rollPercent;
+        this.enhanceLevel = dto.enhanceLevel;
+        this.enhanceBonusTotal = dto.totalEnhanceBonus;
+    }
+
+    // 서버 고유 식별자 GUID
+    public string InstanceId => instanceId;
     // 어떤 장비인지 (고정 정보)
     public EquipmentData Data => data;
 
@@ -101,4 +137,17 @@ public sealed class EquippedItem
     {
         EquippedBy = character;
     }
+    #region 추가 작업물 - 송태훈
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns></returns>
+    public EquipmentSaveDTO ToDTO() => new EquipmentSaveDTO
+    {
+        dataId = data != null ? data.Id : string.Empty,
+        rollPercent = rollPercent,
+        enhanceLevel = enhanceLevel,
+        totalEnhanceBonus = enhanceBonusTotal,
+    };
+    #endregion
 }
