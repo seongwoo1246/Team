@@ -68,7 +68,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
     #region 송태훈 수정 내용
 
     private bool _isInitialized = false;
-    public int LoadOrder => 15;
+    public int LoadOrder => 14;
     private CancellationTokenSource _loopCts;
     #endregion
 
@@ -143,9 +143,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
         CleanUp();
     }
 
-    /// <summary>
-    /// 루프 취소, 이벤트 구독 해제
-    /// </summary>
+    
     private void CleanUp()
     {
         if (!_isInitialized) return;
@@ -261,21 +259,12 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
     /// <param name="token">파괴 시 루프를 멈추는 취소 토큰</param>
     private async UniTaskVoid RunPassiveIncomeLoop(CancellationToken token)
     {
-        float timeSinceLastSave = 0f;
-
         while (!token.IsCancellationRequested)
         {
             await UniTask.Delay(TimeSpan.FromSeconds(tickInterval), cancellationToken: token);
 
             double perTick = GetCurrentGoldPerMinute() * (tickInterval / 60d);
             AddPassiveGold(perTick);
-
-            timeSinceLastSave += tickInterval;
-            if (timeSinceLastSave >= lastSeenSaveInterval)
-            {
-                timeSinceLastSave = 0f;
-                //Save(); // PlayerPrefs 미사용
-            }
         }
     }
 

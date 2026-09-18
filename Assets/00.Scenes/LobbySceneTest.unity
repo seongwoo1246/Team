@@ -345,6 +345,52 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!1 &1791735318
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1791735320}
+  - component: {fileID: 1791735319}
+  m_Layer: 0
+  m_Name: PlayerLevelSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1791735319
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791735318}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5362585ee1c9f9b4285bae7e70958f0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelSystem
+  isDDOL: 1
+  <_config>k__BackingField: {fileID: 0}
+--- !u!4 &1791735320
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791735318}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 886.5225, y: 686.7987, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &15568701280253416
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4035,7 +4081,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1233171000387219504
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4174,7 +4220,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4156095093988172837}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d7bf36271d9bad48bc02bdac7236d33, type: 3}
   m_Name: 
@@ -8034,9 +8080,9 @@ RectTransform:
   - {fileID: 3099239059413140024}
   m_Father: {fileID: 5918391111269893098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 314, y: -122.39996}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2531931516318203126
@@ -8801,8 +8847,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7349569278766174157}
-  - component: {fileID: 5671435790514158772}
-  - component: {fileID: 7333227143936334390}
   - component: {fileID: 122472835367175806}
   m_Layer: 0
   m_Name: SYSTEMS
@@ -9010,9 +9054,9 @@ RectTransform:
   - {fileID: 1345505334965991366}
   m_Father: {fileID: 5918391111269893098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 992, y: -122.39996}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2819865036226486192
@@ -9487,9 +9531,9 @@ RectTransform:
   - {fileID: 500931340436016750}
   m_Father: {fileID: 5918391111269893098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 540, y: -122.39996}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &2906537564675038422
@@ -11683,19 +11727,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d31571c62a9b374894638781df59e59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageManagerJulian
-  isDDOL: 0
   spawner: {fileID: 1921208578198234567}
-  farmingMonsters:
-  - {fileID: 6456079757501667434, guid: 38de2d981a04c9b48954748cf7a9fc3a, type: 3}
-  - {fileID: 8302749502758054592, guid: a79810249d5c823408edd622b461c492, type: 3}
-  - {fileID: 774649218372171895, guid: a9b5d42cbfce3cf469010d774f65a660, type: 3}
-  - {fileID: 2186987795510444607, guid: 7fc55a6b13935134984b8039363ed6af, type: 3}
   farmingSpawnInterval: 1
   farmingMonsterLevel: 1
   maxFarmingMonsterCount: 5
   goldenGoblinPrefab: {fileID: 0}
   goldenGoblinSpawnChance: 0.001
-  roster: {fileID: 11400000, guid: ce0c2888b35095b4eaea0da4487cabfe, type: 2}
+  <roster>k__BackingField: {fileID: 0}
   party:
   - {fileID: 0}
   - {fileID: 0}
@@ -12061,9 +12099,9 @@ RectTransform:
   - {fileID: 8027985906329896147}
   m_Father: {fileID: 5918391111269893098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 88, y: -122.39996}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3657881709474828986
@@ -14200,7 +14238,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 987574869902502381}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aa8ce073189e50d4d8186878c99454c5, type: 3}
   m_Name: 
@@ -15687,7 +15725,6 @@ MonoBehaviour:
   - {fileID: 5521677969296925795}
   - {fileID: 1623621254353153830}
   benchPosition: {fileID: 5571694786281654389}
-  stageManager: {fileID: 3566941241596500860}
   slot1SkillButtons:
   - {fileID: 7514579371772919984}
   - {fileID: 4762665799261813109}
@@ -18783,34 +18820,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &5671435790514158772
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2786592474009555721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5362585ee1c9f9b4285bae7e70958f0d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelSystem
-  isDDOL: 0
-  tiers:
-  - startLevel: 1
-    expPerLevelUp: 20
-  - startLevel: 101
-    expPerLevelUp: 100
-  - startLevel: 301
-    expPerLevelUp: 300
-  - startLevel: 501
-    expPerLevelUp: 600
-  - startLevel: 1001
-    expPerLevelUp: 1200
-  baseExpPerMinute: 20
-  tickInterval: 1
-  saveInterval: 30
-  maxOfflineHours: 12
 --- !u!114 &5674685499645848373
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24210,21 +24219,6 @@ Transform:
   - {fileID: 3876474639334504400}
   m_Father: {fileID: 3614218371074263346}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &7333227143936334390
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2786592474009555721}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8be0265a75795394497b0b6ff5db25c1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MaterialWallet
-  isDDOL: 0
-  secondsPerMaterial: 36000
-  tickInterval: 1
 --- !u!114 &7340562694077314469
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25691,7 +25685,7 @@ GameObject:
   - component: {fileID: 155666551160102802}
   - component: {fileID: 3566941241596500860}
   m_Layer: 0
-  m_Name: StageSystem
+  m_Name: StageManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -27002,9 +26996,9 @@ RectTransform:
   - {fileID: 2555920324588744201}
   m_Father: {fileID: 5918391111269893098}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 766, y: -122.39996}
   m_SizeDelta: {x: 170, y: 170}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8308232987578350764
@@ -30603,11 +30597,12 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 115974821}
+  - {fileID: 155666551160102802}
   - {fileID: 994371359}
   - {fileID: 4566784611805427291}
-  - {fileID: 155666551160102802}
   - {fileID: 3537121367454437266}
   - {fileID: 7349569278766174157}
   - {fileID: 8187942664109631617}
   - {fileID: 347985824}
   - {fileID: 492986773833407235}
+  - {fileID: 1791735320}

@@ -21,9 +21,9 @@ public sealed class GoldenGoblin : Monster
     protected override void OnDied()
     {
         base.OnDied();
-        //if (MaterialWallet.Instance != null)
-        //{
-        //    MaterialWallet.Instance.Add(materialReward);
-        //}
+        if (MaterialWallet.Instance != null)
+        {
+            MaterialWallet.Instance.Add(materialReward);
+        }
     }
 }

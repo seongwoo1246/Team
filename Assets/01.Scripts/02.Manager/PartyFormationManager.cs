@@ -37,9 +37,6 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     [Tooltip("편성에서 빠진 캐릭터를 치워둘 위치 (화면 밖, RosterOnly 등)")]
     [SerializeField] private Transform benchPosition;
 
-    [Header("연결")]
-    [SerializeField] private StageManager stageManager;
-
     [Header("1번 슬롯 스킬 버튼 (스킬1, 스킬2 순서)")]
     [SerializeField] private SkillButtonUI[] slot1SkillButtons;
 
@@ -57,20 +54,6 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 
     // 편성이 바뀔 때마다 발생. 인자 = 새 편성(슬롯 순서). UI(편성 표시 텍스트 등)가 구독해서 갱신하는 용도
     public event System.Action<CharacterBase[]> FormationChanged;
-
-    private void Start()
-    {
-        //// 처음엔 인스펙터 순서대로 앞 3명을 기본 편성으로 시작 (지금까지의 전사/메이지/힐러 고정 편성과 동일)
-        //for (int i = 0; i < SLOT_COUNT && i < allCharacters.Length; i++)
-        //{
-        //    _formation[i] = allCharacters[i];
-        //}
-
-        //// StageManager.party는 이미 인스펙터에 기본 3명이 똑같이 연결돼있어서 여기선 안 건드림
-        //// (Start() 호출 순서가 스크립트마다 달라서, 여기서 무리하게 맞추려다 오히려 꼬일 수 있음)
-        //ApplyFieldPositions();
-        //UpdateAllSkillButtons();
-    }
 
     #region ILoadable 구현
     /// <summary>
@@ -172,7 +155,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
             return;
         }
 
-        if (stageManager != null && stageManager.CurrentMode == StageMode.Challenge)
+        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager) && _stageManager.CurrentMode == StageMode.Challenge)
         {
             UtilDebug.LogWarning("챌린지 진행 중에는 파티 편성을 바꿀 수 없음");
             return;
@@ -197,9 +180,9 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 
         ApplyFieldPositions();
 
-        if (stageManager != null)
+        if (_stageManager != null)
         {
-            stageManager.SetParty((CharacterBase[])_formation.Clone());
+            _stageManager.SetParty((CharacterBase[])_formation.Clone());
         }
 
         UpdateAllSkillButtons();

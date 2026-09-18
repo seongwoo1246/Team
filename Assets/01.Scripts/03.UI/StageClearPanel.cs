@@ -30,6 +30,8 @@ public sealed class StageClearPanel : MonoBehaviour
             _stageManager.StageCleared += OnStageCleared;
             _stageManager.ChallengeStarted += OnChallengeStarted;
         }
+        else
+            DebugLogger<StageClearPanel>.LogError("서비스 초기화 순서 문제");
 
         SetPanelActive(false);
     }

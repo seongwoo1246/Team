@@ -36,7 +36,6 @@ public class UpgradeSystem : MonoBehaviour, ILoadable
     //트랙이 강화되면 발생 (인자 = 강화된 트랙). 캐릭터·UI가 구독해 갱신한다
     public event Action<UpgradeTrack> TrackUpgraded;
 
-    // 초기화 순서 GlodWallet = 15 / ?? = 17 - 송태훈
     // CharacterBase가 UpgradeSystem을 참조하기 때문에 CharacterBase를 소환하는 PartyFormationManager보다 먼저 초기화가 이루어져야 함
     public int LoadOrder => 16;
 

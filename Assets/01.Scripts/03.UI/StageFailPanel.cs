@@ -32,8 +32,10 @@ public sealed class StageFailPanel : MonoBehaviour
             _stageManager.StageFailed += OnStageFailed;
             _stageManager.ChallengeStarted += OnChallengeStarted;
         }
+        else
+            DebugLogger<StageFailPanel>.LogError("서비스 초기화 순서 문제");
 
-        SetPanelActive(false);
+            SetPanelActive(false);
     }
 
     private void OnDisable()

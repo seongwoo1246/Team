@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 플레이어(계정) 레벨 + 경험치 시스템. 캐릭터 개별 스탯이랑은 완전히 별개!!
 
@@ -15,64 +15,27 @@
 
 싱글톤은 팀 공용 Singleton<T> 상속
 */
+/* 공동 작성자 - 송태훈
+ 
+ 
+ */
 
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-
-/// <summary>
-/// 레벨 구간 1개. 이 구간(startLevel부터)에서는 레벨업 1회에 expPerLevelUp만큼의 경험치가 고정으로 든다
-/// </summary>
-[Serializable]
-public sealed class ExpTier
-{
-    [Tooltip("이 구간이 시작하는 레벨 (예: 101 = 101레벨부터 이 구간 적용)")]
-    [SerializeField] private int startLevel = 1;
-
-    [Tooltip("이 구간에서 레벨업 1회당 고정으로 필요한 경험치")]
-    [SerializeField] private float expPerLevelUp = 20f;
-
-    // 이 구간이 시작하는 레벨
-    public int StartLevel => startLevel;
-
-    // 이 구간의 레벨업 1회당 필요 경험치
-    public float ExpPerLevelUp => expPerLevelUp;
-}
+using UtilDebug = DebugLogger<PlayerLevelSystem>;
 
 /// <summary>
 /// 플레이어 레벨/경험치 관리 씬에 하나 두고 PlayerLevelSystem.instance로 접근
 /// </summary>
-public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
+public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable, ISyncable
 {
     // 구간 목록이 비어있을 때(설정 안 됐을 때) 쓰는 대체값
     private const float DEFAULT_EXP_PER_LEVEL = 20f;
 
-    [Header("레벨 구간")]
-    [Tooltip("레벨 구간 목록. 반드시 startLevel 오름차순으로 넣어야 함 (예: 1, 101, 301, 501, 1001 순서)")]
-    [SerializeField] private List<ExpTier> tiers = new List<ExpTier>();
-
-    [Header("분당 경험치")]
-    [Tooltip("분당 획득 경험치 (고정값). 골드와 달리 스테이지 진행 배율을 일부러 안 태움 - " +
-        "레벨이 강화 상한으로서 독립적으로 작동하게 하기 위함")]
-    [SerializeField] private float baseExpPerMinute = 20f;
-
-    [Tooltip("경험치를 몇 초마다 나눠 지급할지")]
-    [SerializeField] private float tickInterval = 1f;
-
-    [Tooltip("레벨/경험치를 PlayerPrefs에 몇 초마다 저장해둘지 (앱 강제종료 대비 안전장치)")]
-    [SerializeField] private float saveInterval = 30f;
-
-    [Header("오프라인 보상")]
-    [Tooltip("게임이 꺼져있던 시간을 최대 몇 시간까지 인정할지 (골드/재료 오프라인 보상이랑 같은 방식)")]
-    [SerializeField] private double maxOfflineHours = 12d;
-
-    // 저장 키
-    private const string LEVEL_KEY = "PlayerLevelSystem_Level";
-    private const string EXP_KEY = "PlayerLevelSystem_Exp";
-    private const string LAST_SEEN_UTC_KEY = "PlayerLevelSystem_LastSeenUtc";
+    // DataManger에서 공급받는 정적 데이터
+    [field: SerializeField] public PlayerLevelConfig _config { get; private set; }
 
     // 현재 레벨. 1부터 시작
     private int _level = 1;
@@ -94,43 +57,108 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
 
     // 현재 레벨 진행률 (0~1). 경험치 바 UI가 이 값을 읽으면 됨
     public float ExpProgressRatio => ExpRequiredForNextLevel > 0f ? Mathf.Clamp01(_currentExp / ExpRequiredForNextLevel) : 0f;
+    
+    #region 추가 변수 - 송태훈
+    public int LoadOrder => 12;
+    private bool _isInitialized = false;
+    private System.Threading.CancellationTokenSource _loopCts;
+    #endregion
 
     protected override void Awake()
     {
         base.Awake();
-
-        // 다른 시스템(UpgradeSystem 등)이 Start에서 이 값을 참조할 수 있으므로 Awake에서 먼저 로드
-        _level = Mathf.Max(1, PlayerPrefs.GetInt(LEVEL_KEY, 1));
-        _currentExp = Mathf.Max(0f, PlayerPrefs.GetFloat(EXP_KEY, 0f));
+        SceneLoadManager.Instance.RegisterLoadable(this);
+        GameManager.Instance.RegisterSyncable(this);
     }
 
-    private void Start()
+    #region ILoadable + ISyncable 구현부 - 송태훈
+    public UniTask OnSceneLoadCreate(SceneId scene)
     {
-        // 골드/재료랑 마찬가지로, 꺼져있던 시간만큼 경험치를 먼저 한 번에 지급한 뒤 실시간 루프 시작
-        ApplyOfflineExp();
-        RunPassiveExpLoop(this.GetCancellationTokenOnDestroy()).Forget();
+        _config = DataManager.Instance.GetSingle<PlayerLevelConfig>();
+        if(_config == null)
+        {
+            UtilDebug.LogError("PlayerLevelConfig를 DataManager에서 찾을 수 없습니다.");
+        }
+        // 에러에 대한 처리를 수정해야함
+        return UniTask.CompletedTask;
+    }
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        if(_isInitialized) return;
+
+        UtilDebug.Log($"초기화 및 서버 유저 데이터 동기화 시작");
+
+        // 서버 데이터 바인딩
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        if(profile != null)
+        {
+            _level = Mathf.Max(1, profile.accountLevel);
+            _currentExp = Mathf.Max(1, profile.currentExp);
+            UtilDebug.Log($"서버 레벨 동기화 완료 : Lv.{_level}, Exp : {_currentExp}");
+        }
+        else
+        {
+            _level = 1;
+            _currentExp = 0f;
+            UtilDebug.LogWarning("서버 유저 프로필 부재 - 기본값(Lv.1, Exp : 0)로 기본 초기화 세팅");
+        }
+
+        LevelUp?.Invoke(_level);
+
+        // 
+        ApplyOfflineExpFromServer();
+
+        _loopCts?.Cancel();
+        _loopCts = new CancellationTokenSource();
+        RunPassiveExpLoop(_loopCts.Token).Forget();
+        
+        _isInitialized = true;
     }
 
+    public void OnSceneDestory(SceneId scene)
+    {
+        CleanUp();
+    }
+
+    public void SyncToUserMemory()
+    {
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        if (profile != null)
+        {
+            profile.accountLevel = _level;
+            profile.currentExp = _currentExp;
+        }
+    }
+    #endregion
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        Save();
-    }
-
-    // 앱이 완전히 꺼질때 (빌드 기준)
-    private void OnApplicationQuit()
-    {
-        Save();
-    }
-
-    // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 저장
-    private void OnApplicationPause(bool isPaused)
-    {
-        if (isPaused)
+        if(GameManager.Instance != null )
         {
-            Save();
+            GameManager.Instance.UnregisterSyncable(this);
         }
+        CleanUp();
     }
+
+    /// <summary>
+    /// 루프 취소, 서버에 보낼 데이터로 최신화
+    /// </summary>
+    private void CleanUp()
+    {
+        if(!_isInitialized) return;
+
+        if(_loopCts != null)
+        {
+            _loopCts?.Cancel();
+            _loopCts?.Dispose();
+            _loopCts = null;
+        }
+
+        SyncToUserMemory();
+        _isInitialized = false;
+    }
+
 
     /// <summary>
     /// tickInterval마다 분당 경험치만큼 나눠서 지급하는 루프. saveInterval마다 한 번씩 저장도 같이함
@@ -138,21 +166,15 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
     /// <param name="token">파괴 시 루프를 멈추는 취소 토큰</param>
     private async UniTaskVoid RunPassiveExpLoop(CancellationToken token)
     {
-        float timeSinceLastSave = 0f;
+        float interval = _config != null ? _config.TickInterval : 1f;
+        float basePerMin = _config != null ? _config.BaseExpPerMinute : 20f;
 
         while (!token.IsCancellationRequested)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(tickInterval), cancellationToken: token);
+            await UniTask.Delay(TimeSpan.FromSeconds(interval), cancellationToken: token);
 
-            float perTick = baseExpPerMinute * (tickInterval / 60f);
+            float perTick = basePerMin * (interval / 60f);
             AddExp(perTick);
-
-            timeSinceLastSave += tickInterval;
-            if (timeSinceLastSave >= saveInterval)
-            {
-                timeSinceLastSave = 0f;
-                Save();
-            }
         }
     }
 
@@ -179,51 +201,62 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
             leveledUp = true;
         }
 
+        // 메모리 상시 반영 ( 5분 자동 플러시 대비 )
+        SyncToUserMemory();
+
         if (leveledUp)
         {
+            UtilDebug.Log($"플레이어 레벨업 달성: Lv {_level}");
             LevelUp?.Invoke(_level);
-            Save();
-        }
-    }
 
-    /// <summary>
-    /// 마지막으로 저장해둔 시각과 지금 시각을 비교해서, 꺼져있던 시간만큼(최대 maxOfflineHours까지)
-    /// 분당 경험치를 한 번에 지급한다. GoldWallet.ApplyOfflineGold/MaterialWallet.ApplyOfflineTime이랑 같은 방식
-    /// </summary>
-    private void ApplyOfflineExp()
-    {
-        string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
-
-        if (!string.IsNullOrEmpty(savedText)
-            && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
-        {
-            double elapsedSeconds = (DateTime.UtcNow - lastSeen).TotalSeconds;
-            double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxOfflineHours * 3600d));
-            double offlineMinutes = cappedSeconds / 60d;
-
-            if (offlineMinutes > 0d)
+            var ct = this.destroyCancellationToken;
+            var profile = UserManager.Instance.CurrentUser?.Profile;
+            if(profile != null)
             {
-                float reward = (float)(baseExpPerMinute * offlineMinutes);
-                AddExp(reward);
-
-                // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
-                // instance/필드 둘 다 null 체크하고 지나감 (없어도 경험치 지급 자체는 이미 끝난 뒤라 안전함)
-                if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerExp != null)
-                {
-                    RewardManager.Instance.GetPlayerExp.text = reward.ToString("F0");
-                }
+                profile.UpdateSingleFieldAsync(StringConsts.UserConstants.AccountLevel, _level, ct).Forget();
+                profile.UpdateSingleFieldAsync(StringConsts.UserConstants.CurrentStage, _currentExp, ct).Forget();
             }
         }
-
-        SaveLastSeenNow();
     }
-
+    
     /// <summary>
-    /// 지금 시각(UTC)을 오프라인 보상 계산용으로 PlayerPrefs에 저장
+    /// 서버 lastLoginTimestamp 기반 오프라인 경험치 정산
     /// </summary>
-    private void SaveLastSeenNow()
+    private void ApplyOfflineExpFromServer()
     {
-        PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        if (profile == null || profile.lastLoginTimestamp <= 0) return;
+        
+        long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        long lastLogin = profile.lastLoginTimestamp;
+
+        // 밀리초 단위 보정
+        if (lastLogin > 100000000000L)
+        {
+            lastLogin /= 1000L;
+        }
+
+        long elapsedSeconds = nowSeconds - lastLogin;
+        if (elapsedSeconds <= 0) return;
+
+        double maxHours = _config != null ? _config.MaxOfflineHours : 12d;
+        float basePerMin = _config != null ? _config.BaseExpPerMinute : 20f;
+
+        double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxHours * 3600d));
+        double offlineMinutes = cappedSeconds / 60d;
+
+        if(offlineMinutes > 0d)
+        {
+            float rewardExp = (float)(basePerMin * offlineMinutes);
+            AddExp(rewardExp);
+            UtilDebug.Log($"서버 기준 오프라인 경험치 지급 완료 : {offlineMinutes:F1}분치 ({rewardExp:F0} Exp)");
+            
+            // 복귀 팝업 UI 연결
+            if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerExp != null)
+            {
+                RewardManager.Instance.GetPlayerExp.text = rewardExp.ToString("F0");
+            }
+        }
     }
 
     /// <summary>
@@ -231,15 +264,19 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
     /// 구간 목록이 비어있으면 DEFAULT_EXP_PER_LEVEL을 대신씀
     /// </summary>
     /// <param name="level">기준 레벨</param>
-    private float GetRequiredExp(int level)
+    private float GetRequiredExp(int targetLevel)
     {
-        float result = DEFAULT_EXP_PER_LEVEL;
-
-        for (int i = 0; i < tiers.Count; i++)
+        if (_config == null || _config.Tiers == null || _config.Tiers.Count == 0)
         {
-            if (tiers[i].StartLevel <= level)
+            return DEFAULT_EXP_PER_LEVEL;
+        }
+
+        float result = DEFAULT_EXP_PER_LEVEL;
+        for (int i = 0; i < _config.Tiers.Count; i++)
+        {
+            if (_config.Tiers[i].StartLevel <= targetLevel)
             {
-                result = tiers[i].ExpPerLevelUp;
+                result = _config.Tiers[i].ExpPerLevelUp;
             }
             else
             {
@@ -248,16 +285,5 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>
         }
 
         return result;
-    }
-
-    /// <summary>
-    /// 레벨/경험치를 PlayerPrefs에 저장
-    /// </summary>
-    private void Save()
-    {
-        PlayerPrefs.SetInt(LEVEL_KEY, _level);
-        PlayerPrefs.SetFloat(EXP_KEY, _currentExp);
-        SaveLastSeenNow();
-        PlayerPrefs.Save();
     }
 }
