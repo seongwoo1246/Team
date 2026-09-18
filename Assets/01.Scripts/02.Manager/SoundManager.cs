@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Debug = DebugLogger<SoundManager>;
@@ -16,7 +17,7 @@ public struct SoundData
 
 
 
-public class SoundManager : Singleton<SoundManager>
+public class SoundManager : Singleton<SoundManager> 
 {
 
     [Header("Audio Sources")]
@@ -31,8 +32,12 @@ public class SoundManager : Singleton<SoundManager>
     private Dictionary<string,AudioClip>bgmDict = new Dictionary<string,AudioClip>();
     private Dictionary<string,AudioClip>sfxDict = new Dictionary<string,AudioClip>();
 
+   
+
     private void Start()
     {
+       
+
         InittializeDictionary();
 
         SetBGMVolume(PlayerPrefs.GetFloat("BGMSound", 0.5f));
@@ -156,4 +161,6 @@ public class SoundManager : Singleton<SoundManager>
         }
 
     }
+
+   
 }
