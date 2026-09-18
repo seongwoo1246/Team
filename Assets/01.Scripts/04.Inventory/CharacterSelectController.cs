@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CharacterSelectController : MonoBehaviour
 {
@@ -12,8 +12,6 @@ public class CharacterSelectController : MonoBehaviour
     [Header("장비 UI")]
     [SerializeField] private EquipmentInventoryController equipmentInventoryController;
 
-    [Header("스탯 UI")]
-    [SerializeField] private CharacterStatsPanel characterStatsPanel;
 
     private AttackType currentAttackType = AttackType.Physical;
 

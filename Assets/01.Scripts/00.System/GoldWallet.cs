@@ -80,35 +80,9 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     {
         isDDOL = true;
         base.Awake();
-
-        //string savedBalance = PlayerPrefs.GetString(BALANCE_KEY, string.Empty);
-        //if (!string.IsNullOrEmpty(savedBalance)
-        //    && double.TryParse(savedBalance, NumberStyles.Float, CultureInfo.InvariantCulture, out long loaded)
-        //    && loaded >= 0d)
-        //{
-        //    _balance = loaded;
-        //}
-        //else
-        //{
-        //    _balance = startGold;
-        //}
     }
 
-    private void Start()
-    {
-        //// StageManager의 _maxClearedStage 로드(Awake)가 전부 끝난 뒤에 계산해야 정확하므로 Start에서 처리
-        //ApplyOfflineGold();
-
-        //_stageManager = StageManager.Instance;
-        //if (_stageManager != null)
-        //{
-        //    _stageManager.StageCleared += OnStageCleared;
-        //}
-
-        //RunPassiveIncomeLoop(this.GetCancellationTokenOnDestroy()).Forget();
-    }
-
-    #region 송태훈 수정 내용
+    #region ILoadable 구현부 - 송태훈
     public UniTask OnSceneLoadCreate(SceneId sncen)
     {
         return UniTask.CompletedTask;
@@ -233,7 +207,8 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable
     /// <param name="baseAmount">배율 적용 전 골드</param>
     private void AddPassiveGold(double baseAmount)
     {
-        double multiplier = UpgradeSystem.Instance != null ? UpgradeSystem.Instance.GetGoldMultiplier() : 1d;
+        UpgradeSystem upgradeSystem = ServiceLocator.Get<UpgradeSystem>();
+        double multiplier = upgradeSystem != null ? upgradeSystem.GetGoldMultiplier() : 1d;
         Add(baseAmount * multiplier);
     }
 

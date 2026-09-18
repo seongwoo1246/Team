@@ -141,14 +141,36 @@ public class UserManager : NonMonoSingleton<UserManager>
             UtilDebug.LogError("SaveAllInfoAsync : 저장할 유저 데이터가 없습니다.");
             return false;
         }
+        string uid = CurrentUser.UID;
 
-        var (profileOk, charOk, invOk) = await UniTask.WhenAll(
-            CurrentUser.Profile.ExcuteSetAsync(ct),
-            CurrentUser.Characters.ExcuteSetAsync(ct),
-            CurrentUser.Inventory.ExcuteSetAsync(ct)
-        );
+        // 트러블 슈팅 - 초기에는 UserManager(this) 자체를 직렬화하여 저장하다가 Dictionary upgradeTrackLevels가 저장되지 못하여
+        // CreateUserInfoAsync와 동일하게 각 도메인별로 저장하는 방식으로 변경
+        try
+        {
+            // 1. 도메인별로 각각 올바른 대상을 직렬화 (JsonConvert 보장)
+            string profileJson = JsonConvert.SerializeObject(CurrentUser.Profile);
+            string charJson = JsonConvert.SerializeObject(CurrentUser.Characters.characterDictionary);
+            string inventoryJson = JsonConvert.SerializeObject(CurrentUser.Inventory.Data);
 
-        return profileOk && charOk && invOk;
+
+            // 2. 각각 정확한 RTDB 경로로 덮어쓰기 병렬 실행
+            await UniTask.WhenAll(
+                GetUserRef(uid).SetRawJsonValueAsync(profileJson).AsUniTask().AttachExternalCancellation(ct),
+                GetCharacterRef(uid).SetRawJsonValueAsync(charJson).AsUniTask().AttachExternalCancellation(ct),
+                GetInventoryRef(uid).SetRawJsonValueAsync(inventoryJson).AsUniTask().AttachExternalCancellation(ct)
+            );
+
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"전체 저장 실패: {ex.Message}");
+            return false;
+        }
     }
 
     /// <summary>

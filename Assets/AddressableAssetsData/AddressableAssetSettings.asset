@@ -122,9 +122,9 @@ MonoBehaviour:
     - Remote_Poolables
     - Remote_UI
     - Bootstrap_Local
-    - LobbySceneTest_Data
     - Character
     - Init_Pool
+    - Static_Data
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: c09c1e7f3ff9971429f609a953aad4b0, type: 2}
