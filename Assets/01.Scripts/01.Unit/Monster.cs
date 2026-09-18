@@ -453,6 +453,11 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     /// </summary>
     private void CheckEnrage()
     {
+       if(SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("심장소리");
+        }
+
         if (_isEnraged || Kind != MonsterKind.Boss || _maxHP <= 0f)
         {
             return;
