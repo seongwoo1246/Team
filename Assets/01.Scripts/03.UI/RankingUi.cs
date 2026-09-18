@@ -25,11 +25,9 @@ public class RankingUi : Singleton<RankingUi>
 
     [Header("탭 버튼들")]
     [SerializeField] private Button damageTapBtn;
-    [SerializeField] private Button playTimeTapBtn;
     [SerializeField] private Button clearTimeTapBtn;
     [Header("각 유저랭크데이터를 넣어줄 리스트")]
     public List<UserRankData> DamageList=new List<UserRankData>();
-    public List<UserRankData> PlayTimeList=new List<UserRankData>();
     public List<UserRankData> ClearTimeList=new List<UserRankData>();
 
     //카테고리 종류별 탑 3를 가지는 딕셔너리
@@ -43,11 +41,9 @@ public class RankingUi : Singleton<RankingUi>
         isDDOL = true;
         // 각 딕셔너리에 미리 크기 지정
         top3CategoryDataDict[RankCategoty.Damage] = new UserRankData[3];
-        top3CategoryDataDict[RankCategoty.PlayTime] = new UserRankData[3];
         top3CategoryDataDict[RankCategoty.ClearTime] = new UserRankData[3];
         // 탭 버튼 이벤트 연결
         damageTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.Damage));
-        playTimeTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.PlayTime));
         clearTimeTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.ClearTime));
         
     }
@@ -68,7 +64,6 @@ public class RankingUi : Singleton<RankingUi>
     public void OnOpenRankUI()
     {
         SetCategoryScores(RankCategoty.Damage,DamageList,false);
-        SetCategoryScores(RankCategoty.PlayTime,PlayTimeList,false);
         SetCategoryScores(RankCategoty.ClearTime, ClearTimeList, true);
 
     }
