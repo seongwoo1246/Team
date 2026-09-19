@@ -109,7 +109,7 @@ public class MailboxUi : MonoBehaviour
 
     private void OnClickClaimAll()
     {
-        MailBoxManager.Instance.ClaimAllMails();
+       // MailBoxManager.Instance.
     }
 
     private void CloseWindow()

@@ -43,6 +43,11 @@ public sealed class GoldDisplay : MonoBehaviour
     /// <param name="balance">변경된 현재 골드</param>
     private void OnBalanceChanged(double balance)
     {
+        if(SoundManager .Instance != null)
+        {
+            SoundManager.Instance.playSFX("돈획득소리");
+        }
+
         if (goldText == null)
         {
             return;

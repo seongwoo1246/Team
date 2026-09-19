@@ -25,6 +25,24 @@ public static class StatCalculator
     /// <summary>몬스터 체력 증가율 기본값 (_Config: monster_hp_growth)</summary>
     public const float DEFAULT_MONSTER_HP_GROWTH = 1.20f;
 
+    /// <summary>
+    /// 몬스터 성장 타감(taper) 지수. 스테이지(=몬스터 레벨)를 그대로 지수로 쓰면
+    /// (기존 baseHp × growthRate^level) 캐릭터 강화 비용은 지수로 커지는데 능력치는 선형으로만
+    /// 오르는 구조라 스테이지 20 전후로 체감상 못깨는 벽이 생긴다는걸 밸런스 시뮬레이션으로 확인
+    /// 레벨을 그대로 안 쓰고 level^taperExponent(0~1)를 지수로 써서, 스테이지가 오를수록
+    /// 체력 증가폭 자체가 완만해지게함
+    public const float DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT = 0.589f;
+
+    // 위 타감 지수를 적용하는 구간의 끝. 이 스테이지까지는 DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT로,
+    // 이 스테이지를 넘어가면 DEFAULT_MONSTER_LATE_GROWTH_RATE로 이어서 계산함
+    public const int MONSTER_GROWTH_TAPER_BREAK_STAGE = 500;
+
+    /// <summary>
+    /// MONSTER_GROWTH_TAPER_BREAK_STAGE(500) 스테이지를 넘어간 뒤부터 레벨 1당 적용되는 완만한 고정증가율
+    /// 4트랙 + 생존체크 시뮬레이션 기준 0.002면 500 이후로도 급발진 없이 계속 어려워지면서
+    /// 약 191일(6.4개월)에 2000스테이지 도달
+    public const float DEFAULT_MONSTER_LATE_GROWTH_RATE = 1.002f;
+
     // ── 기본형: 공식을 그대로 옮긴 함수 ────────────────────────
 
     /// <summary>
@@ -65,6 +83,32 @@ public static class StatCalculator
     {
         int safeLevel = Mathf.Max(0, level);
         return baseHp * Mathf.Pow(hpGrowthRate, safeLevel);
+    }
+
+    public static float GetTaperedGrowthStat(float baseValue, float growthRate, int level, float taperExponent, int breakStage, float lateGrowthRate)
+    {
+        int safeLevel = Mathf.Max(0, level);
+
+        if (safeLevel <= breakStage)
+        {
+            float effectiveLevel = Mathf.Pow(safeLevel, taperExponent);
+            return baseValue * Mathf.Pow(growthRate, effectiveLevel);
+        }
+
+        float valueAtBreakStage = baseValue * Mathf.Pow(growthRate, Mathf.Pow(breakStage, taperExponent));
+        int levelsPastBreak = safeLevel - breakStage;
+        return valueAtBreakStage * Mathf.Pow(lateGrowthRate, levelsPastBreak);
+    }
+
+    public static float GetTaperedMaxHP(BaseStatData data, int hpLevel)
+    {
+        if (data == null)
+        {
+            return 0f;
+        }
+
+        return GetTaperedGrowthStat(data.BaseHp, data.HpGrowthRate, hpLevel,
+            DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, MONSTER_GROWTH_TAPER_BREAK_STAGE, DEFAULT_MONSTER_LATE_GROWTH_RATE);
     }
 
     /// <summary>

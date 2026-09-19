@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Firebase.Database;
 using Debug = DebugLogger<MailBoxManager>;
+using System.IO;
+using System.Data;
 //담당자 - 정성우
 
 public enum RewardType
@@ -44,58 +46,75 @@ public class mailItem
     //만료기간( 초단위 기간)
     public long expireTimestamp;
 
-    // 파이어베이스 역직렬화를 위한 생성자
-    public mailItem() { }
+   
+}
+
+[Serializable]
+public class LoaclMailDataWrapper
+{
+    public List<mailItem> MailList = new List<mailItem>();
 }
 
 
 /// <summary>
-/// (우편함 기능을 구현하기 위해 제작함)
+/// 게임에서 우편 관련 총괄하여 사용할 매니저
 /// </summary>
 public class MailBoxManager : Singleton<MailBoxManager>
 {
-    private DatabaseReference dbRef;
-    private string currentUserId = ""; // 나중에는 파이어베이스 Auth UID사용
-
-    
     //로컬 우편캐시(mailId,mailItem)
-    public Dictionary<string, mailItem> mailDictionary {  get; private set; } = new Dictionary<string, mailItem>();
+    public Dictionary<string, mailItem> mailDictionary { get; private set; } = new Dictionary<string, mailItem>();
 
+    // 우편 상태가 바뀔 때 UI에 알려주는 신호
     public static event Action OnMailboxUpdated;
+
+    private string saveFilePath;
 
     protected override void Awake()
     {
         base.Awake();
-        dbRef = FirebaseDatabase.DefaultInstance.RootReference;
 
-        
+        // 안전한 위치에 저장경로 만들기
+        saveFilePath = Path.Combine(Application.persistentDataPath, "local_mails.json");
+
+       // LoadMailsFromLocal();
     }
 
-    public void SetUserID(string user)
+    public void AddMail(string title , string content, List<mailReward> rewards ,int validDays =7)
     {
-        currentUserId = user;
+        // 중복 되지 않는 우편 아이디를 만들어줌
+        string newMailId = Guid.NewGuid().ToString();
+        // 7일을 초로 바꿔서 만료기간 확인
+        long expireTime = DateTimeOffset.UtcNow.AddDays(validDays).ToUnixTimeSeconds();
 
-        //실시간 우편 감지 시작
-        StartListeningMails();
-    }
-
-    protected override void OnDestroy()
-    {
-        base.OnDestroy();
-        if( dbRef != null )
+        // 편지 객체를 생성
+        mailItem item = new mailItem
         {
-            dbRef.Child("users").Child(currentUserId).Child("mails").ValueChanged -= OnMailDataChanged;
-        }
+            mailId = newMailId,
+            titile = title ,
+            content = content ,
+            rewards = rewards ?? new List<mailReward>(),
+            isClaimed = false,
+            expireTimestamp = expireTime
+
+        };
+
+        // 딕셔너리에 새 편지 기록함
+        mailDictionary[newMailId] = item;
+
+        //변경된 편지 목록 즉시 저장함
+        //SaveMailsToLocal();
+
+        // UI에 우편 왔다고 전달
+        OnMailboxUpdated?.Invoke();
 
     }
 
-    /// <summary>
-    /// 실시간 우편 데이터 변화 감지 구독
-    /// </summary>
-    private  void StartListeningMails()
-    {
-        dbRef.Child("users").Child(currentUserId).Child("mails").ValueChanged += OnMailDataChanged;
-    }
+    //public bool ClaimMailReward(string mailId)
+    //{
+
+    //}
+
+
 
 
     private void OnMailDataChanged(object sender , ValueChangedEventArgs args)
@@ -140,76 +159,8 @@ public class MailBoxManager : Singleton<MailBoxManager>
 
 
 
-    /// <summary>
-    /// 단일 우편 수령시 코드
-    /// </summary>
-    /// <param name="mailId">우편 아이디</param>
-    /// <returns></returns>
-    public async Task<bool> ClaimMailAsync(string mailId)
-    {
-        if (!mailDictionary.TryGetValue(mailId, out mailItem mail)) return false;
+  
 
-        try
-        {
-            //경로 : user/{userId}/mails/{mailId}/isClaumed
-            DatabaseReference targetMailRef = dbRef.Child("user").Child(currentUserId).Child("mails").Child(mailId).Child("isClaimed");
-
-            // 서버 상태 업데이트 (true로 설정)
-            await targetMailRef.SetValueAsync(true);
-            //인게임 보상 지급
-            GrantRewards(mail.rewards);
-
-            mailDictionary.Remove(mailId);
-            OnMailboxUpdated?.Invoke();
-
-            return true;
-        }
-        catch(Exception ex)
-        {
-            Debug.LogWarning($"우편 수령중 문제 발생 : {ex.Message}");
-            return false;
-        }
-    }
-
-
-    /// <summary>
-    /// 전체 메일 일괄 수령(Realtime DB 업데이트 맵 활용)
-    /// </summary>
-    public async void ClaimAllMails()
-    {
-        if (mailDictionary.Count == 0) return;
-
-        //원자적 업데이트를 위한 경로 구성(구성별로 업데이트를 하기 위한 경로 설정)
-        Dictionary<string,object> childUpdates = new Dictionary<string,object>();
-        List<mailReward> allRewalds = new List<mailReward>();
-
-        foreach (var kvp in mailDictionary)
-        {
-            mailItem mail = kvp.Value;
-            //한번에 여러 경로를 업데이트
-            string path = $"/users/{currentUserId}/mails/{mail.mailId}/isClaimed";
-            childUpdates[path] = true;
-
-            allRewalds.AddRange(mail.rewards);
-        }
-
-        try
-        {
-            //1번에 네크워크 통신으로 일괄 처리
-            await dbRef.UpdateChildrenAsync(childUpdates);
-
-            // 전체 보상 지급
-             GrantRewards(allRewalds);
-
-            mailDictionary.Clear();
-            OnMailboxUpdated?.Invoke();
-            Debug.Log("[MailBox] 모든 우편 수령 완료");
-        }
-        catch(Exception ex)
-        {
-            Debug.LogWarning($"전체 우편 수령 실패 : {ex.Message}");
-        }
-    }
 
 
     public void GrantRewards(List<mailReward> rewards)

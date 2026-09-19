@@ -341,7 +341,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentCritBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
         float effectivePower = StatCalculator.GetCritDamage(rawPower, _currentCritChance, _currentCritBonus);
 
-        _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
+        _currentMaxHP = StatCalculator.GetTaperedMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
         _currentPower = effectivePower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
 
         float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;

@@ -347,15 +347,16 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
         int safeLevel = Mathf.Max(0, level);
         bool isBoss = statData.Kind == MonsterKind.Boss;
 
-        float hp = statData.BaseHp * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
+        float hp = StatCalculator.GetTaperedGrowthStat(statData.BaseHp, statData.HpGrowthPerLevel, safeLevel,
+            StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
         if (isBoss)
         {
             hp *= bossHpMultiplier;
         }
         _maxHP = hp;
 
-        // 공격력도 체력과 같은 증가율로 레벨 스케일 (시트에 따로 컬럼 필요하면 나중에 분리)
-        _attackPower = statData.BaseAttack * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
+        _attackPower = StatCalculator.GetTaperedGrowthStat(statData.BaseAttack, statData.HpGrowthPerLevel, safeLevel,
+            StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
 
         _moveSpeed = statData.MoveSpeed;
     }
@@ -453,6 +454,11 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     /// </summary>
     private void CheckEnrage()
     {
+       if(SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("심장소리");
+        }
+
         if (_isEnraged || Kind != MonsterKind.Boss || _maxHP <= 0f)
         {
             return;
