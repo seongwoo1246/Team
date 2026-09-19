@@ -93,7 +93,8 @@ public class ILoadableTest : MonoBehaviour, ILoadable, ISyncable
     {
         // ServiceLifetime이 Local일 경우 해당 씬이 파괴될 경우 등록한 서비스를 해제
         // 또는 데이터 해제나, 루프 해제, 이벤트 구독 헤제를 이 메서드에 넣는다.
-        // -> Init 단계에서 이벤트를 구독해서 계속 유지한 후 파괴할 때 해제해야 하면(OnDestory 에서 진행했을 경우) 이 메서드에 넣기
+        // -> Init 단계에서 이벤트를 구독해서 계속 유지한 후 파괴할 때 해제해야 하면(OnDestory 에서 진행했을 경우) 이 메서드에 넣기.
+        // -> 방어 코드를 생각해서 OnSceneDestory / OnDestroy 2개 다 넣어도 상관은 없음
         // 전역일 경우 해제하지 않아도 된다.
         // 현재는 씬이 2개 밖에 없어서 Local, Global의 의미는 크게 없지만 씬이 늘어나게 될 경우 유효하게 됨
         ServiceLocator.Unregister<ILoadableTest>();
