@@ -55,11 +55,8 @@ public class Test_EquipmentGacha : MonoBehaviour
             int randomIndex = Random.Range(0, equipmentDatas.Length);
             EquipmentData selectedData = equipmentDatas[randomIndex];
 
-            // 장비 옵션 랜덤
-            float rollPercent = Random.Range(1f, 100f);
-
-            // 실제 장비 생성
-            EquippedItem item = new EquippedItem(selectedData, rollPercent);
+            // 실제 장비 생성 (몬스터 드랍이랑 같은 굴림 범위를 쓰도록 공용 함수로 생성)
+            EquippedItem item = EquippedItem.CreateFromDrop(selectedData);
 
             // 인벤토리에 추가
             equipmentInventory.AddItem(item);

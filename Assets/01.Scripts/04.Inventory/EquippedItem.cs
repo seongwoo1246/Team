@@ -48,6 +48,9 @@ public sealed class EquippedItem
     private const float ENHANCE_ROLL_MIN = 1f;
     private const float ENHANCE_ROLL_MAX = 3f;
 
+    public const float DROP_ROLL_MIN = 1f;
+    public const float DROP_ROLL_MAX = 10f;
+
 
     [Tooltip("서버 인벤토리 고유 식별자(GUID)")] // 송태훈
     [SerializeField] private string instanceId;
@@ -74,6 +77,17 @@ public sealed class EquippedItem
         this.instanceId = Guid.NewGuid().ToString();
         this.data = data;
         this.rollPercent = rollPercent;
+    }
+
+    /// <summary>
+    /// 드랍 공용 생성 함수. DROP_ROLL_MIN~DROP_ROLL_MAX 사이에서 랜덤 굴려서 새 장비 인스턴스를 만든다
+    /// 몬스터 드랍, 가챠등 새장비를 드랍시키는 모든 곳에서 이 함수 하나만 쓰면 됨
+    /// </summary>
+    /// <param name="data">어떤 장비인지 (고정 정보)</param>
+    public static EquippedItem CreateFromDrop(EquipmentData data)
+    {
+        float rollPercent = UnityEngine.Random.Range(DROP_ROLL_MIN, DROP_ROLL_MAX);
+        return new EquippedItem(data, rollPercent);
     }
 
     /// <summary>

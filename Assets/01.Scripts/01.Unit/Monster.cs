@@ -432,7 +432,9 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             OnDamaged(damage);
         }
 
-        RankingUi damageRank = FindAnyObjectByType<RankingUi>();
+        // 맞을 때마다(전투 핫패스) FindAnyObjectByType으로 씬 전체를 뒤지던 걸 다른 곳(StageManager)이랑
+        // 똑같이 RankingUi.Instance로 바꿈 - 김주연
+        RankingUi damageRank = RankingUi.Instance;
         if (damageRank != null)
         {
             damageRank.AddRecord(damageRank.DamageList, damage);
@@ -550,11 +552,10 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             return;
         }
 
-        float rollPercent = UnityEngine.Random.Range(1f, 10f);
-        EquippedItem dropped = new EquippedItem(picked, rollPercent);
+        EquippedItem dropped = EquippedItem.CreateFromDrop(picked);
 
         // 드랍 확인용 로그 어느 부위 장비가 몇 %로 떴는지 바로 확인 가능
-        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {rollPercent:F1}%)");
+        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {dropped.RollPercent:F1}%)");
 
         EquipmentDropped?.Invoke(dropped);
     }

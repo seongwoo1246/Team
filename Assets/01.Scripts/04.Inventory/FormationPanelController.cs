@@ -18,9 +18,14 @@ public sealed class FormationPanelController : MonoBehaviour
     // 파티 편성 최대 인원 (PartyFormationManager와 동일한 값)
     private const int REQUIRED_COUNT = 3;
 
-    [Header("연결")]
-    [SerializeField] private PartyFormationManager partyFormationManager;
+    #region 김주연 - ServiceLocator로 매니저 연결
+    // ServiceLocator로 조회
+    //이 패널은 CharacterPanel 열릴 때마다 OnEnable이 반복 실행
+    // 캐싱 안하고 OnEnable마다 다시 조회
+    private PartyFormationManager partyFormationManager;
+    #endregion
 
+    [Header("연결")]
     [Tooltip("Slot_Skills를 누르면 열리는 편성 패널")]
     [SerializeField] private GameObject formationPanel;
 
@@ -40,10 +45,13 @@ public sealed class FormationPanelController : MonoBehaviour
             formationPanel.SetActive(false);
         }
 
-        if (partyFormationManager != null)
+        if (!ServiceLocator.TryGet<PartyFormationManager>(out partyFormationManager))
         {
-            partyFormationManager.FormationChanged += OnFormationChanged;
+            DebugLogger<FormationPanelController>.LogError("PartyFormationManager를 ServiceLocator에서 찾을 수 없습니다.");
+            return;
         }
+
+        partyFormationManager.FormationChanged += OnFormationChanged;
     }
 
     private void OnDisable()

@@ -55,6 +55,23 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     // 편성이 바뀔 때마다 발생. 인자 = 새 편성(슬롯 순서). UI(편성 표시 텍스트 등)가 구독해서 갱신하는 용도
     public event System.Action<CharacterBase[]> FormationChanged;
 
+    #region 김주연 - ServiceLocator 등록
+    private void Awake()
+    {
+        ServiceLocator.Register<PartyFormationManager>(this, ServiceLifetime.Local);
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
+
+    private void OnDestroy()
+    {
+        ServiceLocator.Unregister<PartyFormationManager>();
+        if (SceneLoadManager.Instance != null)
+        {
+            SceneLoadManager.Instance.UnregisterLoadable(this);
+        }
+    }
+    #endregion
+
     #region ILoadable 구현
     /// <summary>
     /// 씬 로드 단계에서 배치할 캐릭터 에셋 로드

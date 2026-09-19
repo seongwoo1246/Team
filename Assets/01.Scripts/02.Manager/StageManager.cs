@@ -39,9 +39,9 @@ using UtilDebug = DebugLogger<StageManager>;
 public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 {
     #region SerializeField variable
-    [Header("스포너")]
-    [Tooltip("몬스터를 실제로 소환할 스포너")]
-    [SerializeField] private MonsterSpawner spawner;
+    // 몬스터를 실제로 소환할 스포너. 예전엔 [SerializeField]로 직접 드래그해서 연결했는데,
+    // 로비 씬 매니저끼리는 ServiceLocator로 연결 Init()에서 조회로 바꿈
+    private MonsterSpawner spawner;
 
     [Header("파밍 설정")]
     [Tooltip("메인 화면에서 무작위로 소환할 몬스터 프리팹들")] // 수정 진행
@@ -216,9 +216,19 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         return UniTask.CompletedTask;
     }
 
+    #region 김주연 - ServiceLocator로 스포너 연결
     public void Init(SceneId scene)
     {
         if (scene != SceneId.LobbySceneTest) return;
+
+        if (ServiceLocator.TryGet<MonsterSpawner>(out MonsterSpawner spawnerService))
+        {
+            spawner = spawnerService;
+        }
+        else
+        {
+            UtilDebug.LogError("MonsterSpawner를 ServiceLocator에서 찾을 수 없습니다.");
+        }
 
         // 서버 프로필에서 클리어 스테이지 동기화
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -228,6 +238,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         EnterFarming();
         _isInitialized = true;
     }
+    #endregion
 
     public void OnSceneDestory(SceneId scene)
     {
