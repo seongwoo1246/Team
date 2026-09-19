@@ -38,20 +38,14 @@ public sealed class FormationPanelController : MonoBehaviour
     [Tooltip("지금 몇 명 편성됐는지 보여주는 텍스트 (예: 파티 편성 (2/3))")]
     [SerializeField] private TextMeshProUGUI countText;
 
+    private bool _isBound = false;
+
     private void OnEnable()
     {
         if (formationPanel != null)
         {
             formationPanel.SetActive(false);
         }
-
-        if (!ServiceLocator.TryGet<PartyFormationManager>(out partyFormationManager))
-        {
-            DebugLogger<FormationPanelController>.LogError("PartyFormationManager를 ServiceLocator에서 찾을 수 없습니다.");
-            return;
-        }
-
-        partyFormationManager.FormationChanged += OnFormationChanged;
     }
 
     private void OnDisable()
@@ -60,6 +54,7 @@ public sealed class FormationPanelController : MonoBehaviour
         {
             partyFormationManager.FormationChanged -= OnFormationChanged;
         }
+        _isBound = false;
     }
 
     /// <summary>편성이 바뀔 때마다(캐릭터 버튼 클릭 등) 패널 표시를 새로고침</summary>
@@ -72,6 +67,19 @@ public sealed class FormationPanelController : MonoBehaviour
     /// <summary>Slot_Skills 버튼 OnClick에 연결. 편성 패널을 연다</summary>
     public void OnClickOpen()
     {
+        if (!_isBound)
+        {
+            if (ServiceLocator.TryGet<PartyFormationManager>(out partyFormationManager))
+            {
+                partyFormationManager.FormationChanged += OnFormationChanged;
+                _isBound = true;
+            }
+            else
+            {
+                DebugLogger<FormationPanelController>.LogError("PartyFormationManager를 ServiceLocator에서 찾을 수 없습니다.");
+            }
+        }
+
         if (formationPanel != null)
         {
             formationPanel.SetActive(true);

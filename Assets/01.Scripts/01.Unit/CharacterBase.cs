@@ -313,6 +313,13 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentHP = _currentMaxHP * hpRatio;
     }
 
+
+    public void RefreshStatsFromUpgradeSystem()
+    {
+        RecalculateStats();
+        _currentHP = _currentMaxHP;
+    }
+
     /// <summary>
     /// 현재 파티 트랙 레벨 + 장착 장비에 맞는 최대 체력과 실효 공격력(힐량)을 계산해 저장
     /// 공격력=Power 트랙, 체력=Hp 트랙, 치명타=Crit 트랙 을 각각 사용하고, 장비 보너스(%)를 그 위에 더 얹음

@@ -49,8 +49,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     // 슬롯별로 지금 배정된 캐릭터. 비어있으면 null
     private readonly CharacterBase[] _formation = new CharacterBase[SLOT_COUNT];
 
-    // UpgradeSystem 보다 무조건 뒤에
-    public int LoadOrder => 9;
+    public int LoadOrder => 17;
 
     // 편성이 바뀔 때마다 발생. 인자 = 새 편성(슬롯 순서). UI(편성 표시 텍스트 등)가 구독해서 갱신하는 용도
     public event System.Action<CharacterBase[]> FormationChanged;
@@ -123,6 +122,11 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
         {
             foreach (var character in allCharacters)
             {
+                if (character != null)
+                {
+                    character.RefreshStatsFromUpgradeSystem();
+                }
+
                 if (charDict != null && charDict.TryGetValue(character.StatData.Id, out var saveData))
                 {
                     if (saveData.partySlot >= 0 && saveData.partySlot < SLOT_COUNT)
