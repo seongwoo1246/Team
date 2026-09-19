@@ -18,6 +18,8 @@ public class ILoadableTest : MonoBehaviour, ILoadable, ISyncable
     // 씬 로드할 때 초기화 순서를 정하는 Idx
     // 만약 다른 매니저나 Service Locator를 참조하게 될 경우 해당 컴포넌트보다 무조건 큰 숫자로 지정
     // 숫자가 낮을 수록 먼저 로드 됨(초기화 됨)
+    // Manager나 System 같은 코어 시스템(Addressable이나 서버에서 직접 데이터를 받아오는) 30 이하의 숫자로
+    // UI나 단순 로컬 데이터에서 받아오는 (UserManager.Instance.CurrentUser 에서 데이터를 받는) 클래스들은 50 이상의 숫자로
     public int LoadOrder => 100;
     private bool _isInitialized = false;    // ServiceLifetime이 Local일 경우 해당 flag 변수 사용
     private bool _isLoaded = false;         // ServiceLifetime이 Global일 경우 해당 flag 변수 사용
@@ -30,6 +32,7 @@ public class ILoadableTest : MonoBehaviour, ILoadable, ISyncable
         ServiceLocator.Register<ILoadableTest>(this, ServiceLifetime.Local);
 
         // 씬 매니저에 loadable을 등록한다.
+        // ★★★★loadable은 싱글톤, 컴포넌트 상관없이 Lobby 씬에 배치되는 모든 컴포넌트(클래스)들을 등록해야함★★★★
         // loadable에 씬이 로드 될 때 LoadOreder에 따라 초기화 순서를 보장할 수 있다.
         SceneLoadManager.Instance.RegisterLoadable(this);
 
