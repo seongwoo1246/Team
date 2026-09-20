@@ -16,7 +16,7 @@ using UtilDebug = DebugLogger<BottomNavModeGate>;
 /// StageManager.CurrentMode를 봐서 Challenge/Lobby 버튼의 interactable을 맞춰준다
 /// 챌린지 모드 중엔 ChallengeButton을, 파밍 모드 중엔 LobbyButton을 비활성화
 /// </summary>
-public sealed class BottomNavModeGate : MonoBehaviour
+public sealed class BottomNavModeGate : MonoBehaviour, ILoadable
 {
     [Tooltip("챌린지 입장 버튼. 이미 챌린지 중이면 비활성화됨")]
     [SerializeField] private Button challengeButton;
@@ -24,32 +24,55 @@ public sealed class BottomNavModeGate : MonoBehaviour
     [Tooltip("로비(파밍) 버튼. 이미 파밍 중이면 비활성화됨")]
     [SerializeField] private Button lobbyButton;
 
-    // OnEnable에서 캐싱해두고 그 뒤로는 이 캐시만 씀 (씬 종료 시 .instance 재호출로
-    // Singleton<T>가 새 오브젝트를 만들어버리는 문제를 피하기 위함)
-    //private StageManager _stageManager;
+    private StageManager _stageManager;
+
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
 
     private void OnEnable()
     {
-        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        {
-            _stageManager.ModeChanged += OnModeChanged;
-        }
-        else
-        {
-            UtilDebug.LogError("서비스 초기화 순서 문제");
-        }
-            ApplyCurrentMode();
+        TryBindStageManager();
+        ApplyCurrentMode();
     }
 
     private void OnDisable()
     {
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        UnbindStageManager();
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        try { TryBindStageManager(); ApplyCurrentMode(); }
+        catch (System.Exception ex) { UtilDebug.LogError($"초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindStageManager();
+    }
+
+    private void TryBindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
+        {
+            _stageManager = stageMng;
+            _stageManager.ModeChanged -= OnModeChanged;
+            _stageManager.ModeChanged += OnModeChanged;
+        }
+    }
+
+    private void UnbindStageManager()
+    {
+        if (_stageManager != null)
         {
             _stageManager.ModeChanged -= OnModeChanged;
-        }
-        else
-        {
-            UtilDebug.LogError("서비스 초기화 순서 문제");
         }
     }
 
@@ -60,9 +83,8 @@ public sealed class BottomNavModeGate : MonoBehaviour
 
     private void ApplyCurrentMode()
     {
-        if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (_stageManager == null)
         {
-            UtilDebug.LogError("서비스 초기화 순서 문제");
             return;
         }
 
