@@ -14,9 +14,8 @@ public class MailboxUi : MonoBehaviour
     [SerializeField] private GameObject emptyStateNotion; // 우편이 없을 때 띄울 안내 텍스트/이미지
 
     [Header("버튼과 알림")]
-    [SerializeField] private Button claimAllButton; // 모두 받기 버튼
     [SerializeField] private Button closeButton; // 닫기 버튼
-    [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 우편이 있다고ㅁ 알려줄 빨간 알림
+    [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 우편이 있다고 알려줄 빨간 알림
 
 
     //[제일 핵심] 내가 스폰한 우편UI만을 스폰 디스폰 하기 위해 만든 바구니 역할
@@ -27,19 +26,13 @@ public class MailboxUi : MonoBehaviour
         if(closeButton != null)
         {
             closeButton.onClick.AddListener(CloseWindow);
+
+            //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
+            ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
         }
 
-        if(claimAllButton != null)
-        {
-            claimAllButton.onClick.AddListener(OnClickClaimAll);
-        }
+       
 
-    }
-
-    private void Start()
-    {
-        //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
-        ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 10);
     }
 
     private void OnEnable()
@@ -73,7 +66,6 @@ public class MailboxUi : MonoBehaviour
         bool isEnpty = mailDict.Count == 0;
 
         if(emptyStateNotion != null) emptyStateNotion.SetActive(isEnpty);
-        if(claimAllButton != null) claimAllButton.interactable = !isEnpty;
         if(LobbyRedDot != null) LobbyRedDot.SetActive(!isEnpty);
 
         foreach (var kvp in mailDict)
@@ -107,12 +99,7 @@ public class MailboxUi : MonoBehaviour
     }
 
 
-    private void OnClickClaimAll()
-    {
-       // MailBoxManager.Instance.
-    }
-
-    private void CloseWindow()
+    public void CloseWindow()
     {
         gameObject.SetActive(false);
     }
