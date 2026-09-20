@@ -14,15 +14,15 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelConfig
   tiers:
   - startLevel: 1
-    expPerLevelUp: 20
+    expPerLevelUp: 1500
   - startLevel: 101
-    expPerLevelUp: 100
+    expPerLevelUp: 7500
   - startLevel: 301
-    expPerLevelUp: 300
+    expPerLevelUp: 22500
   - startLevel: 501
-    expPerLevelUp: 600
+    expPerLevelUp: 45000
   - startLevel: 1001
-    expPerLevelUp: 1200
+    expPerLevelUp: 90000
   baseExpPerMinute: 20
   tickInterval: 1
   maxOfflineHours: 12

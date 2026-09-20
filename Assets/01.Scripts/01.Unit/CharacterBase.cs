@@ -313,6 +313,13 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentHP = _currentMaxHP * hpRatio;
     }
 
+
+    public void RefreshStatsFromUpgradeSystem()
+    {
+        RecalculateStats();
+        _currentHP = _currentMaxHP;
+    }
+
     /// <summary>
     /// 현재 파티 트랙 레벨 + 장착 장비에 맞는 최대 체력과 실효 공격력(힐량)을 계산해 저장
     /// 공격력=Power 트랙, 체력=Hp 트랙, 치명타=Crit 트랙 을 각각 사용하고, 장비 보너스(%)를 그 위에 더 얹음
@@ -341,7 +348,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentCritBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
         float effectivePower = StatCalculator.GetCritDamage(rawPower, _currentCritChance, _currentCritBonus);
 
-        _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
+        _currentMaxHP = StatCalculator.GetTaperedMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
         _currentPower = effectivePower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
 
         float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;

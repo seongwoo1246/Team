@@ -11,6 +11,7 @@ ObjcetPoolManager는 enumType(Cartoon/Pixel/Item/Particle) 하나당 프리팹 �
  */
 
 
+using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using UnityEngine;
 using UtilDebug = DebugLogger<MonsterSpawner>;
@@ -18,7 +19,7 @@ using UtilDebug = DebugLogger<MonsterSpawner>;
 /// <summary>
 /// ObjectPoolMangerTest를 기반으로 몬스터를 스폰 및 관리하는 스포너
 /// </summary>
-public sealed class MonsterSpawner : MonoBehaviour
+public sealed class MonsterSpawner : MonoBehaviour, ILoadable
 {
     [Header("소환 위치")]
     [Tooltip("몬스터가 소환될 지점들. 여러 개면 그중 무작위 위치에 소환한다")]
@@ -26,6 +27,34 @@ public sealed class MonsterSpawner : MonoBehaviour
 
     // 현재 필드에 활성화된 몬스터 집합 (모드 전환 시 일괄 회수용)
     private readonly HashSet<Monster> _activeMonsters = new();
+
+    #region 김주연 - ServiceLocator/ILoadable 등록
+    public int LoadOrder => 5;
+
+    private void Awake()
+    {
+        ServiceLocator.Register<MonsterSpawner>(this, ServiceLifetime.Local);
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene) { }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        DespawnAll();
+    }
+
+    private void OnDestroy()
+    {
+        ServiceLocator.Unregister<MonsterSpawner>();
+        if (SceneLoadManager.Instance != null)
+        {
+            SceneLoadManager.Instance.UnregisterLoadable(this);
+        }
+    }
+    #endregion
 
 
     /// <summary>

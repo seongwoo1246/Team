@@ -347,15 +347,16 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
         int safeLevel = Mathf.Max(0, level);
         bool isBoss = statData.Kind == MonsterKind.Boss;
 
-        float hp = statData.BaseHp * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
+        float hp = StatCalculator.GetTaperedGrowthStat(statData.BaseHp, statData.HpGrowthPerLevel, safeLevel,
+            StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
         if (isBoss)
         {
             hp *= bossHpMultiplier;
         }
         _maxHP = hp;
 
-        // 공격력도 체력과 같은 증가율로 레벨 스케일 (시트에 따로 컬럼 필요하면 나중에 분리)
-        _attackPower = statData.BaseAttack * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
+        _attackPower = StatCalculator.GetTaperedGrowthStat(statData.BaseAttack, statData.HpGrowthPerLevel, safeLevel,
+            StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
 
         _moveSpeed = statData.MoveSpeed;
     }
@@ -431,7 +432,9 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             OnDamaged(damage);
         }
 
-        RankingUi damageRank = FindAnyObjectByType<RankingUi>();
+        // 맞을 때마다(전투 핫패스) FindAnyObjectByType으로 씬 전체를 뒤지던 걸 다른 곳(StageManager)이랑
+        // 똑같이 RankingUi.Instance로 바꿈 - 김주연
+        RankingUi damageRank = RankingUi.Instance;
         if (damageRank != null)
         {
             damageRank.AddRecord(damageRank.DamageList, damage);
@@ -549,11 +552,10 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             return;
         }
 
-        float rollPercent = UnityEngine.Random.Range(1f, 10f);
-        EquippedItem dropped = new EquippedItem(picked, rollPercent);
+        EquippedItem dropped = EquippedItem.CreateFromDrop(picked);
 
         // 드랍 확인용 로그 어느 부위 장비가 몇 %로 떴는지 바로 확인 가능
-        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {rollPercent:F1}%)");
+        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {dropped.RollPercent:F1}%)");
 
         EquipmentDropped?.Invoke(dropped);
     }
