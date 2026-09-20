@@ -6,10 +6,11 @@
 골드획득만 캐릭터 개인 스탯이 아니라 파티 전체에 적용되는 공통 값이라 StageManager에서 따로 읽어옴
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using TMPro;
 
-public sealed class CharacterStatInfoDisplay : MonoBehaviour
+public sealed class CharacterStatInfoDisplay : MonoBehaviour, ILoadable
 {
     [Header("연결")]
     [Tooltip("지금 어느 캐릭터를 보고 있는지 알기 위한 참조")]
@@ -33,15 +34,37 @@ public sealed class CharacterStatInfoDisplay : MonoBehaviour
     private float _lastAttackSpeed;
     private double _lastGoldBonus = double.NegativeInfinity;
 
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
+
     private void OnEnable()
     {
-        if(ServiceLocator.TryGet<StageManager>(out StageManager stageManager))
-        {
-            this._stageManager = stageManager;
-        }
-
+        TryBindStageManager();
         _lastCharacter = null;
         _lastGoldBonus = double.NegativeInfinity;
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        try { TryBindStageManager(); }
+        catch (System.Exception ex) { DebugLogger<CharacterStatInfoDisplay>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene) { }
+
+    private void TryBindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageManager))
+        {
+            _stageManager = stageManager;
+        }
     }
 
     private void Update()

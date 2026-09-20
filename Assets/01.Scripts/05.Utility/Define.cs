@@ -119,3 +119,31 @@ public enum EquipmentSlot
     // 신발 - 공격 속도
     Shoes,
 }
+
+/// <summary>
+/// EquipmentSlot 관련 공용 헬퍼. SelectedEquipmentInfo.cs/SellSelectedEquipmentInfo.cs에
+/// 완전히 똑같은 GetStatName switch문이 복붙돼있어서 여기 하나로 합침
+/// </summary>
+public static class EquipmentSlotHelper
+{
+    public static string GetStatName(EquipmentSlot slot)
+    {
+        switch (slot)
+        {
+            case EquipmentSlot.Weapon:
+                return "공격력";
+            case EquipmentSlot.Armor:
+                return "체력";
+            case EquipmentSlot.Pants:
+                return "골드획득";
+            case EquipmentSlot.Gloves:
+                return "치명타율";
+            case EquipmentSlot.Ring:
+                return "치명타피해";
+            case EquipmentSlot.Shoes:
+                return "공격속도";
+            default:
+                return "옵션";
+        }
+    }
+}

@@ -8,6 +8,7 @@
 깨지므로 다시 손봐야 한다 (StageManager.GetWaveCountForStage로 유동적으로 만드는 방식으로)
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -15,7 +16,7 @@ using UnityEngine.UI;
 /// 웨이브 진행 상황을 슬라이더(3단계 고정: 1웨이브/2웨이브/3웨이브=보스)로 보여준다.
 /// 챌린지 모드일 때만 보임
 /// </summary>
-public sealed class WaveSliderDisplay : MonoBehaviour
+public sealed class WaveSliderDisplay : MonoBehaviour, ILoadable
 {
     [Header("슬라이더")]
     [Tooltip("웨이브 진행을 표시할 슬라이더 (플레이어가 못 만지게 Interactable은 꺼둘 것)")]
@@ -32,23 +33,52 @@ public sealed class WaveSliderDisplay : MonoBehaviour
     // 마지막으로 슬라이더에 반영한 값. 안 바뀌면 다시 안 그려서 매 프레임 낭비를 피함
     private int _lastAppliedValue = int.MinValue;
 
-    // OnEnable에서 캐싱해두고 그 뒤로는 이 캐시만 씀 (씬 종료 시 .instance 재호출로
-    // Singleton<T>가 새 오브젝트를 만들어버리는 문제를 피하기 위함)
-    //private StageManager _stageManager;
+    private StageManager _stageManager;
+
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
 
     private void OnEnable()
     {
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        {
-            _stageManager.ChallengeStarted += OnChallengeStarted;
-        }
-        else
-            DebugLogger<WaveSliderDisplay>.LogError("서비스 초기화 순서 문제");
+        TryBindStageManager();
     }
 
     private void OnDisable()
     {
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        UnbindStageManager();
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        try { TryBindStageManager(); }
+        catch (System.Exception ex) { DebugLogger<WaveSliderDisplay>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindStageManager();
+    }
+
+    private void TryBindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
+        {
+            _stageManager = stageMng;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.ChallengeStarted += OnChallengeStarted;
+        }
+    }
+
+    private void UnbindStageManager()
+    {
+        if (_stageManager != null)
         {
             _stageManager.ChallengeStarted -= OnChallengeStarted;
         }
@@ -63,7 +93,7 @@ public sealed class WaveSliderDisplay : MonoBehaviour
 
     private void Update()
     {
-        if (waveSlider == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (waveSlider == null || _stageManager == null)
         {
             return;
         }

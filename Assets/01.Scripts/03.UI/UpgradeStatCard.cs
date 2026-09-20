@@ -16,6 +16,7 @@ GoldGain/AttackSpeed는 파티 공용 배율이라 referenceCharacterStats 없�
  */
 
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -24,7 +25,7 @@ using TMPro;
 /// 강화 트랙 1개를 담당하는 카드. UpgradeSystem.TrackUpgraded를 구독해서 강화될 때마다(다른 카드가
 /// 강화됐을 때도 - 플레이어 레벨 상한이 공용이라 표시가 바뀔 수 있음) 다시 그린다
 /// </summary>
-public sealed class UpgradeStatCard : MonoBehaviour
+public sealed class UpgradeStatCard : MonoBehaviour, ILoadable
 {
     [Tooltip("이 카드가 담당하는 강화 트랙")]
     [SerializeField] private UpgradeTrack track;
@@ -44,23 +45,18 @@ public sealed class UpgradeStatCard : MonoBehaviour
     [Tooltip("강화 버튼")]
     [SerializeField] private Button levelUpButton;
 
-    // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
-    // UpgradeSystem.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
-    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
     private UpgradeSystem _upgradeSystem;
 
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
 
     private void OnEnable()
     {
-        if (ServiceLocator.TryGet<UpgradeSystem>(out UpgradeSystem service))
-        {
-            _upgradeSystem = service;
-        }
-
-        if (_upgradeSystem != null)
-        {
-            _upgradeSystem.TrackUpgraded += OnTrackUpgraded;
-        }
+        TryBindUpgradeSystem();
 
         if (levelUpButton != null)
         {
@@ -72,14 +68,43 @@ public sealed class UpgradeStatCard : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_upgradeSystem != null)
-        {
-            _upgradeSystem.TrackUpgraded -= OnTrackUpgraded;
-        }
+        UnbindUpgradeSystem();
 
         if (levelUpButton != null)
         {
             levelUpButton.onClick.RemoveListener(OnClickLevelUp);
+        }
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        try { TryBindUpgradeSystem(); RefreshDisplay(); }
+        catch (System.Exception ex) { DebugLogger<UpgradeStatCard>.LogError($"{track} 카드 초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindUpgradeSystem();
+    }
+
+    private void TryBindUpgradeSystem()
+    {
+        if (ServiceLocator.TryGet<UpgradeSystem>(out UpgradeSystem service))
+        {
+            _upgradeSystem = service;
+            _upgradeSystem.TrackUpgraded -= OnTrackUpgraded;
+            _upgradeSystem.TrackUpgraded += OnTrackUpgraded;
+        }
+    }
+
+    private void UnbindUpgradeSystem()
+    {
+        if (_upgradeSystem != null)
+        {
+            _upgradeSystem.TrackUpgraded -= OnTrackUpgraded;
         }
     }
 

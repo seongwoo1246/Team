@@ -44,9 +44,12 @@ public sealed class EquipmentDropCollector : MonoBehaviour, ILoadable
 
         TryBindStageManager();
     }
+    // 씬 전환마다 SceneLoadManager가 여기를 try/catch 없이 그냥 호출해서,
+    // 여기서 예외가 나면 그 뒤 씬 전환 단계(메모리 정리/새 씬 로드/매니저 초기화 등)가 전부 스킵됨.
+    // OnDisable이랑 똑같이 구독만 해제하면 됨 - 김주연
     public void OnSceneDestory(SceneId scene)
     {
-        throw new System.NotImplementedException();
+        UnbindStageManager();
     }
 
     private void TryBindStageManager()

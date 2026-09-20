@@ -16,11 +16,22 @@ public sealed class FormationCharacterButton : MonoBehaviour
     [Tooltip("이 버튼이 나타내는 캐릭터")]
     [SerializeField] private CharacterBase character;
 
-    [Tooltip("편성 로직을 처리하는 매니저")]
-    [SerializeField] private PartyFormationManager partyFormationManager;
-
     [Tooltip("편성 여부에 따라 색이 바뀔 배경 이미지 (보통 이 버튼 자신의 Image)")]
     [SerializeField] private Image highlightImage;
+
+    #region 김주연 - ServiceLocator로 매니저 연결
+    //  ServiceLocator로 조회
+    // OnEnable은 PartyFormationManager.Awake()보다 먼저 실행될 수 있어서(순서 보장 X) Start에서 조회함
+    private PartyFormationManager partyFormationManager;
+
+    private void Start()
+    {
+        if (!ServiceLocator.TryGet<PartyFormationManager>(out partyFormationManager))
+        {
+            DebugLogger<FormationCharacterButton>.LogError("PartyFormationManager를 ServiceLocator에서 찾을 수 없습니다.");
+        }
+    }
+    #endregion
 
     [Header("색상")]
     [Tooltip("편성에 들어가있을 때 배경색")]

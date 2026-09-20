@@ -4,13 +4,14 @@
 StageManager는 클리어해도 자동으로 아무 데도 안 가고 대기만 하므로, 이 패널이 그 대기 상태의 UI
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
 /// StageManager.StageCleared를 구독해서 클리어 선택 화면을 띄움
 /// 버튼 2개(다음 스테이지 / 파밍으로)의 OnClick을 각각 OnClickNextStage / OnClickReturnToFarming에 연결해서 쓴다
 /// </summary>
-public sealed class StageClearPanel : MonoBehaviour
+public sealed class StageClearPanel : MonoBehaviour, ILoadable
 {
     [Tooltip("클리어 화면 전체 패널 (평소엔 꺼져있다가 클리어 순간에만 켜짐)")]
     [SerializeField] private GameObject panelRoot;
@@ -18,27 +19,55 @@ public sealed class StageClearPanel : MonoBehaviour
     // 방금 클리어한 스테이지 번호 (다음 스테이지 버튼 누를 때 씀)
     private int _clearedStageNumber;
 
-    // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
-    // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
-    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
-    //private StageManager _stageManager;
+    private StageManager _stageManager;
+
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
 
     private void OnEnable()
     {
-        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        {
-            _stageManager.StageCleared += OnStageCleared;
-            _stageManager.ChallengeStarted += OnChallengeStarted;
-        }
-        else
-            DebugLogger<StageClearPanel>.LogError("서비스 초기화 순서 문제");
-
+        TryBindStageManager();
         SetPanelActive(false);
     }
 
     private void OnDisable()
     {
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        UnbindStageManager();
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        try { TryBindStageManager(); }
+        catch (System.Exception ex) { DebugLogger<StageClearPanel>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindStageManager();
+    }
+
+    private void TryBindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
+        {
+            _stageManager = stageMng;
+            _stageManager.StageCleared -= OnStageCleared;
+            _stageManager.StageCleared += OnStageCleared;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.ChallengeStarted += OnChallengeStarted;
+        }
+    }
+
+    private void UnbindStageManager()
+    {
+        if (_stageManager != null)
         {
             _stageManager.StageCleared -= OnStageCleared;
             _stageManager.ChallengeStarted -= OnChallengeStarted;
@@ -63,7 +92,7 @@ public sealed class StageClearPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (_stageManager != null)
         {
             _stageManager.ContinueToNextStage(_clearedStageNumber);
         }
@@ -74,7 +103,7 @@ public sealed class StageClearPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (_stageManager != null)
         {
             _stageManager.EnterFarming();
         }

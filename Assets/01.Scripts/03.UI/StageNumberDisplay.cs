@@ -4,6 +4,7 @@
 ChallengeTimerDisplay랑 표시 규칙(챌린지 모드일 때만 보임) 동일하게 맞춤
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using TMPro;
 
@@ -11,7 +12,7 @@ using TMPro;
 /// StageManager.ChallengeStarted를 구독해서 현재 챌린지 스테이지 번호를 표시.
 /// 챌린지 모드일 때만 보이고 파밍 중엔 숨김
 /// </summary>
-public sealed class StageNumberDisplay : MonoBehaviour
+public sealed class StageNumberDisplay : MonoBehaviour, ILoadable
 {
     [Tooltip("스테이지 번호를 표시할 텍스트")]
     [SerializeField] private TextMeshProUGUI stageNumberText;
@@ -22,26 +23,55 @@ public sealed class StageNumberDisplay : MonoBehaviour
     // 마지막으로 화면에 그린 스테이지 번호. 안 바뀌면 다시 안 그려서 GC를 피함
     private int _lastDisplayedStageNumber = int.MinValue;
 
-    // OnEnable에서 구독할 때 캐싱해두고 OnDisable에서 구독 해제할 때 이 캐시로만 접근한다.
-    // StageManager.instance를 OnDisable에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
-    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
-    //private StageManager _stageManager;
+    private StageManager _stageManager;
+
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
 
     private void OnEnable()
     {
-        if(ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        {
-            _stageManager.ChallengeStarted += OnChallengeStarted;
-            _stageManager.ModeChanged += OnModeChanged;
-        }
-        else
-            DebugLogger<StageNumberDisplay>.LogError("서비스 초기화 순서 문제");
+        TryBindStageManager();
         ApplyCurrentState();
     }
 
     private void OnDisable()
     {
-        if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        UnbindStageManager();
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbySceneTest) return;
+        try { TryBindStageManager(); ApplyCurrentState(); }
+        catch (System.Exception ex) { DebugLogger<StageNumberDisplay>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindStageManager();
+    }
+
+    private void TryBindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
+        {
+            _stageManager = stageMng;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.ChallengeStarted += OnChallengeStarted;
+            _stageManager.ModeChanged -= OnModeChanged;
+            _stageManager.ModeChanged += OnModeChanged;
+        }
+    }
+
+    private void UnbindStageManager()
+    {
+        if (_stageManager != null)
         {
             _stageManager.ChallengeStarted -= OnChallengeStarted;
             _stageManager.ModeChanged -= OnModeChanged;
@@ -67,7 +97,7 @@ public sealed class StageNumberDisplay : MonoBehaviour
     /// </summary>
     private void ApplyCurrentState()
     {
-        if (stageNumberText == null || !ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
+        if (stageNumberText == null || _stageManager == null)
         {
             return;
         }
