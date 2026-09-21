@@ -15,8 +15,20 @@ MonoBehaviour:
   m_GroupName: Reomte_Data
   m_GUID: 1046ae78855a49647ae166b0b02637a5
   m_SerializeEntries:
+  - m_GUID: 057714f7580510e44a59eb73cb0d3df8
+    m_Address: 6
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 096c7446f81d95042be716c78e5d213f
     m_Address: Assets/03.Data/00.UnitSO/Characters
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1e3f6952fa320ff4a8153c6d1c4965a0
+    m_Address: 2
     m_ReadOnly: 0
     m_SerializedLabels:
     - Static_Data
@@ -27,14 +39,62 @@ MonoBehaviour:
     m_SerializedLabels:
     - Static_Data
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 290985fd7d8faf442b5438eea759d4a5
+    m_Address: 8
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2bb445bd34c49ee4a810d27767e09226
+    m_Address: 4
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 40584281492375e438a541b1b1c16eeb
     m_Address: Assets/03.Data/00.UnitSO/GameConfig.asset
     m_ReadOnly: 0
     m_SerializedLabels:
     - Static_Data
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 4400d9f943603b645a94f70ed9f03c24
+    m_Address: 9
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 89cc9dc09b4f8e94593f629141bf9bd8
+    m_Address: 1
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9b9270b2da3d35843ba30dd29c725669
+    m_Address: 5
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b9f00beee052dbc46abb539aff8377df
+    m_Address: 10
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ce0c2888b35095b4eaea0da4487cabfe
     m_Address: Assets/03.Data/00.UnitSO/Stages/StageRosterData.asset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: dabc59be5342eef419ff68c548e49607
+    m_Address: 7
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Static_Data
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e46f8c147fbbe964c98e6d89d5d9be08
+    m_Address: 3
     m_ReadOnly: 0
     m_SerializedLabels:
     - Static_Data
