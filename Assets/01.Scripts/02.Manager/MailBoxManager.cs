@@ -166,6 +166,9 @@ public class MailBoxManager : Singleton<MailBoxManager>
 
             // 보상 받음 상태 전환
             mail.isClaimed = true;
+
+            mailDictionary.Remove(mailId);
+
             // 로컬에 저장
             SaveMailsToLocal();
             //UI 새로고침
