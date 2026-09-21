@@ -22,6 +22,17 @@ public class MailItemUi : MonoBehaviour , IPoolable
     private string currnetMailId;
     private mailItem currentData;
 
+    private void Awake()
+    {
+        if(claimButton != null)
+        {
+            //수령버튼 바인딩 (중복방지를 위해 한번 비우고 넣어줌)
+            claimButton.onClick.RemoveAllListeners();
+            claimButton.onClick.AddListener(OnClickClaim);
+        }
+    
+    }
+
     //풀에서 꺼내질 때 초기화를 진행 
     public void OnSpawn()
     {
@@ -29,8 +40,6 @@ public class MailItemUi : MonoBehaviour , IPoolable
         titleText.text = string.Empty;
         contentText.text = string.Empty;
         expireText.text = string.Empty;
-        // 이전 우편에 있던 버튼 이벤트를 제거해서 충돌 방지
-        claimButton.onClick.RemoveAllListeners();
         // 버튼 상태 초기화
         claimButton.interactable = true;
 
@@ -39,9 +48,9 @@ public class MailItemUi : MonoBehaviour , IPoolable
 
     public void OnDespawn()
     {
-        // 주의를 위해 생성과 해제시에 한번씩 진행
-        claimButton.onClick.RemoveAllListeners();
+       
         currentData = null;
+        currnetMailId = string.Empty;
         gameObject.SetActive(false);
     }
 
@@ -66,14 +75,12 @@ public class MailItemUi : MonoBehaviour , IPoolable
             expireText.text = "무제한";
         }
 
-        //수령버튼 바인딩 (중복방지를 위해 한번 비우고 넣어줌)
-        claimButton.onClick.RemoveAllListeners();
-        claimButton.onClick.AddListener(OnClickClaim);
+      
     }
 
     public  void OnClickClaim()
     {
-        Debug.Log($"{currnetMailId}");
+        
 
         // 클릭 중복 방지
         claimButton.interactable = false;
