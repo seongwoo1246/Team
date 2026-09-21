@@ -113,6 +113,9 @@ public sealed class EquippedItem
     // 현재 강화 단계 (+0 ~ +10)
     public int EnhanceLevel => enhanceLevel;
 
+    // 강화로 쌓인 보너스% 합계 (드랍 시 rollPercent는 제외, 서버 저장 호출에 씀)
+    public float EnhanceBonusTotal => enhanceBonusTotal;
+
     // 더 강화할 수 있는지 (+10 미만이어야 함)
     public bool CanEnhance => EnhanceLevel < MAX_ENHANCE_LEVEL;
 
