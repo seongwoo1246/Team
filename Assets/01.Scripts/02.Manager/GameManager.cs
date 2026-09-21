@@ -151,6 +151,7 @@ public class GameManager : Singleton<GameManager>
 
     /// <summary>
     /// 재화, 마지막 로그인 시각, 인벤토리 등의 데이터를 한 번에 안전하게 저장
+    /// 중요한 이벤트 발생 시 무조건 호출 넣기
     /// </summary>
     public async UniTask FlushGameDataAsync()
     {

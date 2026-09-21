@@ -46,7 +46,7 @@ public sealed class EquipmentDropCollector : MonoBehaviour, ILoadable
         if (scene != SceneId.LobbySceneTest) return;
 
         TryBindStageManager();
-        RestoreSavedEquipment();
+        //RestoreSavedEquipment();
     }
     // 씬 전환마다 SceneLoadManager가 여기를 try/catch 없이 그냥 호출해서,
     // 여기서 예외가 나면 그 뒤 씬 전환 단계(메모리 정리/새 씬 로드/매니저 초기화 등)가 전부 스킵됨.

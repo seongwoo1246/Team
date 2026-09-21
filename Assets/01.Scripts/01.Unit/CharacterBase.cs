@@ -417,6 +417,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentHP = _currentMaxHP * hpRatio;
 
         // 서버에도 장착 상태 저장
+        if(persist)
             UserManager.Instance.EquipItemAsync(statData.Id, slot, item.InstanceId, this.destroyCancellationToken).Forget();
 
         return true;
