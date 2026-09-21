@@ -169,6 +169,10 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
     }
     #endregion
 
+    public CharacterBase[] GetAllCharacters()
+    {
+        return allCharacters;
+    }
 
     /// <summary>
     /// 지정한 캐릭터를 편성에 넣거나 뺀다. 이미 편성돼있으면 빼고, 아니면 빈 슬롯에 넣는다
