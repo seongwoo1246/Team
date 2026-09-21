@@ -385,8 +385,9 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     /// <param name="slot">장착할 부위</param>
     /// <param name="item">장착할 장비 인스턴스</param>
+    /// <param name="persist">서버에도 저장할지 (저장된 장착 상태를 복원할 때는 false로 호출)</param>
     /// 장착에 성공했으면 true
-    public bool Equip(EquipmentSlot slot, EquippedItem item)
+    public bool Equip(EquipmentSlot slot, EquippedItem item, bool persist = true)
     {
         if (item == null || !CanEquip(slot, item.Data))
         {
@@ -415,6 +416,9 @@ public class CharacterBase : MonoBehaviour, IEntity
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
 
+        // 서버에도 장착 상태 저장
+            UserManager.Instance.EquipItemAsync(statData.Id, slot, item.InstanceId, this.destroyCancellationToken).Forget();
+
         return true;
     }
 
@@ -422,7 +426,8 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// 지정한 부위의 장비를 해제한다. 이미 비어있으면 아무 일도 안함
     /// </summary>
     /// <param name="slot">해제할 부위</param>
-    public void Unequip(EquipmentSlot slot)
+    /// <param name="persist">서버에도 저장할지 (기본 true) - 김주연</param>
+    public void Unequip(EquipmentSlot slot, bool persist = true)
     {
         if (_equippedItems[(int)slot] == null)
         {
@@ -430,9 +435,16 @@ public class CharacterBase : MonoBehaviour, IEntity
         }
 
         float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
+        _equippedItems[(int)slot].SetEquippedBy(null);
         _equippedItems[(int)slot] = null;
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
+
+        // 김주연 - 서버에도 장착 해제 저장
+        if (persist)
+        {
+            UserManager.Instance.UnequipItemAsync(statData.Id, slot, this.destroyCancellationToken).Forget();
+        }
     }
 
     /// <summary>
@@ -472,7 +484,7 @@ public class CharacterBase : MonoBehaviour, IEntity
             return false;
         }
 
-        if (MaterialWallet.Instance == null || !MaterialWallet.Instance.TrySpend(1))
+        if (MaterialWallet.Instance == null || !MaterialWallet.Instance.TrySpend(1, syncToServer: false))
         {
             return false;
         }
@@ -485,6 +497,12 @@ public class CharacterBase : MonoBehaviour, IEntity
         float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
+
+        // 서버에 강화 수치 + 재료 소모를 한 트랜잭션으로 같이 저장 (둘 중 하나만 반영되는 상태 방지)
+        UserManager.Instance.EnhanceEquipmentTransactionAsync(
+            item.InstanceId, item.EnhanceLevel, item.EnhanceBonusTotal,
+            MaterialWallet.MATERIAL_KEY, MaterialWallet.Instance.MaterialCount,
+            this.destroyCancellationToken).Forget();
 
         return true;
     }
