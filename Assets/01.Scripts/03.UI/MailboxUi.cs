@@ -10,6 +10,7 @@ public class MailboxUi : MonoBehaviour
 {
     [Header("Ui 패널 안에 들어갈 내용들")]
     [SerializeField] private Transform contentParent; // 스크롤뷰의 content의 트랜스폼
+    [SerializeField] private RectTransform contentRectTransform; // content의 RectTransform를 참조
     [SerializeField] private MailItemUi mailItemPrefeb; // 생성할 mailitem의 프리팹
     [SerializeField] private GameObject emptyStateNotion; // 우편이 없을 때 띄울 안내 텍스트/이미지
 
@@ -27,16 +28,18 @@ public class MailboxUi : MonoBehaviour
         {
             closeButton.onClick.AddListener(CloseWindow);
 
-            //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
-            ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
+            
         }
 
-       
+        //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
+        ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
 
     }
 
     private void OnEnable()
     {
+        // 혹시 모르니 먼저 한 번 빼고 넣기
+        MailBoxManager.OnMailboxUpdated -= RefreshUi;
         //[중요] 서버 데이터 변경 이벤트 구독
         MailBoxManager.OnMailboxUpdated += RefreshUi;
 
@@ -88,14 +91,31 @@ public class MailboxUi : MonoBehaviour
     {
         var ObjPoolM = ObjcetPoolManager.Instance;
 
-        for (int i = 0; i<activeMailItems.Count; i++)
+        if(activeMailItems==null||activeMailItems.Count ==0) return; 
+
+        //리스트 요소 삭제 반납시 인덱스 꼬이는 걸 방지하기 위해 역순으로 진행 
+        for (int i = activeMailItems.Count-1; i>=0; i--)
         {
-            if(activeMailItems[i] != null)
+            MailItemUi item =activeMailItems[i];
+            if(item != null)
             {
-                ObjPoolM.Despawn<MailItemUi>(enumType.Item_Mail, activeMailItems[i]);
+                ObjPoolM.Despawn<MailItemUi>(enumType.Item_Mail, item);
             }
         }
         activeMailItems.Clear();
+
+        //content안에 남아있는 오브젝트들이 남아있을 경우를 위한 방어 코드
+        if(contentParent !=null)
+        {
+            for(int i = contentParent.childCount-1; i>=0; i--)
+            {
+               Transform child = contentParent.GetChild(i);
+                if(child.gameObject.activeSelf)
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+        }
     }
 
 

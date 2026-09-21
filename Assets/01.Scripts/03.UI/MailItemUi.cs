@@ -73,6 +73,8 @@ public class MailItemUi : MonoBehaviour , IPoolable
 
     public  void OnClickClaim()
     {
+        Debug.Log($"{currnetMailId}");
+
         // 클릭 중복 방지
         claimButton.interactable = false;
 

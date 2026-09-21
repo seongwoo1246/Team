@@ -127,6 +127,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 606178660770730526, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: contentRectTransform
+      value: 
+      objectReference: {fileID: 1886344079}
     - target: {fileID: 1937095527589547530, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
       propertyPath: m_Name
       value: MailboxUi
@@ -171,9 +175,17 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6128677636132696061, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_ChildControlHeight
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7380385866679653143, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_HorizontalFit
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8273315930020807492, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
       propertyPath: m_SizeDelta.x
-      value: 0
+      value: -1093.0444
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -361,6 +373,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!224 &1886344079 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 8273315930020807492, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+  m_PrefabInstance: {fileID: 1030561837}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2060144173
 GameObject:
   m_ObjectHideFlags: 0

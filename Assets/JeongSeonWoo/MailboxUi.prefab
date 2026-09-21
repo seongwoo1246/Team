@@ -395,6 +395,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MailboxUi
   contentParent: {fileID: 8273315930020807492}
+  contentRectTransform: {fileID: 8273315930020807492}
   mailItemPrefeb: {fileID: 6496942752162278317, guid: 48429db7755026241838b5a40c040b14, type: 3}
   emptyStateNotion: {fileID: 595029316861026474}
   closeButton: {fileID: 7240461308360232929}

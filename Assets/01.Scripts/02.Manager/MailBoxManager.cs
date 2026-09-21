@@ -74,16 +74,21 @@ public class MailBoxManager : Singleton<MailBoxManager>
     {
         base.Awake();
 
+
         // 안전한 위치에 저장경로 만들기
         saveFilePath = Path.Combine(Application.persistentDataPath, "local_mails.json");
 
         LoadMailsFromLocal();
+
     }
 
     public void AddMail(string title , string content, List<mailReward> rewards ,int validDays =7)
     {
         // 중복 되지 않는 우편 아이디를 만들어줌
         string newMailId = Guid.NewGuid().ToString();
+
+        Debug.Log($"만들어진 우편 아이디 : {newMailId}");
+       
         // 7일을 초로 바꿔서 만료기간 확인
         long expireTime = DateTimeOffset.UtcNow.AddDays(validDays).ToUnixTimeSeconds();
 
@@ -152,7 +157,13 @@ public class MailBoxManager : Singleton<MailBoxManager>
         if (mailDictionary.TryGetValue(mailId, out mailItem mail))
         {
             // 이미 받은 거는 패스
-            if (mail.isClaimed) return false;
+            if (mail.isClaimed)
+            {
+                mailDictionary.Remove(mailId);
+                SaveMailsToLocal();
+                OnMailboxUpdated?.Invoke();
+                return false;
+            }
 
             // 유통기한이 지난거는 패스
             long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
