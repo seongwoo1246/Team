@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AchievementSlot : MonoBehaviour
+public class AchievementSlot : MonoBehaviour , IPoolable
 {
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private Slider progressBar;
@@ -10,13 +10,27 @@ public class AchievementSlot : MonoBehaviour
     [SerializeField] private Button claimButton;
     [SerializeField] private GameObject CompletedMark;
 
-    
+
+    private int currentAchievementId;
 
 
+
+
+    private void OnprogressChanged(int updatedId)
+    {
+        if (AchievementManager.Instance.achievementsDictionary.TryGetValue(updatedId, out Achievement ach))
+        {
+            BindData(ach);
+        }
+    }
+
+   
 
     // 재사용 시 데이터만 전달받아 UI 요소를 갱신합니다.
     public void  BindData(Achievement ach)
     {
+        currentAchievementId = ach.id;
+
         titleText.text = ach.title;
 
         // 진행도 계산
@@ -38,8 +52,13 @@ public class AchievementSlot : MonoBehaviour
         }
     }
 
+    public void OnSpawn()
+    {
+        AchievementManager.OnAchievementUpdated += OnprogressChanged;
+    }
 
-
-
-
+    public void OnDespawn()
+    {
+        AchievementManager.OnAchievementUpdated -= OnprogressChanged;
+    }
 }

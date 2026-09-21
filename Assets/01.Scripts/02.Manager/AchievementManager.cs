@@ -82,9 +82,11 @@ public static class GameEvents
 /// </summary>
 public class AchievementManager : Singleton<AchievementManager>
 {
+    [SerializeField] private AchievementSlot slot;
+
     // 업적을 담아두는 리스트와 딕셔너리
-    [SerializeField] private List<Achievement> achievements = new List<Achievement>();
-    private Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
+    [SerializeField] public List<Achievement> achievements = new List<Achievement>();
+    public Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
 
 
 
@@ -94,8 +96,15 @@ public class AchievementManager : Singleton<AchievementManager>
         base.Awake();
         InitializeDictionary();
 
+        if(ObjcetPoolManager.Instance != null )
+        {
+            ObjcetPoolManager.Instance.RegisterPool<AchievementSlot>(enumType.UI, slot, 4);
+        }
         
     }
+
+    // UI 슬롯들이 구독할 전용 이벤트 (변경된 업적의 id를 전달 )
+    public static event System.Action<int> OnAchievementUpdated;
 
 
     private void OnEnable()
@@ -126,12 +135,14 @@ public class AchievementManager : Singleton<AchievementManager>
 
         ach.currentProgress += amount;
 
-        if(ach.currentProgress==ach.targetProgress)
+        if(ach.currentProgress>=ach.targetProgress)
         {
             ach.currentProgress = ach.targetProgress;
             UnlockAchievement(ach);
         }
-  
+
+        //진행도가 진짜로 변경 되어 UI에게 알림
+        OnAchievementUpdated?.Invoke(id);
     }
 
    
