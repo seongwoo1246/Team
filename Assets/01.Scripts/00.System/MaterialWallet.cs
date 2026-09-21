@@ -34,7 +34,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     [Tooltip("온라인 누적 시간을 몇 초마다 체크할지")]
     [SerializeField] private float tickInterval = 1f;
 
-    private const string MATERIAL_KEY = "Material";
+    public const string MATERIAL_KEY = "Material";
     // 저장 키
     private const string ACCUMULATED_SECONDS_KEY = "MaterialWallet_AccumulatedSeconds";
     //private const string MATERIAL_COUNT_KEY = "MaterialWallet_Count"; - 메서드 미사용으로 변경함으로서 변수 미사용
@@ -201,7 +201,8 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     /// 재료가 충분하면 차감하고 true, 부족하면 아무 것도 안 하고 false (장비 강화 비용 지불용)
     /// </summary>
     /// <param name="amount">차감할 개수</param>
-    public bool TrySpend(int amount)
+    /// <param name="syncToServer">false면 서버 저장을 생략 (다른 데이터랑 한 트랜잭션으로 같이 저장할 때 사용)</param>
+    public bool TrySpend(int amount, bool syncToServer = true)
     {
         if (amount <= 0)
         {
@@ -216,8 +217,12 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         _materialCount -= amount;
         MaterialCountChanged?.Invoke(_materialCount);
 
-        // 서버 메모리 및 RTDB 동기화
-        SyncMaterialToServer();
+        // 오류방지?
+        if (syncToServer)
+        {
+            // 서버 메모리 및 RTDB 동기화
+            SyncMaterialToServer();
+        }
         return true;
     }
 

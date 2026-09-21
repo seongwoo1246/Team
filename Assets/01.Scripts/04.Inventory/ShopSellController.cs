@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -158,6 +159,9 @@ public class ShopSellController : MonoBehaviour
             if (equipmentInventory.RemoveItem(item))
             {
                 sellCount++;
+
+                // 서버 인벤토리에서도 제거
+                UserManager.Instance.RemoveEquipmentAsync(item.InstanceId, this.destroyCancellationToken).Forget();
             }
         }
 

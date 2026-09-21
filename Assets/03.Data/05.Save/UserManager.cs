@@ -239,6 +239,25 @@ public class UserManager : NonMonoSingleton<UserManager>
         return await CurrentUser.Inventory.UpdateEquipmentEnhanceAsync(instanceId, newLevel, newBonus, ct);
     }
 
+    // 김주연 - 장비 인벤토리 서버 연동 (드랍 저장 / 판매 제거)
+    /// <summary>
+    /// 장비 획득(드랍/가챠) 시 인벤토리에 저장
+    /// </summary>
+    public async UniTask<bool> AddEquipmentAsync(string instanceId, EquipmentSaveDTO newEquip, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        return await CurrentUser.Inventory.AddEquipmentAsync(instanceId, newEquip, ct);
+    }
+
+    /// <summary>
+    /// 장비 판매/버리기 시 인벤토리에서 제거
+    /// </summary>
+    public async UniTask<bool> RemoveEquipmentAsync(string instanceId, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        return await CurrentUser.Inventory.RemoveEquipmentAsync(instanceId, ct);
+    }
+
     /// <summary>
     /// 재료 소모
     /// </summary>
