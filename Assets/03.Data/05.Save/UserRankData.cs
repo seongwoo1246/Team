@@ -7,7 +7,6 @@
 public enum RankCategoty
 {
     Damage,  // 최고 데미지 랭킹
-    PlayTime,// 플레이 시간 랭킹
     ClearTime// 클리어 타임 랭킹
 }
 

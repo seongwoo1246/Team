@@ -16,6 +16,7 @@ public class MailboxUi : MonoBehaviour
 
     [Header("버튼과 알림")]
     [SerializeField] private Button closeButton; // 닫기 버튼
+    [SerializeField] private Button OpenButton; // 열기 버튼
     [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 우편이 있다고 알려줄 빨간 알림
 
 
@@ -27,9 +28,14 @@ public class MailboxUi : MonoBehaviour
         if(closeButton != null)
         {
             closeButton.onClick.AddListener(CloseWindow);
-
-            
+  
         }
+        if(OpenButton != null)
+        {
+            OpenButton.onClick.AddListener(OpenWindow);
+  
+        }
+
 
         //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
         ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
@@ -122,5 +128,10 @@ public class MailboxUi : MonoBehaviour
     public void CloseWindow()
     {
         gameObject.SetActive(false);
+    }
+
+    public void OpenWindow()
+    {
+        gameObject.SetActive(true);
     }
 }
