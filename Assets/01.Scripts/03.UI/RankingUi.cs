@@ -35,6 +35,9 @@ public class RankingUi : Singleton<RankingUi>
     
     private RankCategoty currentCategory = RankCategoty.Damage;
 
+    // 컬러 매핑
+   private readonly RankColor[] colors = new RankColor[] { RankColor.Gold, RankColor.Silver, RankColor.Bronze };
+
     protected override void Awake()
     {
         base.Awake();
@@ -146,8 +149,7 @@ public class RankingUi : Singleton<RankingUi>
     {
         UserRankData[] currentTop3 = top3CategoryDataDict[currentCategory];
 
-        // 컬러 매핑
-        RankColor[] colors = new RankColor[] { RankColor.Gold, RankColor.Silver, RankColor.Bronze };
+      
 
         for(int i = 0; i < 3; i++)
         {

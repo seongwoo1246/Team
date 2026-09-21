@@ -18,10 +18,7 @@ public class RankingSlot : MonoBehaviour
     [SerializeField] private TextMeshProUGUI RankText;
     [SerializeField] private Image BackGround;
 
-    private void Start()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
+   
     public void SetUpSlot(int rank, double Score, RankColor color)
     {
         RankText.text = $"{rank}위 : {Score}";

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 //담당자 - 정성우
 
 /// <summary>
@@ -25,4 +26,11 @@ public struct UserRankData
         this.score = score;
 
     }
+}
+
+[Serializable]
+public class LocalRankingDataWrapper
+{
+    public List<UserRankData> damageRankList = new List<UserRankData>();
+    public List<UserRankData> clearRankList = new List<UserRankData>();
 }
