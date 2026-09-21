@@ -83,6 +83,7 @@ public class MailItemUi : MonoBehaviour , IPoolable
             claimButton.interactable = true;
         }
         
+      
 
         // 성공시 매니저의 이벤트(OnMailboxUpdated)가 나와서 리스트가 리프레시 되면서 자동으로 사라짐
     }

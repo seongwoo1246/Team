@@ -208,7 +208,7 @@ public class MailBoxManager : Singleton<MailBoxManager>
         long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() ;
         List<string> expiredIds = new List<string>() ;
 
-        //장부를 뒤져서 만료 시간이 지나 편지 ID를 수집함
+        //장부를 뒤져서 만료 시간이 지난 편지 ID를 수집함
         foreach(var pair in mailDictionary)
         {
             if(currentTime>pair.Value.expireTimestamp)
