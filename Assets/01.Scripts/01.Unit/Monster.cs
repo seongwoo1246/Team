@@ -437,7 +437,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
         RankingUi damageRank = RankingUi.Instance;
         if (damageRank != null)
         {
-            damageRank.AddRecord(damageRank.DamageList, damage);
+            damageRank.AddRecordAndSave(RankCategoty.Damage, damage);
         }
 
         CheckEnrage();

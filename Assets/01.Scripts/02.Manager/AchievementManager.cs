@@ -83,36 +83,19 @@ public static class GameEvents
 public class AchievementManager : Singleton<AchievementManager>
 {
     // 업적을 담아두는 리스트와 딕셔너리
-    [SerializeField] private List<Achievement> achievements;
+    [SerializeField] private List<Achievement> achievements = new List<Achievement>();
     private Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
 
-    
 
-    private DatabaseReference databaseReference; //파이어베이스 DB참조
-    private string userId = "";  // 실제 서비스 시 Auth에서 가져오는 UID
-    
+
 
     protected override void Awake()
     {
         base.Awake();
         InitializeDictionary();
 
-        //파이어 베이스 루트 참조 초기화 (리얼타임 데이터베이스 기준)
-        databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+        
     }
-
-
-    public async void SetUserId(string user)
-    {
-        userId = user;
-
-
-        await LoadAchievementsFromFirebase();
-    }
-
-
-
-
 
 
     private void OnEnable()
@@ -143,7 +126,7 @@ public class AchievementManager : Singleton<AchievementManager>
 
         ach.currentProgress += amount;
 
-        if(ach.currentProgress>=ach.targetProgress)
+        if(ach.currentProgress==ach.targetProgress)
         {
             ach.currentProgress = ach.targetProgress;
             UnlockAchievement(ach);
@@ -160,12 +143,8 @@ public class AchievementManager : Singleton<AchievementManager>
         ach.isUnLocked = true;
         ach.isClaimed = true;
 
-        // 보상 지급 해주는 코드 넣어주기 우편으로 지급 예정;
+        AchievementClearReward(ach);
 
-
-        // 클리어 서버에 저장
-        SaveAchivementToFirebase(ach);
-       
     }
 
 
@@ -179,69 +158,24 @@ public class AchievementManager : Singleton<AchievementManager>
         }
     }
 
-    #region 파이어베이스 관련 함수들
-    /// <summary>
-    /// 특정 업적에 대한 상태를 파이어 베이스에 저장(Realtime Database)
-    /// </summary>
-    /// <param name="ach"></param>
-    private async void SaveAchivementToFirebase(Achievement ach)
+    
+    private void AchievementClearReward(Achievement ach)
     {
-        string json = JsonUtility.ToJson(ach);
-        try 
+        switch(ach.rewardType)
         {
-            // users/{userId}/achievements/{achievementId} 경로에 저장
-            await databaseReference.Child("users")
-              .Child(userId)
-              .Child("achievements")
-              .Child(ach.id.ToString())
-              .SetRawJsonValueAsync(json);
+            case RewardType.Gold:
+                GoldWallet.Instance.Add(ach.rewardAmount);
+                break;
+
+            case RewardType.Diamond: 
+                
+                break;
+
+            case RewardType.Item: 
+                
+                break;
         }
-        catch(Exception e) 
-        {
-            Debug.LogError($"파이어 베이스 저장 실패 : {e.Message}");
-        }
- 
     }
-
-    /// <summary>
-    /// 로그인시 파이어베이스에서 기존 업적 정보 불러오기
-    /// </summary>
-    private async Task LoadAchievementsFromFirebase()
-    {
-        try
-        {
-            DataSnapshot snapshot = await databaseReference
-                .Child("users")
-                .Child(userId)
-                .Child("achievements")
-                .GetValueAsync();
-
-            if (snapshot.Exists)
-            {
-                foreach (DataSnapshot child in snapshot.Children)
-                {
-                    string json = child.GetRawJsonValue();
-                    Achievement loadedAch = JsonUtility.FromJson<Achievement>(json);
-
-                    //불러온 정보를 로컬데이터로 딕셔너리 정보 갱신
-                    if (achievementsDictionary.ContainsKey(loadedAch.id))
-                    {
-                        achievementsDictionary[loadedAch.id].currentProgress = loadedAch.currentProgress;
-                        achievementsDictionary[loadedAch.id].isUnLocked = loadedAch.isUnLocked;
-                    }
-
-                }
-                Debug.Log($"파이어 베이스 업적 데이터 불러오기 성공");
-            }
-        }
-        catch( Exception e ) 
-        {
-            Debug.LogError($"파이어 베이스 로드 실패 : {e.Message}");
-        }
-
-    }
-
-    #endregion
 
 
     #region 이벤트 핸들러들 모음

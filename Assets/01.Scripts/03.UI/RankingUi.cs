@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.Android.Gradle.Manifest;
 using UnityEngine;
 using UnityEngine.UI;
 // 담당자 - 정성우
@@ -12,11 +13,23 @@ record 버튼 열 때 OnOpenRankUI();를 실행해서 랭킹표에 데이터를 
 
 
 
+
+
 /// <summary>
 /// 여러 카테고리의 랭킹 데이터를 관리하고 탭 전환을 처리하는 UI 관리 스크립트
 /// </summary>
 public class RankingUi : Singleton<RankingUi>
 {
+    private static readonly RankColor[] CachedColors = new RankColor[]
+    {
+        RankColor.Gold,
+        RankColor.Silver,
+        RankColor.Bronze
+    };
+
+    [SerializeField] private Button OpenBtn;
+    [SerializeField] private Button CloseBtn;
+
     /// <summary>
     /// 랭킹 슬롯 UI을 여기 넣어주면 된다.
     /// </summary>
@@ -35,8 +48,7 @@ public class RankingUi : Singleton<RankingUi>
     
     private RankCategoty currentCategory = RankCategoty.Damage;
 
-    // 컬러 매핑
-   private readonly RankColor[] colors = new RankColor[] { RankColor.Gold, RankColor.Silver, RankColor.Bronze };
+    
 
     protected override void Awake()
     {
@@ -48,27 +60,42 @@ public class RankingUi : Singleton<RankingUi>
         // 탭 버튼 이벤트 연결
         damageTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.Damage));
         clearTimeTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.ClearTime));
-        
+        OpenBtn.onClick.AddListener(OpenWindow);
+        CloseBtn.onClick.AddListener(CloseWindow);
+
+        //게임 시작 시 로컬 저장소에서 데이터 불러오기
+        LoadLocalData();
+    }
+
+    private void LoadLocalData()
+    {
+        LocalRankingDataWrapper savedData = RankingSaveSystem.LoadRankingData();
+
+        // 불러온 데이터 정렬 및 버퍼 세팅
+        SetCategoryScores(RankCategoty.Damage,savedData.damageRankList,isAscending:false);
+        SetCategoryScores(RankCategoty.ClearTime,savedData.clearRankList,isAscending:true);
     }
 
     /// <summary>
     /// 각 데이터를 랭킹 리스트에 저장하는 역할, 랭킹을 켜줄 때 한번에 정렬 되어서 나올 예정
     /// </summary>
-    /// <param name="dataList">데미지는 DamageList, 플레이 시간은 PlayTimeList, 클리어 시간은 ClearTimeList로 설정</param>
-    /// <param name="score">값을 넣어주면 된다.</param>
-    public void AddRecord(List<UserRankData> dataList ,double score)
+    public void AddRecordAndSave(RankCategoty category, double score)
     {
-        dataList.Add(new UserRankData(score));
-    }
+        UserRankData newData = new UserRankData(score);
 
-    /// <summary>
-    /// Record or Ranking 버튼을 누를 때 지금까지 모은 데이터를 한 번에 보내줘서 초기화 하는 작업
-    /// </summary>
-    public void OnOpenRankUI()
-    {
-        SetCategoryScores(RankCategoty.Damage,DamageList,false);
-        SetCategoryScores(RankCategoty.ClearTime, ClearTimeList, true);
+        if(category == RankCategoty.Damage)
+        {
+            DamageList.Add(newData);
+        }
+        else
+        {
+           ClearTimeList.Add(newData);
+        }
 
+        //랭킹 재정렬
+        SetCategoryScores(category, category == RankCategoty.Damage ? DamageList : ClearTimeList, category == RankCategoty.ClearTime);
+
+        RankingSaveSystem.SaveRankingData(DamageList, ClearTimeList);
     }
 
     /// <summary>
@@ -135,6 +162,8 @@ public class RankingUi : Singleton<RankingUi>
     /// <param name="SelectedCategory"></param>
     public void OnClickTap(RankCategoty SelectedCategory)
     {
+        Debug.Log("탭 전환");
+
         if (currentCategory == SelectedCategory) return;
 
       
@@ -156,12 +185,22 @@ public class RankingUi : Singleton<RankingUi>
             // 데이터가 있는 경우 슬롯 갱신 없으면 기본값
             if (currentTop3[i].score>0)
             {
-                slots[i].SetUpSlot(i + 1, currentTop3[i].score, colors[i]);
+                slots[i].SetUpSlot(i + 1, currentTop3[i].score, CachedColors[i]);
             }
             else
             {
-                slots[i].SetUpSlot(i+1,0,colors[i]);
+                slots[i].SetUpSlot(i+1,0, CachedColors[i]);
             }
         }
+    }
+
+
+    private void OpenWindow()
+    {
+        this.gameObject.SetActive(true);
+    }
+    private void CloseWindow()
+    {
+        this.gameObject.SetActive(true);
     }
 }
