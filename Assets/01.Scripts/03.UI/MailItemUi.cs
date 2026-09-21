@@ -1,4 +1,5 @@
 ﻿
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 우편 목록 내부에 들어갈 프리팹 바인딩 스크립트
 /// </summary>
-public class MailItemUi : MonoBehaviour , IPoolable
+public class MailItemUi : MonoBehaviour , IPoolable ,ILoadable
 {
     [Header("Ui 컴포넌트들")]
     [SerializeField] private TextMeshProUGUI titleText; //우편 제목
@@ -21,6 +22,9 @@ public class MailItemUi : MonoBehaviour , IPoolable
 
     private string currnetMailId;
     private mailItem currentData;
+
+    // 딱히 빨라야 할 거는 없음 
+    public int LoadOrder => 22;
 
     private void Awake()
     {
@@ -97,6 +101,18 @@ public class MailItemUi : MonoBehaviour , IPoolable
         // 성공시 매니저의 이벤트(OnMailboxUpdated)가 나와서 리스트가 리프레시 되면서 자동으로 사라짐
     }
 
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 
+    public void Init(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 }

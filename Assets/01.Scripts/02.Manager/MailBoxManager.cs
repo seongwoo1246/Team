@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Debug = DebugLogger<MailBoxManager>;
 using System.IO;
+using Cysharp.Threading.Tasks;
 
 //담당자 - 정성우
 
@@ -60,10 +61,13 @@ public class LoaclMailDataWrapper
 /// <summary>
 /// 게임에서 우편 관련 총괄하여 사용할 매니저
 /// </summary>
-public class MailBoxManager : Singleton<MailBoxManager>
+public class MailBoxManager : Singleton<MailBoxManager> ,ILoadable
 {
     //로컬 우편캐시(mailId,mailItem)
     public Dictionary<string, mailItem> mailDictionary { get; private set; } = new Dictionary<string, mailItem>();
+
+    // 메일 박스보다는 빨라야 함
+    public int LoadOrder => 20;
 
     // 우편 상태가 바뀔 때 UI에 알려주는 신호
     public static event Action OnMailboxUpdated;
@@ -285,6 +289,19 @@ public class MailBoxManager : Singleton<MailBoxManager>
         CleanExpiredMails();
 
     }
-  
 
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Init(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
 }

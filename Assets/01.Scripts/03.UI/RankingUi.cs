@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Cysharp.Threading.Tasks;
+using System;
 using System.Collections.Generic;
 using Unity.Android.Gradle.Manifest;
 using UnityEngine;
@@ -18,7 +19,7 @@ record 버튼 열 때 OnOpenRankUI();를 실행해서 랭킹표에 데이터를 
 /// <summary>
 /// 여러 카테고리의 랭킹 데이터를 관리하고 탭 전환을 처리하는 UI 관리 스크립트
 /// </summary>
-public class RankingUi : Singleton<RankingUi>
+public class RankingUi : Singleton<RankingUi> , ILoadable
 {
     private static readonly RankColor[] CachedColors = new RankColor[]
     {
@@ -48,7 +49,8 @@ public class RankingUi : Singleton<RankingUi>
     
     private RankCategoty currentCategory = RankCategoty.Damage;
 
-    
+    // 랭킹중에서는 가장 빨라야함
+    public int LoadOrder => 25;
 
     protected override void Awake()
     {
@@ -202,5 +204,20 @@ public class RankingUi : Singleton<RankingUi>
     private void CloseWindow()
     {
         this.gameObject.SetActive(true);
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Init(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new NotImplementedException();
     }
 }

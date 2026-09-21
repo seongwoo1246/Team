@@ -1,8 +1,9 @@
-﻿using TMPro;
+﻿using Cysharp.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class AchievementSlot : MonoBehaviour , IPoolable
+public class AchievementSlot : MonoBehaviour , IPoolable , ILoadable
 {
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private Slider progressBar;
@@ -13,8 +14,8 @@ public class AchievementSlot : MonoBehaviour , IPoolable
 
     private int currentAchievementId;
 
-
-
+    // 업적 매니저 보다 늦으면 상관없음
+    public int LoadOrder => 31;
 
     private void OnprogressChanged(int updatedId)
     {
@@ -60,5 +61,20 @@ public class AchievementSlot : MonoBehaviour , IPoolable
     public void OnDespawn()
     {
         AchievementManager.OnAchievementUpdated -= OnprogressChanged;
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void Init(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new System.NotImplementedException();
     }
 }

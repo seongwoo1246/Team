@@ -1,10 +1,10 @@
-﻿
-using Firebase.Database;
+﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
-using Debug = DebugLogger<AchievementManager>;
+using UnityEngine.UI;
+
+
 //담당자 - 정성우
 
 
@@ -80,26 +80,49 @@ public static class GameEvents
 /// <summary>
 /// 업적 데이터를 로컬과 서버와 동기화 하여 관리하는 스크립트
 /// </summary>
-public class AchievementManager : Singleton<AchievementManager>
+public class AchievementManager : Singleton<AchievementManager> , ILoadable
 {
     [SerializeField] private AchievementSlot slot;
+    [SerializeField] private Transform contentParent;
+
+    [SerializeField] private GameObject BackGround;
+
+    [SerializeField] private Button openBtn;
+    [SerializeField] private Button closeBtn;
 
     // 업적을 담아두는 리스트와 딕셔너리
-    [SerializeField] public List<Achievement> achievements = new List<Achievement>();
+    public List<Achievement> achievements = new List<Achievement>();
     public Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
+    public List<AchievementSlot> activeSlots = new List<AchievementSlot>();
 
-
-
+    //업적 슬롯보다는 빨리 되어야함
+    //오브젝트 풀링 보다는 늦어야함
+    public int LoadOrder => 30;
 
     protected override void Awake()
     {
         base.Awake();
         InitializeDictionary();
+        gameObject.SetActive(false);
 
-        if(ObjcetPoolManager.Instance != null )
+        if (ObjcetPoolManager.Instance != null )
         {
             ObjcetPoolManager.Instance.RegisterPool<AchievementSlot>(enumType.UI, slot, 4);
         }
+        
+        if(openBtn != null)
+        {
+
+            openBtn.onClick.RemoveAllListeners();
+            openBtn.onClick.AddListener(OpenUI);
+        }
+        if(closeBtn != null)
+        {
+            closeBtn.onClick.RemoveAllListeners();
+            closeBtn.onClick.AddListener(closeUI);
+            closeBtn.gameObject.SetActive(false);
+        }
+
         
     }
 
@@ -109,22 +132,50 @@ public class AchievementManager : Singleton<AchievementManager>
 
     public void OpenUI()
     {
-        slot.gameObject.SetActive(true);
+        gameObject.SetActive(true);
+        if(BackGround != null) BackGround.gameObject.SetActive(true);
+        if(closeBtn != null) closeBtn.gameObject.SetActive(true);
 
-       // ClearSlots();
+        ClearActiveSlots();
 
-        foreach(var ach  in achievements)
+        foreach (var ach  in achievements)
         {
-            //AchievementSlot slot = 
+            AchievementSlot newslot = ObjcetPoolManager.Instance.Spawn<AchievementSlot>(enumType.UI);
+
+
+            if (newslot != null)
+            {
+               
+                newslot.transform.SetParent(contentParent, false);
+                newslot.BindData(ach);
+
+                activeSlots.Add(newslot);
+            }
         }
+
       
     }
 
 
     public void closeUI()
     {
-
+        ClearActiveSlots();
+        slot.gameObject.SetActive(false);
+        BackGround.gameObject.SetActive(false);
     }
+
+    /// <summary>
+    /// 전부 디스폰 하고 리스트 비우기
+    /// </summary>
+    private void ClearActiveSlots()
+    {
+        foreach(var slot in activeSlots)
+        {
+            ObjcetPoolManager.Instance.Despawn<AchievementSlot>(enumType.UI,slot);
+        }
+        activeSlots.Clear();
+    }
+
 
     private void OnEnable()
     {
@@ -242,6 +293,21 @@ public class AchievementManager : Singleton<AchievementManager>
     private void HandlePlayTime(double times)
     {
         AddProgress(10004,times);
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void Init(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new NotImplementedException();
     }
 
     #endregion

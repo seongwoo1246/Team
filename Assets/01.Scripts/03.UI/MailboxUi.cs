@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 //담당자 - 정성우
@@ -6,7 +7,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 전체 우편함 팝업 패널 제어 스크립트 (패널UI한태 직접 붙여주는 스크립트)
 /// </summary>
-public class MailboxUi : MonoBehaviour
+public class MailboxUi : MonoBehaviour ,ILoadable
 {
     [Header("Ui 패널 안에 들어갈 내용들")]
     [SerializeField] private Transform contentParent; // 스크롤뷰의 content의 트랜스폼
@@ -22,6 +23,9 @@ public class MailboxUi : MonoBehaviour
 
     //[제일 핵심] 내가 스폰한 우편UI만을 스폰 디스폰 하기 위해 만든 바구니 역할
     private List<MailItemUi> activeMailItems = new List<MailItemUi>();
+
+    // 메일 아이템 보다는 먼저 되어야 함
+    public int LoadOrder => 21;
 
     private void Awake()
     {
@@ -133,5 +137,20 @@ public class MailboxUi : MonoBehaviour
     public void OpenWindow()
     {
         gameObject.SetActive(true);
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void Init(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new System.NotImplementedException();
     }
 }
