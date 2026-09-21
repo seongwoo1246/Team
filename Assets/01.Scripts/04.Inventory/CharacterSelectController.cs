@@ -1,81 +1,112 @@
-﻿using UnityEngine;
+﻿/*
+ */
 
-public class CharacterSelectController : MonoBehaviour
+/* 공동 작업자 - 송태훈
+원본 코드를 최대한 덜 훼손하는 상태로 해결할 수 있는 방식으로 리펙토링
+캐릭터 선택 버튼이 보유 중인 캐릭터 선택에 대한 패널이 연결되도록 수정
+ */
+
+using Cysharp.Threading.Tasks;
+using System.Collections.Generic;
+using UnityEngine;
+using UtilDebug = DebugLogger<CharacterSelectController>;
+
+public class CharacterSelectController : MonoBehaviour, ILoadable
+
 {
-    [Header("캐릭터")]
-    [SerializeField] private CharacterBase warrior;
-    [SerializeField] private CharacterBase mage;
-    [SerializeField] private CharacterBase healer;
-    [SerializeField] private CharacterBase paladin;
-    [SerializeField] private CharacterBase archer;
-
     [Header("장비 UI")]
     [SerializeField] private EquipmentInventoryController equipmentInventoryController;
 
-
+    private readonly Dictionary<AttackType, CharacterBase> _characterMap = new();
     private AttackType currentAttackType = AttackType.Physical;
-
     public AttackType CurrentAttackType => currentAttackType;
 
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
 
     // 현재 선택된 캐릭터
     public CharacterBase CurrentCharacter
     {
         get
         {
-            switch (currentAttackType)
-            {
-                case AttackType.Physical:
-                    return warrior;
+            _characterMap.TryGetValue(currentAttackType, out var character);
 
-                case AttackType.Magic:
-                    return mage;
-
-                case AttackType.Heal:
-                    return healer;
-
-                case AttackType.Paladin:
-                    return paladin;
-
-                case AttackType.Archer:
-                    return archer;
-            }
-
-            return null;
+            return character;
         }
     }
+
+    public int LoadOrder => 50;
 
     // 캐릭터 패널 상단 캐릭터 선택버튼
     public void SelectWarrior()
     {
-        currentAttackType = AttackType.Physical;
-        equipmentInventoryController.RefreshEquippedSlots();
-        //characterStatsPanel.RefreshStats();
+        SelectType(AttackType.Physical);
     }
 
     public void SelectMage()
     {
-        currentAttackType = AttackType.Magic;
-        equipmentInventoryController.RefreshEquippedSlots();
-        //characterStatsPanel.RefreshStats();
+        SelectType(AttackType.Magic);
     }
 
     public void SelectHealer()
     {
-        currentAttackType = AttackType.Heal;
-        equipmentInventoryController.RefreshEquippedSlots();
-        //characterStatsPanel.RefreshStats();
+        SelectType(AttackType.Heal);
     }
 
     public void SelectPaladin()
     {
-        currentAttackType = AttackType.Paladin;
-        equipmentInventoryController.RefreshEquippedSlots();
+        SelectType(AttackType.Paladin);
     }
 
     public void SelectArcher()
     {
-        currentAttackType = AttackType.Archer;
-        equipmentInventoryController.RefreshEquippedSlots();
+        SelectType(AttackType.Archer);
+    }
+
+    private void SelectType(AttackType type)
+    {
+        currentAttackType = type;
+        if (equipmentInventoryController != null)
+        {
+            equipmentInventoryController.RefreshEquippedSlots();
+        }
+    }
+
+
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        return UniTask.CompletedTask;
+    }
+
+    public void Init(SceneId scene)
+    {
+        if(!ServiceLocator.TryGet<PartyFormationManager>(out var service))
+        {
+            UtilDebug.LogError("PartyFormationManager와 초기화 순서 확인");
+            return;
+        }
+
+        _characterMap.Clear();
+        var characters = service.GetAllCharacters();
+        if(characters != null)
+        {
+            foreach( var character in characters)
+            {
+                if (character != null && character.StatData != null)
+                {
+                    _characterMap[character.StatData.AttackType] = character;
+                }
+            }
+        }
+
+        UtilDebug.Log("캐릭터 선택 컨트롤러 매핑 완료");
+        SelectWarrior();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        SceneLoadManager.Instance.UnregisterLoadable(this);
     }
 }

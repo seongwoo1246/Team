@@ -81,6 +81,12 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     #endregion
 
     #region MyRegion
+    // 모드 전환 쿨타임(초). 버튼 연타 등으로 파밍↔챌린지가 너무 빨리 반복되는 것을 막음
+    private const float MODE_CHANGE_COOLDOWN = 1f;
+
+    // 마지막으로 모드가 바뀐 시각(Time.time 기준)
+    private float _lastModeChangeTime = float.NegativeInfinity;
+
     // 현재 진행 모드
     private StageMode _currentMode = StageMode.Farming;
 
@@ -311,6 +317,12 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// </summary>
     public void EnterFarming()
     {
+        if (Time.time - _lastModeChangeTime < MODE_CHANGE_COOLDOWN)
+        {
+            return;
+        }
+        _lastModeChangeTime = Time.time;
+
         RestartFlow();
         _currentMode = StageMode.Farming;
         ModeChanged?.Invoke(_currentMode);
@@ -357,6 +369,12 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             UtilDebug.LogWarning($"스테이지 {stageNumber}에 등장 가능한 보스가 없어 챌린지를 시작하지 않음 (roster의 bossMonsters 설정 확인)");
             return;
         }
+
+        if (Time.time - _lastModeChangeTime < MODE_CHANGE_COOLDOWN)
+        {
+            return;
+        }
+        _lastModeChangeTime = Time.time;
 
         RestartFlow();
         _currentMode = StageMode.Challenge;
