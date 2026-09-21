@@ -268,6 +268,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 
             if (slot < fieldSlots.Length && fieldSlots[slot] != null)
             {
+                character.transform.SetParent(fieldSlots[slot]); 
                 character.transform.position = fieldSlots[slot].position;
             }
 
@@ -296,6 +297,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
         // 꺼질 땐 벤치 위치로도 옮겨서, 콜라이더가 실수로 안 꺼진 경우에도 실전투와 물리적으로 안 겹치게 함
         if (!active && benchPosition != null)
         {
+            character.transform.SetParent(benchPosition);
             character.transform.position = benchPosition.position;
         }
     }
