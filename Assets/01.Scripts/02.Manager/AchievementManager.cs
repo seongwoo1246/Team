@@ -107,6 +107,25 @@ public class AchievementManager : Singleton<AchievementManager>
     public static event System.Action<int> OnAchievementUpdated;
 
 
+    public void OpenUI()
+    {
+        slot.gameObject.SetActive(true);
+
+       // ClearSlots();
+
+        foreach(var ach  in achievements)
+        {
+            //AchievementSlot slot = 
+        }
+      
+    }
+
+
+    public void closeUI()
+    {
+
+    }
+
     private void OnEnable()
     {
         //게임 내 주요 이벤트 구독 예정
