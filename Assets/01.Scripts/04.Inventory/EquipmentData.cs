@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 장비 1종의 고정 정보(부위, 착용 제한)를 담는 SO. 구글 시트 Equipment 탭 → CSV 임포터가 채워줌
 개별 드랍/장착 시 굴리는 랜덤 % 옵션은 여기 없고 EquippedItem이 따로 들고 있음 (SO는 여러 개체가 공유하는 값이라
@@ -30,6 +30,9 @@ public sealed class EquipmentData : ScriptableObject, IIdentifiable
     [Tooltip("무기(Weapon) 부위 전용 - 이 무기를 낄 수 있는 캐릭터의 공격 방식. 무기가 아닌 부위는 무시됨 (전체공통)")]
     [SerializeField] private AttackType allowedAttackType = AttackType.Physical;
 
+    [Header("장비 아이콘")]
+    [SerializeField] private Sprite icon;
+
     // 고유키 (시트: id)
     public string Id => id;
 
@@ -41,4 +44,7 @@ public sealed class EquipmentData : ScriptableObject, IIdentifiable
 
     // 무기전용 착용제한 (그 외 부위는 의미 없음)
     public AttackType AllowedAttackType => allowedAttackType;
+
+    // 장비 아이콘
+    public Sprite Icon => icon;
 }

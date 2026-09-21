@@ -10,6 +10,9 @@ public class EquipmentInventorySlot : MonoBehaviour
     [SerializeField] private TextMeshProUGUI enhanceText;
     [SerializeField] private TextMeshProUGUI statText;
 
+    [Header("아이콘")]
+    [SerializeField] private Image iconImage;
+
     [Header("상점 판매 선택 테두리")]
     [SerializeField] private Outline selectedOutline;
 
@@ -109,6 +112,13 @@ public class EquipmentInventorySlot : MonoBehaviour
         // TotalRollPercent는 이미 퍼센트 단위이므로 * 100 하지 않음
         statText.text = "옵션 +" + equippedItem.TotalRollPercent.ToString("F1") + "%";
 
+        // 장비 아이콘 표시
+        if (iconImage != null)
+        {
+            iconImage.sprite = equippedItem.Data.Icon;
+            iconImage.enabled = equippedItem.Data.Icon != null;
+        }
+
         // 일반 인벤토리에서만 장착 여부 표시
         if (equippedOutline != null)
         {
@@ -127,6 +137,12 @@ public class EquipmentInventorySlot : MonoBehaviour
 
         if (statText != null)
             statText.text = "";
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = null;
+            iconImage.enabled = false;
+        }
 
         if (equippedOutline != null)
             equippedOutline.enabled = false;
