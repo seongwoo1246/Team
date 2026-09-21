@@ -19173,7 +19173,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FormationCharacterButton
   character: {fileID: 525293485}
-  partyFormationManager: {fileID: 3777258262667938942}
   highlightImage: {fileID: 5966659173753318036}
   selectedColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   unselectedColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
@@ -19813,7 +19812,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b7099c919e97bd48b915a88308367d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FormationPanelController
-  partyFormationManager: {fileID: 3777258262667938942}
   formationPanel: {fileID: 2179946962529835015}
   characterButtons:
   - {fileID: 5086745793996240407}
@@ -20697,9 +20695,9 @@ RectTransform:
   m_Father: {fileID: 2584163573475836380}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: -17, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &2037165788613636836
 CanvasRenderer:
@@ -23560,10 +23558,10 @@ RectTransform:
   m_Children:
   - {fileID: 4193771333224144133}
   - {fileID: 5675298774586540024}
-  - {fileID: 4889679098668310971}
-  - {fileID: 8814516390754733740}
   - {fileID: 2584163573475836380}
   - {fileID: 5670058954934865708}
+  - {fileID: 4889679098668310971}
+  - {fileID: 8814516390754733740}
   - {fileID: 2566371286034814841}
   m_Father: {fileID: 3629517086370565738}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -31248,7 +31246,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FormationCharacterButton
   character: {fileID: 644387851}
-  partyFormationManager: {fileID: 3777258262667938942}
   highlightImage: {fileID: 295240754390687123}
   selectedColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   unselectedColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
@@ -32795,7 +32792,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!1 &5707840105069912226
 GameObject:
   m_ObjectHideFlags: 0
@@ -36513,7 +36510,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FormationCharacterButton
   character: {fileID: 1382955454}
-  partyFormationManager: {fileID: 3777258262667938942}
   highlightImage: {fileID: 4627900309185710519}
   selectedColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   unselectedColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
@@ -36532,7 +36528,7 @@ RectTransform:
   m_Father: {fileID: 2318767745245376024}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -39704,7 +39700,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FormationCharacterButton
   character: {fileID: 2031288610}
-  partyFormationManager: {fileID: 3777258262667938942}
   highlightImage: {fileID: 945968440502575042}
   selectedColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   unselectedColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
@@ -40002,7 +39997,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &7852278827422139457
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -41410,7 +41405,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::FormationCharacterButton
   character: {fileID: 1869374213}
-  partyFormationManager: {fileID: 3777258262667938942}
   highlightImage: {fileID: 6158161141032614380}
   selectedColor: {r: 0.4, g: 0.8, b: 1, a: 1}
   unselectedColor: {r: 0.85, g: 0.85, b: 0.85, a: 1}
@@ -42995,11 +42989,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d31571c62a9b374894638781df59e59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageManagerJulian
-  spawner: {fileID: 8113180970714524662}
   farmingSpawnInterval: 1
   farmingMonsterLevel: 1
   maxFarmingMonsterCount: 10
-  goldenGoblinPrefab: {fileID: 2961078506604230677, guid: a8a5d6e173615e84a859521f27d6a2bb, type: 3}
+  <goldenGoblinPrefab>k__BackingField: {fileID: 0}
   goldenGoblinSpawnChance: 0.001
   <roster>k__BackingField: {fileID: 0}
   party:
@@ -43398,7 +43391,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 90}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &8963429400751685017
 MonoBehaviour:
