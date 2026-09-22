@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -33,9 +34,6 @@ public class Achievement
     // 보상 수령 여부
     public bool isClaimed;
 
-    // 파이어 베이스에 josn으로 저장하기 위한 생성자 및 변환 메서드
-    public Achievement() { }
-
     public Achievement(int id, string title, double targetProgress, double currentProgress, bool isUnLocked, RewardType rewardType, double rewardAmount, bool isClaimed)
     {
         this.id = id;
@@ -47,6 +45,18 @@ public class Achievement
         this.rewardAmount = rewardAmount;
         this.isClaimed = false;
     }
+}
+
+/// <summary>
+/// json에 저장 하기 위해 필요한 거만 뽑아낸 클래스
+/// </summary>
+[System.Serializable]
+public class AchievementSaveData
+{
+    public int id;
+    public double currentProgress;
+    public bool isClaimed;
+    public bool isUnLocked;
 }
 
 #region 업적 관련 이벤트 함수 모음
@@ -246,7 +256,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
         switch(ach.rewardType)
         {
             case RewardType.Gold:
-                Debug.Log("보상 수령");
+               
                 GoldWallet.Instance.Add(ach.rewardAmount);
                 break;
 
@@ -259,6 +269,13 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
                 break;
         }
     }
+
+
+    #region 저장과 불러오기를 위한 함수와 내용물
+    private string SavePath => Path.Combine()
+
+    #endregion
+
 
 
     #region 이벤트 핸들러들 모음
