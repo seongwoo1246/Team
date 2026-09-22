@@ -53,6 +53,6 @@ public sealed class GoldDisplay : MonoBehaviour
             return;
         }
 
-        goldText.text = $"Gold: {balance:N0}G";
+        goldText.text = $"{balance:N0}G";
     }
 }
