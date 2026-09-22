@@ -109,8 +109,9 @@ public class EquipmentInventorySlot : MonoBehaviour
             return;
         }
 
+        // 김주연 - 등급(하급/중급/상급) 표시 추가
         if (nameText != null)
-            nameText.text = equippedItem.Data.NameKr ?? string.Empty;
+            nameText.text = "[" + EquipmentGradeHelper.GetDisplayName(equippedItem.Grade) + "] " + equippedItem.Data.NameKr;
 
         if (enhanceText != null)
             enhanceText.text = $"+{equippedItem.EnhanceLevel}";

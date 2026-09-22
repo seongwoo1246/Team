@@ -147,3 +147,41 @@ public static class EquipmentSlotHelper
         }
     }
 }
+
+// 작성자: 김주연
+/// <summary>
+/// 장비 등급. SO(EquipmentData)에 고정된 값이 아니라 드랍될 때(EquippedItem.CreateFromDrop) 랜덤으로 정해짐
+/// (하급/중급/상급이 각자 다른 % 보너스 범위를 씀 - EquippedItem.cs의 등급별 ROLL 범위 상수 참고)
+/// </summary>
+public enum EquipmentGrade
+{
+    // 하급 - 기존 드랍 범위(1~10%) 그대로
+    Low,
+
+    // 중급
+    Mid,
+
+    // 상급
+    High,
+}
+
+/// <summary>
+/// EquipmentGrade 관련 공용 헬퍼 (표시 이름)
+/// </summary>
+public static class EquipmentGradeHelper
+{
+    public static string GetDisplayName(EquipmentGrade grade)
+    {
+        switch (grade)
+        {
+            case EquipmentGrade.Low:
+                return "하급";
+            case EquipmentGrade.Mid:
+                return "중급";
+            case EquipmentGrade.High:
+                return "상급";
+            default:
+                return "-";
+        }
+    }
+}

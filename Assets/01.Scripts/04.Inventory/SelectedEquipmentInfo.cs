@@ -24,7 +24,8 @@ public class SelectedEquipmentInfo : MonoBehaviour
             return;
         }
 
-        currentEquipmentText.text = "현재 장착\n\n" + item.Data.NameKr + "\n" + EquipmentSlotHelper.GetStatName(item.Data.Slot) + " +"
+        currentEquipmentText.text = "현재 장착\n\n[" + EquipmentGradeHelper.GetDisplayName(item.Grade) + "] " + item.Data.NameKr + "\n"
+            + EquipmentSlotHelper.GetStatName(item.Data.Slot) + " +"
             + item.TotalRollPercent.ToString("F1") + "%\n" + "강화 +" + item.EnhanceLevel;
     }
 
@@ -38,7 +39,8 @@ public class SelectedEquipmentInfo : MonoBehaviour
         }
 
         selectedEquipmentText.text =
-            "선택 장비\n\n" + item.Data.NameKr + "\n" + EquipmentSlotHelper.GetStatName(item.Data.Slot) + " +"
+            "선택 장비\n\n[" + EquipmentGradeHelper.GetDisplayName(item.Grade) + "] " + item.Data.NameKr + "\n"
+            + EquipmentSlotHelper.GetStatName(item.Data.Slot) + " +"
             + item.TotalRollPercent.ToString("F1") + "%\n" + "강화 +" + item.EnhanceLevel;
     }
 

@@ -532,7 +532,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
     /// <summary>
     /// possibleDrops 중 하나를 무작위로 골라 equipmentDropChance 확률로 장비를 드랍
-    /// 드랍되면 1~10% 사이 랜덤 보너스로 EquippedItem을 만들어 EquipmentDropped 이벤트로 넘긴다
+    /// 드랍되면 등급(하급/중급/상급)과 그 등급 범위 안의 랜덤 보너스로 EquippedItem을 만들어 EquipmentDropped 이벤트로 넘긴다
     /// </summary>
     private void TryDropEquipment()
     {
@@ -554,8 +554,8 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
         EquippedItem dropped = EquippedItem.CreateFromDrop(picked);
 
-        // 드랍 확인용 로그 어느 부위 장비가 몇 %로 떴는지 바로 확인 가능
-        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {dropped.RollPercent:F1}%)");
+        // 드랍 확인용 로그 - 어느 부위 장비가 몇 등급/몇 %로 떴는지 바로 확인 가능
+        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {EquipmentGradeHelper.GetDisplayName(dropped.Grade)}, {dropped.RollPercent:F1}%)");
 
         EquipmentDropped?.Invoke(dropped);
     }
