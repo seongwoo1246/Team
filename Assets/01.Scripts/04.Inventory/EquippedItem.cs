@@ -58,23 +58,28 @@ public sealed class EquippedItem
     private const float HIGH_ROLL_MIN = 25f;
     private const float HIGH_ROLL_MAX = 50f;
 
-    // 등급 드랍 가중치 (하급/중급/상급 순. 합계가 100일 필요는 없고 비율만 맞으면 됨)
-    private const float GRADE_WEIGHT_LOW = 70f;
-    private const float GRADE_WEIGHT_MID = 25f;
-    private const float GRADE_WEIGHT_HIGH = 5f;
+    // 몬스터 드랍 등급 가중치 (하급/중급/상급 순. 합계가 100일 필요는 없고 비율만 맞으면 됨)
+    private const float DROP_GRADE_WEIGHT_LOW = 70f;
+    private const float DROP_GRADE_WEIGHT_MID = 25f;
+    private const float DROP_GRADE_WEIGHT_HIGH = 5f;
+
+    // 가챠 등급 가중치 (하급 없이 중급/상급만 나오게)
+    private const float GACHA_GRADE_WEIGHT_LOW = 0f;
+    private const float GACHA_GRADE_WEIGHT_MID = 90f;
+    private const float GACHA_GRADE_WEIGHT_HIGH = 10f;
 
     /// <summary>가중치대로 등급 하나를 랜덤으로 뽑는다</summary>
-    private static EquipmentGrade RollGrade()
+    private static EquipmentGrade RollGrade(float weightLow, float weightMid, float weightHigh)
     {
-        float totalWeight = GRADE_WEIGHT_LOW + GRADE_WEIGHT_MID + GRADE_WEIGHT_HIGH;
+        float totalWeight = weightLow + weightMid + weightHigh;
         float roll = UnityEngine.Random.Range(0f, totalWeight);
 
-        if (roll < GRADE_WEIGHT_LOW)
+        if (roll < weightLow)
         {
             return EquipmentGrade.Low;
         }
 
-        if (roll < GRADE_WEIGHT_LOW + GRADE_WEIGHT_MID)
+        if (roll < weightLow + weightMid)
         {
             return EquipmentGrade.Mid;
         }
@@ -138,7 +143,18 @@ public sealed class EquippedItem
     /// <param name="data">어떤 장비인지 (고정 정보)</param>
     public static EquippedItem CreateFromDrop(EquipmentData data)
     {
-        EquipmentGrade grade = RollGrade();
+        EquipmentGrade grade = RollGrade(DROP_GRADE_WEIGHT_LOW, DROP_GRADE_WEIGHT_MID, DROP_GRADE_WEIGHT_HIGH);
+        float rollPercent = RollPercentForGrade(grade);
+        return new EquippedItem(data, rollPercent, grade);
+    }
+
+    /// <summary>
+    /// 가챠 전용 생성 함수. 하급 없이 중급/상급 가중치로만 등급을 뽑는다
+    /// </summary>
+    /// <param name="data">어떤 장비인지 (고정 정보)</param>
+    public static EquippedItem CreateFromGacha(EquipmentData data)
+    {
+        EquipmentGrade grade = RollGrade(GACHA_GRADE_WEIGHT_LOW, GACHA_GRADE_WEIGHT_MID, GACHA_GRADE_WEIGHT_HIGH);
         float rollPercent = RollPercentForGrade(grade);
         return new EquippedItem(data, rollPercent, grade);
     }
