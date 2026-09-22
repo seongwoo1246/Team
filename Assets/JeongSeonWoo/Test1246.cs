@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 
 public class Test1246 : MonoBehaviour
@@ -12,6 +13,10 @@ public class Test1246 : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-      
+        if(Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            GameEvents.TriggerOnEnemyKilled();
+        }
+        
     }
 }

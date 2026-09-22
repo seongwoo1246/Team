@@ -104,7 +104,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
         base.Awake();
         InitializeDictionary();
         gameObject.SetActive(false);
-
+        
         if (ObjcetPoolManager.Instance != null )
         {
             ObjcetPoolManager.Instance.RegisterPool<AchievementSlot>(enumType.UI, slot, 4);
@@ -115,12 +115,13 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
 
             openBtn.onClick.RemoveAllListeners();
             openBtn.onClick.AddListener(OpenUI);
+            openBtn.gameObject.SetActive(true);
         }
         if(closeBtn != null)
         {
             closeBtn.onClick.RemoveAllListeners();
             closeBtn.onClick.AddListener(closeUI);
-            closeBtn.gameObject.SetActive(false);
+           
         }
 
         
@@ -245,6 +246,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
         switch(ach.rewardType)
         {
             case RewardType.Gold:
+                Debug.Log("보상 수령");
                 GoldWallet.Instance.Add(ach.rewardAmount);
                 break;
 
