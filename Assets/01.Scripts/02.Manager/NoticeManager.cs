@@ -10,7 +10,7 @@ using Debug = DebugLogger<NoticeManager>;
 //담당자 - 정성우
 
 #region 공지사항 데이터 모델 ( 유니티JsonUtility 호환)
-[SelectionBase]
+[System.Serializable]
 public class NoticeItem
 {
     public int id; //공지 ID
@@ -19,7 +19,7 @@ public class NoticeItem
     public string imageUrl; // 공지 사진 이미지URL
     public string linkUrl; // 링크 URL
 }
-[SelectionBase]
+[System.Serializable]
 public class NoticeData
 {
     public bool isMaintenance;
@@ -34,7 +34,7 @@ public class NoticeData
 /// <summary>
 /// 공지 사항을 전달 해주기 위해 만든 매니저 
 /// </summary>
-public class NoticeManager : MonoBehaviour
+public class NoticeManager : MonoBehaviour ,ILoadable
 {
     [Header("공지 UI References")]
     [SerializeField] private GameObject noticePopupUi;
@@ -44,8 +44,8 @@ public class NoticeManager : MonoBehaviour
     [SerializeField] private Button linkBtn;
     [SerializeField] private Button closeBtn;
 
-  
-
+    // 로비씬에 왔을 때 가장 먼저 화면에 보여주고 있어야함
+    public int LoadOrder => 10;
     private NoticeData currentNoticeData;
     private Texture2D downloadedTexture;
 
@@ -82,14 +82,14 @@ public class NoticeManager : MonoBehaviour
         // 점검 및 공지 데이터 유효성 체크
         if(currentNoticeData == null || currentNoticeData.notices == null ||currentNoticeData.notices.Count == 0)
         {
-            Debug.Log("2");
+            
             noticePopupUi.SetActive(false);
             return;
         }
 
         if(IsNoticeHiddenToday())
         {
-            Debug.Log("3");
+            
             noticePopupUi.SetActive(false);
             return;
         }
@@ -99,7 +99,7 @@ public class NoticeManager : MonoBehaviour
         //3. 서버 점검 상태 처리 (최우선 확인 사항)
         if (currentNoticeData.isMaintenance)
         {
-            Debug.Log("4");
+           
             ShowMaintenancePopup();
             return;
         }
@@ -107,7 +107,7 @@ public class NoticeManager : MonoBehaviour
         // 4. 공지사항이 없는 경우 종료
         if(currentNoticeData.notices ==  null||currentNoticeData.notices.Count ==0)
         {
-            Debug.Log("5");
+            
             noticePopupUi.SetActive(false);
             return;
         }
@@ -128,7 +128,7 @@ public class NoticeManager : MonoBehaviour
                 noticeRawImage.gameObject.SetActive(true);
             }
         }
-        Debug.Log("6");
+        
         //7. 외부 웹 링크 버튼 이벤트 바인딩
         linkBtn.onClick.RemoveAllListeners();
         if(!string.IsNullOrEmpty(firstNotice.linkUrl))
@@ -143,11 +143,11 @@ public class NoticeManager : MonoBehaviour
 
         //8. 닫기 버튼 설정
         closeBtn.onClick.RemoveAllListeners();
-        closeBtn.onClick.AddListener(CloseNoticeUI);
+        closeBtn.onClick.AddListener(OnclickHideToday);
        
         //Ui 활성화
         noticePopupUi.SetActive(true);
-        Debug.Log("끝");
+       
     }
 
 
@@ -204,6 +204,9 @@ public class NoticeManager : MonoBehaviour
 
     #region 저장 불러오기 기능 추가
     private string LocalNoticePath => Path.Combine(Application.persistentDataPath, "NoticeData.json");
+
+    
+
     private const string HIDE_NOTICE_KEY = "Notice_Hide_Date";
 
 
@@ -247,6 +250,21 @@ public class NoticeManager : MonoBehaviour
 
         return saveData == todayStr;
        
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void Init(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new System.NotImplementedException();
     }
     #endregion
 }
