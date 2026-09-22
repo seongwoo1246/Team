@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -33,9 +34,6 @@ public class Achievement
     // 보상 수령 여부
     public bool isClaimed;
 
-    // 파이어 베이스에 josn으로 저장하기 위한 생성자 및 변환 메서드
-    public Achievement() { }
-
     public Achievement(int id, string title, double targetProgress, double currentProgress, bool isUnLocked, RewardType rewardType, double rewardAmount, bool isClaimed)
     {
         this.id = id;
@@ -47,6 +45,24 @@ public class Achievement
         this.rewardAmount = rewardAmount;
         this.isClaimed = false;
     }
+}
+
+/// <summary>
+/// json에 저장 하기 위해 필요한 거만 뽑아낸 클래스
+/// </summary>
+[System.Serializable]
+public class AchievementSaveData
+{
+    public int id;
+    public double currentProgress;
+    public bool isClaimed;
+    public bool isUnLocked;
+}
+
+[System.Serializable]
+public class AchievementSaveDataList
+{
+    public List<AchievementSaveData> list = new List<AchievementSaveData>();
 }
 
 #region 업적 관련 이벤트 함수 모음
@@ -103,8 +119,10 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     {
         base.Awake();
         InitializeDictionary();
-        gameObject.SetActive(false);
+        LoadAchievements();
 
+        gameObject.SetActive(false);
+        
         if (ObjcetPoolManager.Instance != null )
         {
             ObjcetPoolManager.Instance.RegisterPool<AchievementSlot>(enumType.UI, slot, 4);
@@ -115,15 +133,16 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
 
             openBtn.onClick.RemoveAllListeners();
             openBtn.onClick.AddListener(OpenUI);
+            openBtn.gameObject.SetActive(true);
         }
         if(closeBtn != null)
         {
             closeBtn.onClick.RemoveAllListeners();
             closeBtn.onClick.AddListener(closeUI);
-            closeBtn.gameObject.SetActive(false);
+           
         }
 
-        
+      
     }
 
     // UI 슬롯들이 구독할 전용 이벤트 (변경된 업적의 id를 전달 )
@@ -132,6 +151,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
 
     public void OpenUI()
     {
+       
         gameObject.SetActive(true);
         if(BackGround != null) BackGround.gameObject.SetActive(true);
         if(closeBtn != null) closeBtn.gameObject.SetActive(true);
@@ -153,15 +173,17 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
             }
         }
 
-      
+       
     }
 
 
     public void closeUI()
     {
+       
         ClearActiveSlots();
         slot.gameObject.SetActive(false);
-        BackGround.gameObject.SetActive(false);
+        BackGround.gameObject.SetActive(false);   
+       
     }
 
     /// <summary>
@@ -211,6 +233,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
             UnlockAchievement(ach);
         }
 
+        SaveAchievements();
         //진행도가 진짜로 변경 되어 UI에게 알림
         OnAchievementUpdated?.Invoke(id);
     }
@@ -245,6 +268,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
         switch(ach.rewardType)
         {
             case RewardType.Gold:
+               
                 GoldWallet.Instance.Add(ach.rewardAmount);
                 break;
 
@@ -257,6 +281,60 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
                 break;
         }
     }
+
+
+    #region 저장과 불러오기를 위한 함수와 내용물
+    private string SavePath => Path.Combine(Application.persistentDataPath, "AchievementSaveData.json");
+
+    //데이터를 저장하기 위한 함수
+    public void SaveAchievements()
+    {
+        AchievementSaveDataList saveDataList = new AchievementSaveDataList();
+
+        foreach(var pair in  achievementsDictionary)
+        {
+            Achievement ach = pair.Value;
+            saveDataList.list.Add(new AchievementSaveData
+            {
+                id = ach.id,
+                currentProgress = ach.currentProgress,
+                isUnLocked = ach.isUnLocked,
+                isClaimed = ach.isClaimed,
+            });
+        }
+
+        string json = JsonUtility.ToJson(saveDataList,true);
+        File.WriteAllText(SavePath, json);
+        Debug.Log($"저장 위치  : {SavePath}");
+    }
+
+    /// <summary>
+    /// 업적 데이터를 가져오는 함수
+    /// </summary>
+    public void LoadAchievements()
+    {
+        if(!File.Exists(SavePath))
+        {
+            return;
+        }
+
+        string json = File.ReadAllText(SavePath);
+        AchievementSaveDataList saveDataList = JsonUtility.FromJson<AchievementSaveDataList>(json);
+
+        foreach(var saveData in saveDataList.list)
+        {
+            if(achievementsDictionary.TryGetValue(saveData.id, out Achievement ach))
+            {
+                ach.currentProgress = saveData.currentProgress;
+                ach.isUnLocked = saveData.isUnLocked;
+                ach.isClaimed = saveData.isClaimed;
+
+                OnAchievementUpdated?.Invoke(ach.id);
+            }
+        }
+    }
+    #endregion
+
 
 
     #region 이벤트 핸들러들 모음
