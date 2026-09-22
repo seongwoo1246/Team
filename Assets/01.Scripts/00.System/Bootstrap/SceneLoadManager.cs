@@ -97,7 +97,18 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
                 await loadingView.UpdateSliderSmoothAsync(0.3f, 0.2f, this.destroyCancellationToken);
 
             // 4. Addressables를 통한 새 씬 비동기 로드
-            await AddressableManager.Instance.LoadSceneAsync(nextScene.ToString());
+            if (nextScene == SceneId.BootstrapScene)
+            {
+                // 계정 탈퇴, 로그아웃 등등 타이틀 씬으로 돌아가는 경우
+                await UnityEngine.SceneManagement.SceneManager
+                    .LoadSceneAsync(nextScene.ToString())
+                    .ToUniTask(cancellationToken: this.destroyCancellationToken);
+            }
+            else
+            {
+                await AddressableManager.Instance.LoadSceneAsync(nextScene.ToString());
+            }
+
             if (loadingView != null)
                 await loadingView.UpdateSliderSmoothAsync(0.5f, 0.2f, this.destroyCancellationToken);
 
@@ -108,13 +119,13 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
             await LTSBootstrapRunnerAsync(nextScene);
 
             #region 사운드를 위해서 넣은 함수들
-            if(SoundManager.Instance !=null)
+            if (SoundManager.Instance != null)
             {
-                switch(nextScene)
+                switch (nextScene)
                 {
-                    case SceneId.BootstrapScene:await SoundManager.Instance.FadeSound("불꽃속산길1",3f);  break;
+                    case SceneId.BootstrapScene: await SoundManager.Instance.FadeSound("불꽃속산길1", 3f); break;
 
-                    case SceneId.LobbySceneTest: await SoundManager.Instance.FadeSound("픽셀풍노래1",3f); break;
+                    case SceneId.LobbySceneTest: await SoundManager.Instance.FadeSound("픽셀풍노래1", 3f); break;
                 }
             }
 

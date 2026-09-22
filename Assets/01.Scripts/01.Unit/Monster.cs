@@ -434,11 +434,11 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
 
         // 맞을 때마다(전투 핫패스) FindAnyObjectByType으로 씬 전체를 뒤지던 걸 다른 곳(StageManager)이랑
         // 똑같이 RankingUi.Instance로 바꿈 - 김주연
-        RankingUi damageRank = RankingUi.Instance;
-        if (damageRank != null)
-        {
-            damageRank.AddRecordAndSave(RankCategoty.Damage, damage);
-        }
+        //RankingUi damageRank = RankingUi.Instance;
+        //if (damageRank != null)
+        //{
+        //    damageRank.AddRecordAndSave(RankCategoty.Damage, damage);
+        //}
 
         CheckEnrage();
 

@@ -7,6 +7,8 @@ public static class TitleBootstrap
     {
         AddressableManager.Instance.Init();
 
+        SoundManager soundManager = SoundManager.Instance;
+
         SceneLoadManager sceneMng = SceneLoadManager.Instance;
 
         DataManager dataMng = DataManager.Instance;
