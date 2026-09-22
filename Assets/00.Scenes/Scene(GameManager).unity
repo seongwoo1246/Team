@@ -269,6 +269,75 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 506574353}
   m_CullTransparentMesh: 1
+--- !u!1001 &571337319
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 606178660770730526, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: OpenButton
+      value: 
+      objectReference: {fileID: 3902564257404774496}
+    - target: {fileID: 1937095527589547530, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_Name
+      value: MailboxUi
+      objectReference: {fileID: 0}
+    - target: {fileID: 1937095527589547530, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -39.34049
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1368.0277
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5626470530498290922, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8273315930020807492, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+      propertyPath: m_SizeDelta.x
+      value: -1093.0444
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
 --- !u!1 &652499887
 GameObject:
   m_ObjectHideFlags: 0
@@ -19030,7 +19099,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 293009853514146207}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 606178660770730526, guid: ead3b41c88c0eac46b157ae18b56bef9, type: 3}
+        m_TargetAssemblyTypeName: MailboxUi, Assembly-CSharp
+        m_MethodName: OpenWindow
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &3924237033794447923
 GameObject:
   m_ObjectHideFlags: 0
@@ -40916,7 +40997,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 0}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 8158335003672716418}
+        m_TargetAssemblyTypeName: SettingsPopupController, Assembly-CSharp
+        m_MethodName: ClosePopup
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &8875364493808693401
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -42389,3 +42482,4 @@ SceneRoots:
   - {fileID: 1859780375}
   - {fileID: 1278420893}
   - {fileID: 1209991679}
+  - {fileID: 571337319}
