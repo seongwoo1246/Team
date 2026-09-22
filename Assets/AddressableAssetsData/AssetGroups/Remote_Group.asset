@@ -94,25 +94,25 @@ MonoBehaviour:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: c6f7256c467b106498c738e31d0333d6
-    m_Address: Assets/02.Prefabs/External/prefebBackup/prefebUnit/Monster_Bat.prefab
+    m_Address: Monster_Bat
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: ce8d986ed318cdc43872dcb72c44265a
-    m_Address: Assets/02.Prefabs/External/prefebBackup/prefebUnit/Monster_Larva.prefab
+    m_Address: Monster_Larva
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d6f3c1b0f81da2f4195c67a5f6d1257f
-    m_Address: Assets/02.Prefabs/External/prefebBackup/prefebUnit/Monster_Slime.prefab
+    m_Address: Monster_Slime
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e5369b755514d484ba50cf4ddc245e32
-    m_Address: Assets/02.Prefabs/External/prefebBackup/prefebUnit/Monster_OgreKing.prefab
+    m_Address: Monster_OgreKing
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool

@@ -497,8 +497,8 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         {
 
             // 이 부분 RankingUI의 gameObject.SetActive가 false여서 실행 안될건데?
-            RankingUi clearTimeRank = RankingUi.Instance;
-            RankingUi.Instance.AddRecordAndSave(RankCategoty.ClearTime, MathF.Max(0, (Time.time - _challengeStartTime)));
+            //RankingUi clearTimeRank = RankingUi.Instance;
+            //RankingUi.Instance.AddRecordAndSave(RankCategoty.ClearTime, MathF.Max(0, (Time.time - _challengeStartTime)));
             GameEvents.TriggerOnStageCleared();
             OnStageCleared(stageNumber);
         }

@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: 2d94eeee82208164198ebf2ca66aae62
   m_SerializeEntries:
   - m_GUID: 1575ba33df0062249a82ee0a07f4a179
-    m_Address: Assets/00.Scenes/BootStrapScene.unity
+    m_Address: BootStrapScene
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
