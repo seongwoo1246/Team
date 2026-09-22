@@ -66,12 +66,12 @@ public class NoticeManager : MonoBehaviour
     /// </summary>
     public async UniTask FetchAndShowNoticeAsync(CancellationToken token)
     {
-        Debug.Log("0");
+       
         // 1. json 데이터 요청
         string jsonText = LoadLocalNoticeJson();
         if (string.IsNullOrEmpty(jsonText))
         {
-            Debug.Log("1");
+            
             noticePopupUi.SetActive(false);
             return;
         }
