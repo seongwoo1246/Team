@@ -1,4 +1,5 @@
 ﻿
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 우편 목록 내부에 들어갈 프리팹 바인딩 스크립트
 /// </summary>
-public class MailItemUi : MonoBehaviour , IPoolable
+public class MailItemUi : MonoBehaviour , IPoolable ,ILoadable
 {
     [Header("Ui 컴포넌트들")]
     [SerializeField] private TextMeshProUGUI titleText; //우편 제목
@@ -22,6 +23,20 @@ public class MailItemUi : MonoBehaviour , IPoolable
     private string currnetMailId;
     private mailItem currentData;
 
+    // 딱히 빨라야 할 거는 없음 
+    public int LoadOrder => 22;
+
+    private void Awake()
+    {
+        if(claimButton != null)
+        {
+            //수령버튼 바인딩 (중복방지를 위해 한번 비우고 넣어줌)
+            claimButton.onClick.RemoveAllListeners();
+            claimButton.onClick.AddListener(OnClickClaim);
+        }
+    
+    }
+
     //풀에서 꺼내질 때 초기화를 진행 
     public void OnSpawn()
     {
@@ -29,8 +44,6 @@ public class MailItemUi : MonoBehaviour , IPoolable
         titleText.text = string.Empty;
         contentText.text = string.Empty;
         expireText.text = string.Empty;
-        // 이전 우편에 있던 버튼 이벤트를 제거해서 충돌 방지
-        claimButton.onClick.RemoveAllListeners();
         // 버튼 상태 초기화
         claimButton.interactable = true;
 
@@ -39,9 +52,9 @@ public class MailItemUi : MonoBehaviour , IPoolable
 
     public void OnDespawn()
     {
-        // 주의를 위해 생성과 해제시에 한번씩 진행
-        claimButton.onClick.RemoveAllListeners();
+       
         currentData = null;
+        currnetMailId = string.Empty;
         gameObject.SetActive(false);
     }
 
@@ -66,21 +79,40 @@ public class MailItemUi : MonoBehaviour , IPoolable
             expireText.text = "무제한";
         }
 
-        //수령버튼 바인딩 (중복방지를 위해 한번 비우고 넣어줌)
-        claimButton.onClick.RemoveAllListeners();
-        claimButton.onClick.AddListener(OnClickClaim);
+      
     }
 
-    private async void OnClickClaim()
+    public  void OnClickClaim()
     {
-        // 클릭 중복 방지 ( 서버 통신 중에는 비활성화)
+        
+
+        // 클릭 중복 방지
         claimButton.interactable = false;
 
+        bool success = MailBoxManager.Instance.ClaimMailReward(currnetMailId);
+
+        if(!success)
+        { 
+            claimButton.interactable = true;
+        }
         
+      
 
         // 성공시 매니저의 이벤트(OnMailboxUpdated)가 나와서 리스트가 리프레시 되면서 자동으로 사라짐
     }
 
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 
+    public void Init(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 }

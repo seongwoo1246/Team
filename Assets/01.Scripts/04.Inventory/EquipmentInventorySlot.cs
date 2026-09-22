@@ -2,7 +2,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-
+using UtilDebug = DebugLogger<EquipmentInventorySlot>;
 public class EquipmentInventorySlot : MonoBehaviour
 {
     [Header("텍스트")]
@@ -68,12 +68,11 @@ public class EquipmentInventorySlot : MonoBehaviour
 
         RefreshDisplay();
 
-        Button button = GetComponent<Button>();
-
-        if (button != null)
+        if (TryGetComponent<Button>(out var button))
         {
+            Debug.LogError("버튼 문제");
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnSellSlotClicked);
+            button.onClick.AddListener(OnSlotClicked);
         }
     }
 
@@ -95,9 +94,7 @@ public class EquipmentInventorySlot : MonoBehaviour
 
         RefreshDisplay();
 
-        Button button = GetComponent<Button>();
-
-        if (button != null)
+        if (TryGetComponent<Button>(out var button))
         {
             button.onClick.RemoveAllListeners();
         }
@@ -106,11 +103,20 @@ public class EquipmentInventorySlot : MonoBehaviour
 
     private void RefreshDisplay()
     {
-        nameText.text = equippedItem.Data.NameKr;
-        enhanceText.text = "+" + equippedItem.EnhanceLevel;
+        if (equippedItem == null || equippedItem.Data == null)
+        {
+            ClearDisplay();
+            return;
+        }
 
-        // TotalRollPercent는 이미 퍼센트 단위이므로 * 100 하지 않음
-        statText.text = "옵션 +" + equippedItem.TotalRollPercent.ToString("F1") + "%";
+        if (nameText != null)
+            nameText.text = equippedItem.Data.NameKr ?? string.Empty;
+
+        if (enhanceText != null)
+            enhanceText.text = $"+{equippedItem.EnhanceLevel}";
+
+        if (statText != null)
+            statText.text = $"옵션 +{equippedItem.TotalRollPercent:F1}%";
 
         // 장비 아이콘 표시
         if (iconImage != null)
@@ -130,13 +136,13 @@ public class EquipmentInventorySlot : MonoBehaviour
     private void ClearDisplay()
     {
         if (nameText != null)
-            nameText.text = "";
+            nameText.text = string.Empty;
 
         if (enhanceText != null)
-            enhanceText.text = "";
+            enhanceText.text = string.Empty;
 
         if (statText != null)
-            statText.text = "";
+            statText.text = string.Empty;
 
         if (iconImage != null)
         {

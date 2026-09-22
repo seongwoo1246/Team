@@ -317,6 +317,8 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// </summary>
     public void EnterFarming()
     {
+        
+
         if (Time.time - _lastModeChangeTime < MODE_CHANGE_COOLDOWN)
         {
             return;
@@ -348,6 +350,11 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// <param name="failedStageNumber">다시 시도할 스테이지 번호</param>
     public void RetryStage(int failedStageNumber)
     {
+        if(SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("되감기");
+        }
+       
         EnterChallenge(failedStageNumber);
     }
 
@@ -358,6 +365,10 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// <param name="stageNumber">진행할 스테이지 번호 (1 이상)</param>
     public void EnterChallenge(int stageNumber)
     {
+        if(SoundManager.Instance !=  null)
+        {
+            SoundManager.Instance.playBGM("부서진왕관");
+        }
         if (roster == null || stageNumber < 1)
         {
             UtilDebug.LogWarning($"잘못된 챌린지 진입 요청 (stageNumber: {stageNumber})");
@@ -406,6 +417,11 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// <param name="token">챌린지 진입 등으로 파밍을 멈출 때 쓰는 취소 토큰</param>
     private async UniTaskVoid RunFarmingLoopAsync(CancellationToken token)
     {
+        if (SoundManager.Instance != null)
+        {
+           await SoundManager.Instance.FadeSound("픽셀풍노래1", 3f);
+        }
+
         if (_farmingMonsterKeys == null || _farmingMonsterKeys.Count == 0)
         {
             UtilDebug.LogWarning("파밍 몬스터 프리팹이 비어있음");
@@ -482,7 +498,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 
             // 이 부분 RankingUI의 gameObject.SetActive가 false여서 실행 안될건데?
             RankingUi clearTimeRank = RankingUi.Instance;
-            RankingUi.Instance.AddRecord(clearTimeRank.ClearTimeList, MathF.Max(0, (Time.time - _challengeStartTime)));
+            RankingUi.Instance.AddRecordAndSave(RankCategoty.ClearTime, MathF.Max(0, (Time.time - _challengeStartTime)));
             GameEvents.TriggerOnStageCleared();
             OnStageCleared(stageNumber);
         }

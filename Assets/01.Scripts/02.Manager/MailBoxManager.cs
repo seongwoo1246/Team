@@ -2,12 +2,11 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using UnityEngine;
-using Firebase.Database;
 using Debug = DebugLogger<MailBoxManager>;
 using System.IO;
-using System.Data;
+using Cysharp.Threading.Tasks;
+
 //담당자 - 정성우
 
 public enum RewardType
@@ -49,6 +48,9 @@ public class mailItem
    
 }
 
+/// <summary>
+/// 우편 데이터 저장용 리스트
+/// </summary>
 [Serializable]
 public class LoaclMailDataWrapper
 {
@@ -59,10 +61,13 @@ public class LoaclMailDataWrapper
 /// <summary>
 /// 게임에서 우편 관련 총괄하여 사용할 매니저
 /// </summary>
-public class MailBoxManager : Singleton<MailBoxManager>
+public class MailBoxManager : Singleton<MailBoxManager> ,ILoadable
 {
     //로컬 우편캐시(mailId,mailItem)
     public Dictionary<string, mailItem> mailDictionary { get; private set; } = new Dictionary<string, mailItem>();
+
+    // 메일 박스보다는 빨라야 함
+    public int LoadOrder => 20;
 
     // 우편 상태가 바뀔 때 UI에 알려주는 신호
     public static event Action OnMailboxUpdated;
@@ -73,16 +78,21 @@ public class MailBoxManager : Singleton<MailBoxManager>
     {
         base.Awake();
 
+
         // 안전한 위치에 저장경로 만들기
         saveFilePath = Path.Combine(Application.persistentDataPath, "local_mails.json");
 
-       // LoadMailsFromLocal();
+        LoadMailsFromLocal();
+
     }
 
     public void AddMail(string title , string content, List<mailReward> rewards ,int validDays =7)
     {
         // 중복 되지 않는 우편 아이디를 만들어줌
         string newMailId = Guid.NewGuid().ToString();
+
+        Debug.Log($"만들어진 우편 아이디 : {newMailId}");
+       
         // 7일을 초로 바꿔서 만료기간 확인
         long expireTime = DateTimeOffset.UtcNow.AddDays(validDays).ToUnixTimeSeconds();
 
@@ -102,87 +112,196 @@ public class MailBoxManager : Singleton<MailBoxManager>
         mailDictionary[newMailId] = item;
 
         //변경된 편지 목록 즉시 저장함
-        //SaveMailsToLocal();
+        SaveMailsToLocal();
 
         // UI에 우편 왔다고 전달
         OnMailboxUpdated?.Invoke();
 
     }
 
-    //public bool ClaimMailReward(string mailId)
-    //{
-
-    //}
-
-
-
-
-    private void OnMailDataChanged(object sender , ValueChangedEventArgs args)
+    /// <summary>
+    /// 보상이 한개 인 경우 사용하는 AddMail
+    /// </summary>
+    /// <param name="title">제목</param>
+    /// <param name="content">내용</param>
+    /// <param name="reward">보상종류</param>
+    /// <param name="amount">수량</param>
+    /// <param name="itemCode">아이템 Id (기본 =0)</param>
+    /// <param name="validDays">만료기간 (기본 =7일)</param>
+    public void AddMail(string title , string content , RewardType reward ,int amount,int itemCode = 0, int validDays = 7)
     {
-        if(args.DatabaseError != null)
+        List<mailReward> singleRewardList = new List<mailReward>
         {
-            Debug.LogError($"데이터 로드 실패 = {args.DatabaseError.Message}");
-            return;
+            new mailReward
+            {
+                rewardType = reward ,
+                amount = amount ,
+                itemCode = itemCode ,
+            }
+        };
+
+        // 만들어서 보내주기
+        AddMail(title,content, singleRewardList, validDays);
+    }
+
+    /// <summary>
+    /// 보상이 없는 공지용 우편
+    /// </summary>
+    /// <param name="title"></param>
+    /// <param name="content"></param>
+    /// <param name="validDays"></param>
+    public void AddMail(string title, string content , int validDays = 7)
+    {
+        AddMail(title, content ,null, validDays);
+    }
+
+    public bool ClaimMailReward(string mailId)
+    {
+        // 장부에서 해당 ID의 편지가 있는지 확인
+        if (mailDictionary.TryGetValue(mailId, out mailItem mail))
+        {
+            // 이미 받은 거는 패스
+            if (mail.isClaimed)
+            {
+                mailDictionary.Remove(mailId);
+                SaveMailsToLocal();
+                OnMailboxUpdated?.Invoke();
+                return false;
+            }
+
+            // 유통기한이 지난거는 패스
+            long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if(currentTime> mail.expireTimestamp) return false;
+
+            //보상 지급
+            foreach(var reward in mail.rewards)
+            {
+                GiveRewardToPlayer(reward);
+            }
+
+            // 보상 받음 상태 전환
+            mail.isClaimed = true;
+
+            mailDictionary.Remove(mailId);
+
+            // 로컬에 저장
+            SaveMailsToLocal();
+            //UI 새로고침
+            OnMailboxUpdated?.Invoke();
+            return true;
         }
 
+        return false;
+    }
+
+
+    /// <summary>
+    /// 보상 종류에 따라 플레이어에게 실제 재화 지급 함수
+    /// </summary>
+    /// <param name="reward"></param>
+    private void GiveRewardToPlayer(mailReward reward)
+    {
+        switch (reward.rewardType)
+        {
+            case RewardType.Gold:
+                GameEvents.TriggerOnGoldObtained(reward.amount);
+                GoldWallet.Instance.Add(reward.amount);
+                break;
+
+            case RewardType.Diamond:
+                // 유료 재화가 생길 시 여기서 추가하는 함수 넣기
+                break;
+
+            case RewardType.Item:
+                // 인벤토리에 리워드 아이템 코드를 찾아서 받아오는 식
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 메일 정리 하는 함수
+    /// </summary>
+    public void CleanExpiredMails()
+    {
+        long currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds() ;
+        List<string> expiredIds = new List<string>() ;
+
+        //장부를 뒤져서 만료 시간이 지난 편지 ID를 수집함
+        foreach(var pair in mailDictionary)
+        {
+            if(currentTime>pair.Value.expireTimestamp)
+            {
+                expiredIds.Add(pair.Key);
+            }
+        }
+
+        //지울 편지가 있다면 장부에서 완전히 삭제
+        if(expiredIds.Count > 0)
+        {
+            foreach(string id in expiredIds)
+            {
+                mailDictionary.Remove(id);
+            }
+
+            SaveMailsToLocal();
+            OnMailboxUpdated?.Invoke();
+        }
+    }
+
+    /// <summary>
+    /// 장부의 데이터를 텍스트 글자로 바꿔서 저장 파일로 만드는 함수
+    /// </summary>
+    private void SaveMailsToLocal()
+    {
+        //저장 가방 객체를 만들고 딕셔너리의 편지들을 리스트
+        LoaclMailDataWrapper wrapper = new LoaclMailDataWrapper();
+        wrapper.MailList.AddRange(mailDictionary.Values);
+
+        // 객체를 json 형태의 문장으로 변환
+        string json = JsonUtility.ToJson(wrapper,true);
+
+        File.WriteAllText(saveFilePath, json);
+    }
+
+    /// <summary>
+    /// 저장 파일의 글자 일어와 다시 장부에 채우는 함수
+    /// </summary>
+    private void LoadMailsFromLocal()
+    {
+        
         mailDictionary.Clear();
-        DataSnapshot snapshot = args.Snapshot;
 
-        if(snapshot.Exists)
+        // 저장된 파일이 없으면 패스
+        if (!File.Exists(saveFilePath)) return;
+        //파일의 텍스트 읽어오기
+        string json = File.ReadAllText(saveFilePath);
+        //json 문장을 다시 C# 객체로 만들어서 조립
+        LoaclMailDataWrapper wrapper = JsonUtility.FromJson<LoaclMailDataWrapper>(json);
+
+        if(wrapper != null&&wrapper.MailList!=null)
         {
-            long currentUnixTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            foreach(DataSnapshot mailsnap in snapshot.Children)
+            foreach(var mail in wrapper.MailList)
             {
-                //json파일을 객체값으로 전환
-                string json = mailsnap.GetRawJsonValue();
-                mailItem mail = JsonUtility.FromJson<mailItem>(json);
-                mail.mailId = mailsnap.Key; // 키값을 mailId로 지정
-
-                //만료 시간 검증
-                if(mail.expireTimestamp>0&&mail.expireTimestamp < currentUnixTime)
-                {
-                    continue;
-                }
-
-                // 미수령 우편만 받음
-                if(!mail.isClaimed)
-                {
-                    mailDictionary[mail.mailId] = mail;
-                }
+                mailDictionary[mail.mailId] = mail;
             }
         }
-
-        Debug.Log($"우편함 동기화 왼료 / 안 받은 우편{mailDictionary.Count}개 있음");
-        OnMailboxUpdated?.Invoke();
+        //불러오기 후 오래된 편지는 정리
+        CleanExpiredMails();
 
     }
 
-
-
-  
-
-
-
-    public void GrantRewards(List<mailReward> rewards)
+    public UniTask OnSceneLoadCreate(SceneId scene)
     {
-        foreach (mailReward reward in rewards)
-        {
-            switch(reward.rewardType)
-            {
-                case RewardType.Gold:
-                    GameEvents.TriggerOnGoldObtained(reward.amount);
-                    GoldWallet.Instance.Add(reward.amount);
-                    break;
-
-                case RewardType.Diamond:
-                    // 유료 재화가 생길 시 여기서 추가하는 함수 넣기
-                    break;
-
-                case RewardType.Item: 
-                    // 인벤토리에 리워드 아이템 코드를 찾아서 받아오는 식
-                    break;
-            }
-        }
+        throw new NotImplementedException();
     }
 
+    public void Init(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new NotImplementedException();
+    }
 }

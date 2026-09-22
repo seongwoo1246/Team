@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 //담당자 - 정성우
 
 /// <summary>
@@ -7,7 +8,6 @@
 public enum RankCategoty
 {
     Damage,  // 최고 데미지 랭킹
-    PlayTime,// 플레이 시간 랭킹
     ClearTime// 클리어 타임 랭킹
 }
 
@@ -26,4 +26,11 @@ public struct UserRankData
         this.score = score;
 
     }
+}
+
+[Serializable]
+public class LocalRankingDataWrapper
+{
+    public List<UserRankData> damageRankList = new List<UserRankData>();
+    public List<UserRankData> clearRankList = new List<UserRankData>();
 }

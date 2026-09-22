@@ -1,4 +1,5 @@
 ﻿
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,15 +14,14 @@ public enum RankColor
 /// <summary>
 /// 단일 랭킹 슬롯을 담당 (1,2,3위를 표시할 예정)
 /// </summary>
-public class RankingSlot : MonoBehaviour
+public class RankingSlot : MonoBehaviour , ILoadable
 {
     [SerializeField] private TextMeshProUGUI RankText;
     [SerializeField] private Image BackGround;
 
-    private void Start()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
+    // 랭캉UI다음에 나와야 함
+    public int LoadOrder => 26;
+
     public void SetUpSlot(int rank, double Score, RankColor color)
     {
         RankText.text = $"{rank}위 : {Score}";
@@ -38,7 +38,18 @@ public class RankingSlot : MonoBehaviour
         }
     }
 
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 
+    public void Init(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 
-
+    public void OnSceneDestory(SceneId scene)
+    {
+        throw new System.NotImplementedException();
+    }
 }

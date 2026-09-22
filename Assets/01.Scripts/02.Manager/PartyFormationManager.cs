@@ -113,8 +113,20 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
         if (scene == SceneId.BootstrapScene || scene == SceneId.None) return;
         UtilDebug.Log($"[{scene}] 캐릭터 에셋 로드 및 인스턴스화 시작");
 
-        var user = UserManager.Instance.CurrentUser;
-        var charDict = user?.Characters?.characterDictionary;
+        UserInfo user = UserManager.Instance.CurrentUser;
+        Dictionary<string, CharacterSaveData> charDict = user?.Characters?.characterDictionary;
+        if (user == null || charDict == null)
+        {
+            UtilDebug.LogError($"{user} 또는 charDict 널 에러.");
+            return;
+        }
+
+
+        if (!ServiceLocator.TryGet<EquipmentInventory>(out var equipmentInventory))
+        {
+            UtilDebug.LogError("EquipmentInventory 서비스를 찾을 수 없습니다. 초기화 순서를 점검");
+            return;
+        }
 
         for (int i = 0; i < SLOT_COUNT; i++) _formation[i] = null;
 
@@ -122,19 +134,34 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
         {
             foreach (var character in allCharacters)
             {
-                if (character != null)
-                {
-                    character.RefreshStatsFromUpgradeSystem();
-                }
+                if (character == null || character.StatData == null) continue;
 
-                if (charDict != null && charDict.TryGetValue(character.StatData.Id, out var saveData))
+                if (charDict.TryGetValue(character.StatData.Id, out var saveData))
                 {
+                    // 1. 장비 복원 (equippedItems가 있을 때만)
+                    if (saveData.equippedItems != null)
+                    {
+                        foreach (var slotPair in saveData.equippedItems)
+                        {
+                            if (System.Enum.TryParse(slotPair.Key, out EquipmentSlot slot))
+                            {
+                                if (equipmentInventory.TryGetItem(slotPair.Value, out var equipItem))
+                                {
+                                    character.Equip(slot, equipItem, persist: false);
+                                }
+                            }
+                        }
+                    }
+
+                    // 2. 파티 슬롯 배정 (장비 유무와 무관하게 항상 실행)
                     if (saveData.partySlot >= 0 && saveData.partySlot < SLOT_COUNT)
                     {
                         _formation[saveData.partySlot] = character;
                     }
                 }
+                character.RefreshStatsFromUpgradeSystem();
             }
+
 
             // Fallback (비어있으면 앞 3명) - 방어코드 리펙토링하면 없앨 수 있음
             if (_formation[0] == null && _formation[1] == null && _formation[2] == null)
@@ -146,7 +173,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
             }
         }
         if (!ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        { 
+        {
             UtilDebug.LogError("서비스 등록 순서 초기화");
         }
         if (_stageManager != null)
@@ -272,7 +299,7 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 
             if (slot < fieldSlots.Length && fieldSlots[slot] != null)
             {
-                character.transform.SetParent(fieldSlots[slot]); 
+                character.transform.SetParent(fieldSlots[slot]);
                 character.transform.position = fieldSlots[slot].position;
             }
 
