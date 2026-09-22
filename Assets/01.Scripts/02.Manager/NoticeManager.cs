@@ -1,5 +1,6 @@
 ﻿using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using TMPro;
 using UnityEngine;
@@ -32,7 +33,6 @@ public class NoticeData
 
 /// <summary>
 /// 공지 사항을 전달 해주기 위해 만든 매니저 
-/// 하드코딩이 아닌 Json Url만 갖고 오기에 Json만 수정 하면 긴급 점검 및 이벤트 교체가 용이
 /// </summary>
 public class NoticeManager : MonoBehaviour
 {
@@ -44,22 +44,19 @@ public class NoticeManager : MonoBehaviour
     [SerializeField] private Button linkBtn;
     [SerializeField] private Button closeBtn;
 
-    [Header("서버 config")]
-    //여기서 공지가 저장된 json파일 주소를 호출
-    //"http://yuor-sever.com/notice.json" 식으로 연결 해주기
-    [SerializeField] private string noticeJsonUrl;
+  
 
     private NoticeData currentNoticeData;
     private Texture2D downloadedTexture;
 
     private async void Start()
     {
-        if(noticeJsonUrl !=null)
-        {
+        
+        
             // 씬 시작시 토큰 생성(씬 파괴시 메모리 누수 방지)
             var token = this.GetCancellationTokenOnDestroy();
             await FetchAndShowNoticeAsync(token);
-        }
+      
        
        
     }
@@ -69,27 +66,48 @@ public class NoticeManager : MonoBehaviour
     /// </summary>
     public async UniTask FetchAndShowNoticeAsync(CancellationToken token)
     {
+        Debug.Log("0");
         // 1. json 데이터 요청
-        string jsonText = await DownloadJsonAsync(noticeJsonUrl, token);
-        if(string.IsNullOrEmpty(jsonText))
+        string jsonText = LoadLocalNoticeJson();
+        if (string.IsNullOrEmpty(jsonText))
         {
-            Debug.LogWarning("공지 데이터 불러오기 실패");
+            Debug.Log("1");
+            noticePopupUi.SetActive(false);
             return;
         }
 
         //2. json파싱
         currentNoticeData = JsonUtility.FromJson<NoticeData>(jsonText);
+        
+        // 점검 및 공지 데이터 유효성 체크
+        if(currentNoticeData == null || currentNoticeData.notices == null ||currentNoticeData.notices.Count == 0)
+        {
+            Debug.Log("2");
+            noticePopupUi.SetActive(false);
+            return;
+        }
+
+        if(IsNoticeHiddenToday())
+        {
+            Debug.Log("3");
+            noticePopupUi.SetActive(false);
+            return;
+        }
+
+       
 
         //3. 서버 점검 상태 처리 (최우선 확인 사항)
-        if(currentNoticeData.isMaintenance)
+        if (currentNoticeData.isMaintenance)
         {
-            ShowMaintenancePopup(currentNoticeData.maintenanceMassage);
+            Debug.Log("4");
+            ShowMaintenancePopup();
             return;
         }
 
         // 4. 공지사항이 없는 경우 종료
         if(currentNoticeData.notices ==  null||currentNoticeData.notices.Count ==0)
         {
+            Debug.Log("5");
             noticePopupUi.SetActive(false);
             return;
         }
@@ -110,7 +128,7 @@ public class NoticeManager : MonoBehaviour
                 noticeRawImage.gameObject.SetActive(true);
             }
         }
-
+        Debug.Log("6");
         //7. 외부 웹 링크 버튼 이벤트 바인딩
         linkBtn.onClick.RemoveAllListeners();
         if(!string.IsNullOrEmpty(firstNotice.linkUrl))
@@ -126,31 +144,14 @@ public class NoticeManager : MonoBehaviour
         //8. 닫기 버튼 설정
         closeBtn.onClick.RemoveAllListeners();
         closeBtn.onClick.AddListener(CloseNoticeUI);
-
+       
         //Ui 활성화
         noticePopupUi.SetActive(true);
+        Debug.Log("끝");
     }
 
-    /// <summary>
-    /// UnityWebRequest를 기반 Json다운로드
-    /// (GC를 부르지 않아서 메모리 최적화 기법이라고 함)
-    /// </summary>
-    /// <param name="url"></param>
-    /// <param name="token"></param>
-    /// <returns></returns>
-    public async UniTask<string> DownloadJsonAsync(string url, CancellationToken token)
-    {
-        using(UnityWebRequest request = new UnityWebRequest(url))
-        {
-            //WithCancellation(token);를 통해서 공지사항을 다운 받아오는 도중에 끊어져도 토큰으로 무사히 중단이 됨
-            await request.SendWebRequest().WithCancellation(token);
-            if(request.result == UnityWebRequest.Result.Success)
-            {
-                return request.downloadHandler.text;
-            }
-        }
-        return null;
-    }
+
+
 
     /// <summary>
     /// 공지 이미지 전용 다운로드 및 메모리 로드
@@ -174,14 +175,13 @@ public class NoticeManager : MonoBehaviour
     /// <summary>
     /// 점검 팝업 노출 처리
     /// </summary>
-    /// <param name="message"></param>
-    private void ShowMaintenancePopup(string message)
+    private void ShowMaintenancePopup()
     {
- 
-        titleText.text = "시스템 점검 안내";
-        contentText.text = message;
-        if(noticeRawImage != null)  noticeRawImage.gameObject.SetActive(false);
-        if(linkBtn !=null) linkBtn.gameObject.SetActive(false);
+        NoticeItem firstNotice = currentNoticeData.notices[0]; 
+        titleText.text = firstNotice.title;
+        contentText.text = firstNotice.content;
+        if(noticeRawImage != null)  noticeRawImage.gameObject.SetActive(true);
+        if(linkBtn !=null) linkBtn.gameObject.SetActive(true);
 
         noticePopupUi.SetActive(true);
     }
@@ -201,4 +201,52 @@ public class NoticeManager : MonoBehaviour
             downloadedTexture = null;
         }
     }
+
+    #region 저장 불러오기 기능 추가
+    private string LocalNoticePath => Path.Combine(Application.persistentDataPath, "NoticeData.json");
+    private const string HIDE_NOTICE_KEY = "Notice_Hide_Date";
+
+
+    public string LoadLocalNoticeJson()
+    {
+        if(File.Exists(LocalNoticePath))
+        {
+            return File.ReadAllText(LocalNoticePath);
+        }
+
+        TextAsset defultJson = Resources.Load<TextAsset>("NoticeData");
+        return defultJson != null ? defultJson.text : null;
+    }
+
+    public void SaveNoticeJson(NoticeData noticeData)
+    {
+        string jsonText = JsonUtility.ToJson(noticeData,true);
+        File.WriteAllText(LocalNoticePath, jsonText);
+        Debug.Log($"저장 경로 : {LocalNoticePath}");
+    }
+
+
+    /// <summary>
+    /// 오늘 하루 보지 않기 처리하는 함수
+    /// </summary>
+    public void OnclickHideToday()
+    {
+        string todayStr = System.DateTime.Now.ToString("yyyyMMdd");
+        PlayerPrefs.SetString(HIDE_NOTICE_KEY, todayStr);
+        PlayerPrefs.Save();
+
+        CloseNoticeUI();
+    }
+
+    private bool IsNoticeHiddenToday()
+    {
+        if(!PlayerPrefs.HasKey(HIDE_NOTICE_KEY)) { return false; }
+
+        string saveData = PlayerPrefs.GetString(HIDE_NOTICE_KEY);
+        string todayStr = System.DateTime.Now.ToString("yyyyMMdd");
+
+        return saveData == todayStr;
+       
+    }
+    #endregion
 }
