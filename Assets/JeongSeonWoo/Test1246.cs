@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.InputSystem;
 
 
 public class Test1246 : MonoBehaviour
@@ -13,5 +14,6 @@ public class Test1246 : MonoBehaviour
     void Update()
     {
       
+        
     }
 }
