@@ -13,6 +13,8 @@ GameObject:
   - component: {fileID: 5174227699656925170}
   - component: {fileID: 6532121343498048942}
   - component: {fileID: 7451909790926202217}
+  - component: {fileID: 5565078541143641024}
+  - component: {fileID: 6520354371677532160}
   m_Layer: 5
   m_Name: Test_Item
   m_TagString: Untagged
@@ -137,8 +139,39 @@ MonoBehaviour:
   nameText: {fileID: 2465340347665077315}
   enhanceText: {fileID: 0}
   statText: {fileID: 0}
+  iconImage: {fileID: 0}
   selectedOutline: {fileID: 0}
   equippedOutline: {fileID: 0}
+--- !u!114 &5565078541143641024
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268637539604367509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
+--- !u!114 &6520354371677532160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 268637539604367509}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
+  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
+  m_EffectDistance: {x: 1, y: -1}
+  m_UseGraphicAlpha: 1
 --- !u!1 &9127967572844674043
 GameObject:
   m_ObjectHideFlags: 0

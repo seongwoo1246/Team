@@ -51,6 +51,52 @@ public sealed class EquippedItem
     public const float DROP_ROLL_MIN = 1f;
     public const float DROP_ROLL_MAX = 10f;
 
+    #region 김주연 - 장비 등급(중급/상급) 추가
+    // 등급별 랜덤 보너스 범위(%). 하급은 기존 DROP_ROLL_MIN~MAX 그대로 씀
+    private const float MID_ROLL_MIN = 10f;
+    private const float MID_ROLL_MAX = 25f;
+    private const float HIGH_ROLL_MIN = 25f;
+    private const float HIGH_ROLL_MAX = 50f;
+
+    // 등급 드랍 가중치 (하급/중급/상급 순. 합계가 100일 필요는 없고 비율만 맞으면 됨)
+    private const float GRADE_WEIGHT_LOW = 70f;
+    private const float GRADE_WEIGHT_MID = 25f;
+    private const float GRADE_WEIGHT_HIGH = 5f;
+
+    /// <summary>가중치대로 등급 하나를 랜덤으로 뽑는다</summary>
+    private static EquipmentGrade RollGrade()
+    {
+        float totalWeight = GRADE_WEIGHT_LOW + GRADE_WEIGHT_MID + GRADE_WEIGHT_HIGH;
+        float roll = UnityEngine.Random.Range(0f, totalWeight);
+
+        if (roll < GRADE_WEIGHT_LOW)
+        {
+            return EquipmentGrade.Low;
+        }
+
+        if (roll < GRADE_WEIGHT_LOW + GRADE_WEIGHT_MID)
+        {
+            return EquipmentGrade.Mid;
+        }
+
+        return EquipmentGrade.High;
+    }
+
+    /// <summary>등급에 맞는 랜덤 보너스% 범위를 돌려준다</summary>
+    private static float RollPercentForGrade(EquipmentGrade grade)
+    {
+        switch (grade)
+        {
+            case EquipmentGrade.Mid:
+                return UnityEngine.Random.Range(MID_ROLL_MIN, MID_ROLL_MAX);
+            case EquipmentGrade.High:
+                return UnityEngine.Random.Range(HIGH_ROLL_MIN, HIGH_ROLL_MAX);
+            default:
+                return UnityEngine.Random.Range(DROP_ROLL_MIN, DROP_ROLL_MAX);
+        }
+    }
+    #endregion
+
 
     [Tooltip("서버 인벤토리 고유 식별자(GUID)")] // 송태훈
     [SerializeField] private string instanceId;
@@ -58,8 +104,11 @@ public sealed class EquippedItem
     [Tooltip("이 인스턴스가 어떤 장비인지 (고정 정보)")]
     [SerializeField] private EquipmentData data;
 
-    [Tooltip("드랍될 때 굴린 랜덤 보너스 (1~10 사이, %). Data.Slot이 담당하는 스탯에 이 값만큼 % 로 적용됨")]
+    [Tooltip("드랍될 때 굴린 랜덤 보너스 (등급별 범위 다름, %). Data.Slot이 담당하는 스탯에 이 값만큼 % 로 적용됨")]
     [SerializeField] private float rollPercent;
+
+    [Tooltip("장비 등급 (하급/중급/상급). 드랍 시 가중치대로 랜덤 결정")]
+    [SerializeField] private EquipmentGrade grade;
 
     [Tooltip("현재 강화 단계 (+0 ~ +10)")]
     [SerializeField] private int enhanceLevel;
@@ -71,23 +120,27 @@ public sealed class EquippedItem
     /// 장비 인스턴스를 만든다. 보통 몬스터 드랍 시 랜덤 롤로 생성함 (강화 0회 상태로 시작)
     /// </summary>
     /// <param name="data">어떤 장비인지 (고정 정보)</param>
-    /// <param name="rollPercent">이번에 뜬 랜덤 보너스 (1~10 사이, %)</param>
-    public EquippedItem(EquipmentData data, float rollPercent)
+    /// <param name="rollPercent">이번에 뜬 랜덤 보너스 (등급별 범위, %)</param>
+    /// <param name="grade">이번에 뜬 등급 (하급/중급/상급)</param>
+    public EquippedItem(EquipmentData data, float rollPercent, EquipmentGrade grade = EquipmentGrade.Low)
     {
         this.instanceId = Guid.NewGuid().ToString();
         this.data = data;
         this.rollPercent = rollPercent;
+        this.grade = grade;
     }
 
     /// <summary>
-    /// 드랍 공용 생성 함수. DROP_ROLL_MIN~DROP_ROLL_MAX 사이에서 랜덤 굴려서 새 장비 인스턴스를 만든다
+    /// 드랍 공용 생성 함수. 등급(하급/중급/상급)을 가중치대로 먼저 뽑고, 그 등급 범위 안에서
+    /// 랜덤 보너스를 굴려 새 장비 인스턴스를 만든다.
     /// 몬스터 드랍, 가챠등 새장비를 드랍시키는 모든 곳에서 이 함수 하나만 쓰면 됨
     /// </summary>
     /// <param name="data">어떤 장비인지 (고정 정보)</param>
     public static EquippedItem CreateFromDrop(EquipmentData data)
     {
-        float rollPercent = UnityEngine.Random.Range(DROP_ROLL_MIN, DROP_ROLL_MAX);
-        return new EquippedItem(data, rollPercent);
+        EquipmentGrade grade = RollGrade();
+        float rollPercent = RollPercentForGrade(grade);
+        return new EquippedItem(data, rollPercent, grade);
     }
 
     /// <summary>
@@ -98,6 +151,7 @@ public sealed class EquippedItem
         this.instanceId = instanceId;
         this.data = data;
         this.rollPercent = dto.rollPercent;
+        this.grade = dto.grade;
         this.enhanceLevel = dto.enhanceLevel;
         this.enhanceBonusTotal = dto.totalEnhanceBonus;
     }
@@ -106,6 +160,8 @@ public sealed class EquippedItem
     public string InstanceId => instanceId;
     // 어떤 장비인지 (고정 정보)
     public EquipmentData Data => data;
+    // 장비 등급 (하급/중급/상급)
+    public EquipmentGrade Grade => grade;
 
     // 드랍될 때 굴린 랜덤 보너스 (강화분 제외, 1~10 사이 %)
     public float RollPercent => rollPercent;
@@ -163,6 +219,7 @@ public sealed class EquippedItem
     {
         dataId = data != null ? data.Id : string.Empty,
         rollPercent = rollPercent,
+        grade = grade,
         enhanceLevel = enhanceLevel,
         totalEnhanceBonus = enhanceBonusTotal,
     };

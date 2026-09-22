@@ -16,7 +16,7 @@ public class SellSelectedEquipmentInfo : MonoBehaviour
         }
 
         equipmentInfoText.text =
-            item.Data.NameKr + "\n\n" +
+            "[" + EquipmentGradeHelper.GetDisplayName(item.Grade) + "] " + item.Data.NameKr + "\n\n" +
             EquipmentSlotHelper.GetStatName(item.Data.Slot) + " +" +
             item.TotalRollPercent.ToString("F1") + "%\n" +
             "강화 +" + item.EnhanceLevel;

@@ -353,6 +353,7 @@ public class EquipmentSaveDTO
 {
     public string dataId;           // 장비 SO 고유 ID
     public float rollPercent;       // 드랍 시 제공되는 기본 Roll %
+    public EquipmentGrade grade;    // 장비 등급 (하급/중급/상급)
     public int enhanceLevel;        // 장비 강화 단계
     public float totalEnhanceBonus; // 강화 누적 보너스 합계 %
 }
