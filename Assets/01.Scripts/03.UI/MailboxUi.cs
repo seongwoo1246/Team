@@ -24,7 +24,6 @@ public class MailboxUi : MonoBehaviour
     private List<MailItemUi> activeMailItems = new List<MailItemUi>();
 
     // 메일 아이템 보다는 먼저 되어야 함
-    public int LoadOrder => 21;
 
     private void Awake()
     {
@@ -36,9 +35,7 @@ public class MailboxUi : MonoBehaviour
         if(OpenButton != null)
         {
             OpenButton.onClick.AddListener(OpenWindow);
-  
         }
-
 
         //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
         ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
