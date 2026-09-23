@@ -3108,7 +3108,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -136.60808, y: 14395.106}
+  m_AnchoredPosition: {x: -180.8888, y: 19061.367}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1247884557435832700
@@ -3492,6 +3492,7 @@ MonoBehaviour:
   closeButton: {fileID: 8745598812145107914}
   OpenButton: {fileID: 7172689568701150357}
   LobbyRedDot: {fileID: 5437884018621127997}
+  dim: {fileID: 0}
 --- !u!1 &1971485050942590118
 GameObject:
   m_ObjectHideFlags: 0
@@ -9561,6 +9562,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RankingUi
   OpenBtn: {fileID: 1489288097553369059}
   CloseBtn: {fileID: 64100172730012571}
+  dim: {fileID: 0}
   slots:
   - {fileID: 3210716890576304662}
   - {fileID: 8530988031775113228}
@@ -10731,6 +10733,7 @@ MonoBehaviour:
   BackGround: {fileID: 7529191139952614084}
   openBtn: {fileID: 7238022870458773353}
   closeBtn: {fileID: 6341119376239733946}
+  dim: {fileID: 0}
   achievements:
   - id: 10001
     title: "\uBAAC\uC2A4\uD130\uB97C \uC7A1\uC544\uB77C"
