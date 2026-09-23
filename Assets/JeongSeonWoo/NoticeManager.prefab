@@ -416,7 +416,6 @@ MonoBehaviour:
   noticeRawImage: {fileID: 4773281599023861643}
   linkBtn: {fileID: 8808866968013664155}
   closeBtn: {fileID: 7545894577270697588}
-  noticeJsonUrl: 
 --- !u!1 &5531241625239336735
 GameObject:
   m_ObjectHideFlags: 0

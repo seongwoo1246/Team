@@ -37,6 +37,8 @@ public static class RankingSaveSystem
             return new LocalRankingDataWrapper(); // 저장 데이터가 없으면 새 객체가 반환
         }
 
+
+        
         string json = PlayerPrefs.GetString(Save_Key);
         return JsonUtility.FromJson<LocalRankingDataWrapper>(json);
     }
