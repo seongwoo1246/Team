@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using UnityEngine;
 using static StringConsts.UserConstants;
 using UtilDebug = DebugLogger<UserManager>;
 
@@ -14,11 +15,22 @@ public class UserManager : NonMonoSingleton<UserManager>
 {
     private DatabaseReference rootRef;
     public UserInfo CurrentUser { get; private set; }
+    private const string LOCAL_SAVE_DATA_KEY = "LOCAL_USER_SAVE_DATA";
+    public readonly string LocalGuestUID = "local_guest_player";
+    public bool IsLocalMode { get; set; } = false;
+    public bool HasLocalSaveData() => PlayerPrefs.HasKey(LOCAL_SAVE_DATA_KEY);
 
     public override void Init()
     {
         base.Init();
-        rootRef = FirebaseDatabase.DefaultInstance.RootReference;
+        try
+        {
+            rootRef = FirebaseDatabase.DefaultInstance.RootReference;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogWarning($"Firebase RootRef 초기화 스킵 (오프라인/로컬 대응): {ex.Message}");
+        }
     }
 
     private DatabaseReference GetUserRef(string uid) => rootRef?.Child(Users).Child(uid);
@@ -32,6 +44,31 @@ public class UserManager : NonMonoSingleton<UserManager>
     /// </summary>
     public async UniTask<(bool exists, UserInfo data)> LoadUserInfoAsync(string uid, CancellationToken ct = default)
     {
+        // 로컬 분기
+        if(IsLocalMode)
+        {
+            if (!HasLocalSaveData())
+            {
+                UtilDebug.Log("로컬 저장 데이터 없음 -> 닉네임 입력 창으로 이동");
+                CurrentUser = null;
+                return (false, null);
+            }
+
+            try
+            {
+                string json = PlayerPrefs.GetString(LOCAL_SAVE_DATA_KEY);
+                CurrentUser = JsonConvert.DeserializeObject<UserInfo>(json);
+                UtilDebug.Log($"로컬 저장 데이터 로드 성공 (닉네임: {CurrentUser.Profile.nickname})");
+                return (true, CurrentUser);
+            }
+            catch (Exception ex)
+            {
+                UtilDebug.LogError($"로컬 데이터 로드 실패: {ex.Message}");
+                return (false, null);
+            }
+        }
+
+        // 서버 분기
         try
         {
             UserInfo tempUser = new UserInfo(uid, string.Empty);
@@ -71,34 +108,23 @@ public class UserManager : NonMonoSingleton<UserManager>
     /// </summary>
     public async UniTask<bool> CreateUserInfoAsync(string uid, string nickname, CancellationToken ct = default)
     {
+        // 로컬 분기
+        if (IsLocalMode)
+        {
+            UserInfo newUserData = new UserInfo(uid, nickname);
+            SetupDefaultUserData(newUserData);
+
+            CurrentUser = newUserData;
+            SaveLocalUserData();
+            UtilDebug.Log($"로컬 신규 계정 생성 및 로컬 저장 완료: {nickname}");
+            return true;
+        }
+
+        // 서버 분기
         try
         {
             UserInfo newUserData = new UserInfo(uid, nickname);
-            var warriorData = new CharacterSaveData
-            {
-                characterId = "char_warrior",
-                isUnlocked = true,
-                partySlot = 0
-            };
-
-            var mageData = new CharacterSaveData
-            {
-                characterId = "char_mage",
-                isUnlocked = true,
-                partySlot = 1
-            };
-
-            var healerData = new CharacterSaveData
-            {
-                characterId = "char_healer",
-                isUnlocked = true,
-                partySlot = 2
-            };
-
-            newUserData.Characters.characterDictionary[warriorData.characterId] = warriorData;
-            newUserData.Characters.characterDictionary[mageData.characterId] = mageData;
-            newUserData.Characters.characterDictionary[healerData.characterId] = healerData;
-            newUserData.Inventory.Data.consumables["Material"] = 1;
+            SetupDefaultUserData(newUserData);
 
             // 1. 순수 JSON 문자열 직렬화
             string profileJson = JsonConvert.SerializeObject(newUserData.Profile);
@@ -128,6 +154,23 @@ public class UserManager : NonMonoSingleton<UserManager>
             return false;
         }
     }
+
+    private void SetupDefaultUserData(UserInfo data)
+    {
+        // 기본 캐릭터 (전사, 메이지, 힐러) 및 재료 세팅
+        var warriorData = new CharacterSaveData { characterId = "char_warrior", isUnlocked = true, partySlot = 0 };
+        var mageData = new CharacterSaveData { characterId = "char_mage", isUnlocked = true, partySlot = 1 };
+        var healerData = new CharacterSaveData { characterId = "char_healer", isUnlocked = true, partySlot = 2 };
+        var archerData = new CharacterSaveData { characterId = "char_archer", isUnlocked = true, partySlot = -1 };
+        var paladinData = new CharacterSaveData { characterId = "char_paladin", isUnlocked = true, partySlot = -1 };
+
+        data.Characters.characterDictionary[warriorData.characterId] = warriorData;
+        data.Characters.characterDictionary[mageData.characterId] = mageData;
+        data.Characters.characterDictionary[healerData.characterId] = healerData;
+        data.Characters.characterDictionary[archerData.characterId] = archerData;
+        data.Characters.characterDictionary[paladinData.characterId] = paladinData;
+        data.Inventory.Data.consumables["Material"] = 10;
+    }
     #endregion
 
     #region [Save & Sync]
@@ -141,6 +184,14 @@ public class UserManager : NonMonoSingleton<UserManager>
             UtilDebug.LogError("SaveAllInfoAsync : 저장할 유저 데이터가 없습니다.");
             return false;
         }
+        // 로컬 분기
+        if(IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        // 서버 분기
         string uid = CurrentUser.UID;
 
         // 트러블 슈팅 - 초기에는 UserManager(this) 자체를 직렬화하여 저장하다가 Dictionary upgradeTrackLevels가 저장되지 못하여
@@ -172,6 +223,14 @@ public class UserManager : NonMonoSingleton<UserManager>
             return false;
         }
     }
+    public void SaveLocalUserData()
+    {
+        if (CurrentUser == null) return;
+        string json = JsonConvert.SerializeObject(CurrentUser, Formatting.Indented);
+        PlayerPrefs.SetString(LOCAL_SAVE_DATA_KEY, json);
+        PlayerPrefs.Save();
+        UtilDebug.Log("[로컬] PlayerPrefs 디스크 저장 완료");
+    }
 
     /// <summary>
     /// 방치 보상 계산을 위한 마지막 접속 시간 단일 필드 동기화
@@ -186,15 +245,28 @@ public class UserManager : NonMonoSingleton<UserManager>
 
         long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         CurrentUser.Profile.lastLoginTimestamp = now;
+        if(IsLocalMode)
+        {
+            SaveLocalUserData();
+            return;
+        }
+
         await CurrentUser.Profile.UpdateSingleFieldAsync(LastLoginTimestamp, now, ct);
     }
     #endregion
 
     #region [Facade API : 단일 도메인]
+    /* 
+    골드, 다이아, 스테이지, 장비 추가/삭제, 강화 등은
+    IsLocalMode일 때 메모리(CurrentUser)만 갱신하고 서버 API 호출을 생략합니다.
+    어차피 GameManager.FlushGameDataAsync()나 5분 주기 루프에서 SaveAllInfoAsync()가 불려 로컬에 디스크 저장이 됩니다.
+    */
+
     public async UniTask<bool> UpdateCurrentStageAsync(int clearStage, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
         CurrentUser.Profile.currentStage = clearStage;
+        if (IsLocalMode) return true; // 서버 통신 차단
         return await CurrentUser.Profile.UpdateSingleFieldAsync("currentStage", clearStage, ct);
     }
     // 골드 단일 갱신
@@ -202,6 +274,7 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         if (CurrentUser == null) return false;
         CurrentUser.Profile.gold = newGold;
+        if (IsLocalMode) return true; // 서버 통신 차단
         return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newGold, ct);
     }
     // 다이아 단일 갱신
@@ -209,6 +282,7 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         if (CurrentUser == null) return false;
         CurrentUser.Profile.dia = newDia;
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 서버 통신 차단
         return await CurrentUser.Profile.UpdateSingleFieldAsync("dia", newDia, ct);
     }
 
@@ -218,6 +292,15 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> EquipItemAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
+        if (IsLocalMode)
+        {
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+            {
+                charData.equippedItems[slot.ToString()] = instanceId;
+                SaveLocalUserData();
+            }
+            return true; // 서버 통신 차단
+        }
         return await CurrentUser.Characters.SetEquippedSlotAsync(charId, slot, instanceId, ct);
     }
 
@@ -227,6 +310,15 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> UnequipItemAsync(string charId, EquipmentSlot slot, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
+        if (IsLocalMode)
+        {
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+            {
+                charData.equippedItems.Remove(slot.ToString());
+                SaveLocalUserData();
+            }
+            return true; // 서버 통신 차단
+        }
         return await CurrentUser.Characters.UnequipSlotAsync(charId, slot, ct);
     }
 
@@ -236,6 +328,16 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> EnhanceEquipmentAsync(string instanceId, int newLevel, float newBonus, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
+        if (IsLocalMode)
+        {
+            if (CurrentUser.Inventory.Data.equipments.TryGetValue(instanceId, out var equip))
+            {
+                equip.enhanceLevel = newLevel;
+                equip.totalEnhanceBonus = newBonus;
+                SaveLocalUserData();
+            }
+            return true; // 서버 통신 차단
+        }
         return await CurrentUser.Inventory.UpdateEquipmentEnhanceAsync(instanceId, newLevel, newBonus, ct);
     }
 
@@ -246,6 +348,8 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> AddEquipmentAsync(string instanceId, EquipmentSaveDTO newEquip, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
+        CurrentUser.Inventory.Data.equipments[instanceId] = newEquip;
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 로컬 파일 즉시 반영
         return await CurrentUser.Inventory.AddEquipmentAsync(instanceId, newEquip, ct);
     }
 
@@ -254,7 +358,9 @@ public class UserManager : NonMonoSingleton<UserManager>
     /// </summary>
     public async UniTask<bool> RemoveEquipmentAsync(string instanceId, CancellationToken ct = default)
     {
-        if (CurrentUser == null) return false;
+        if (CurrentUser == null) return false; 
+        CurrentUser.Inventory.Data.equipments.Remove(instanceId);
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 서버 통신 차단
         return await CurrentUser.Inventory.RemoveEquipmentAsync(instanceId, ct);
     }
 
@@ -264,6 +370,10 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> UpdateConsumableCountAsync(string itemId, int count, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
+        if (count <= 0) CurrentUser.Inventory.Data.consumables.Remove(itemId);
+        else CurrentUser.Inventory.Data.consumables[itemId] = count;
+
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 서버 통신 차단
         return await CurrentUser.Inventory.UpdateConsumableCountAsync(itemId, count, ct);
     }
 
@@ -273,6 +383,8 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> UpgradeTrackLevelAsync(UpgradeTrack track, int newLevel, CancellationToken ct = default)
     {
         if (CurrentUser == null) return false;
+        CurrentUser.Profile.upgradeTrackLevels[track.ToString()] = newLevel;
+        if (IsLocalMode) return true; // 서버 통신 차단
         return await CurrentUser.Profile.UpdateUpgradeTrackAsync(track, newLevel, ct);
     }
     #endregion
@@ -287,6 +399,23 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<bool> UpdateAllPartySlotAsync(Dictionary<string, int> slotMap, CancellationToken ct = default)
     {
         if(CurrentUser == null) return false;
+
+        // 로컬 분기
+        foreach (var kvp in slotMap)
+        {
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(kvp.Key, out var charData))
+            {
+                charData.partySlot = kvp.Value;
+            }
+        }
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        // 서버 분기
         var updates = new Dictionary<string, object>();
         foreach(var kvp in slotMap)
         {
@@ -323,26 +452,31 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         if (CurrentUser == null) return false;
 
+        // 로컬 분기
         string slotKey = slot.ToString();
-        var updates = new Dictionary<string, object>();
-        string uid = CurrentUser.UID;
-
-        // 1. 기존 착용 캐릭터가 있었다면 해당 캐릭터 슬롯에서 제거
         if (!string.IsNullOrEmpty(previousOwnerCharId) && previousOwnerCharId != targetCharId)
         {
             if (CurrentUser.Characters.characterDictionary.TryGetValue(previousOwnerCharId, out var prevChar))
-            {
                 prevChar.equippedItems.Remove(slotKey);
-                updates[$"{StringConsts.UserConstants.Characters}/{uid}/{previousOwnerCharId}/{EquippedSlotMap}/{slotKey}"] = null;
-            }
         }
 
-        // 2. 대상 캐릭터 슬롯에 새 instanceId 지정
         if (CurrentUser.Characters.characterDictionary.TryGetValue(targetCharId, out var targetChar))
-        {
             targetChar.equippedItems[slotKey] = newInstanceId;
-            updates[$"{StringConsts.UserConstants.Characters}/{uid}/{targetCharId}/{EquippedSlotMap}/{slotKey}"] = newInstanceId;
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
         }
+
+        // 서버 분기
+        var updates = new Dictionary<string, object>();
+        string uid = CurrentUser.UID;
+
+        if (!string.IsNullOrEmpty(previousOwnerCharId) && previousOwnerCharId != targetCharId)
+            updates[$"{StringConsts.UserConstants.Characters}/{uid}/{previousOwnerCharId}/{EquippedSlotMap}/{slotKey}"] = null;
+
+        updates[$"{StringConsts.UserConstants.Characters}/{uid}/{targetCharId}/{EquippedSlotMap}/{slotKey}"] = newInstanceId;
 
         try
         {
@@ -363,15 +497,6 @@ public class UserManager : NonMonoSingleton<UserManager>
     {
         if (CurrentUser == null) return false;
 
-        string uid = CurrentUser.UID;
-        var updates = new Dictionary<string, object>
-    {
-        { $"{Inventories}/{uid}/{Equipments}/{instanceId}/enhanceLevel", newLevel },
-        { $"{Inventories}/{uid}/{Equipments}/{instanceId}/totalEnhanceBonus", newBonus },
-        { $"{Inventories}/{uid}/{Consumables}/{materialItemId}", remainingMaterialCount }
-    };
-
-        // 로컬 메모리 상태 갱신
         if (CurrentUser.Inventory.Data.equipments.TryGetValue(instanceId, out var equip))
         {
             equip.enhanceLevel = newLevel;
@@ -379,15 +504,26 @@ public class UserManager : NonMonoSingleton<UserManager>
         }
         CurrentUser.Inventory.Data.consumables[materialItemId] = remainingMaterialCount;
 
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        string uid = CurrentUser.UID;
+        var updates = new Dictionary<string, object>
+        {
+            { $"{Inventories}/{uid}/{Equipments}/{instanceId}/enhanceLevel", newLevel },
+            { $"{Inventories}/{uid}/{Equipments}/{instanceId}/totalEnhanceBonus", newBonus },
+            { $"{Inventories}/{uid}/{Consumables}/{materialItemId}", remainingMaterialCount }
+        };
+
         try
         {
             await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
             return true;
         }
-        catch (OperationCanceledException)
-        {
-            return false;
-        }
+        catch (OperationCanceledException) { return false; }
         catch (Exception ex)
         {
             UtilDebug.LogError($"장비 강화 트랜잭션 실패: {ex.Message}");
@@ -399,6 +535,8 @@ public class UserManager : NonMonoSingleton<UserManager>
     #region [Check API : 닉네임 중복 검사]
     public async UniTask<bool> IsNicknameDuplicateAsync(string nickname, CancellationToken ct = default)
     {
+        if (IsLocalMode) return false; // 로컬 테스트는 닉네임 중복 검사 무조건 통과
+
         try
         {
             var snapshot = await GetNicknameRef(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
@@ -423,6 +561,16 @@ public class UserManager : NonMonoSingleton<UserManager>
     /// </summary>
     public async UniTask<bool> DeleteUserDataAsync(string uid, CancellationToken ct = default)
     {
+        if (IsLocalMode)
+        {
+            PlayerPrefs.DeleteKey(LOCAL_SAVE_DATA_KEY);
+            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+            PlayerPrefs.Save();
+            ClearLocalData();
+            UtilDebug.Log("[로컬] 데이터 완전 삭제 완료");
+            return true;
+        }
+
         try
         {
             string nickname = CurrentUser?.Profile?.nickname;

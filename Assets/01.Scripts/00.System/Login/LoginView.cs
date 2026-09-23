@@ -7,9 +7,13 @@ public class LoginView : MonoBehaviour
     [SerializeField] private GameObject loginPanel;
     [SerializeField] private UnityEngine.UI.Button googleLoginButton;
     [SerializeField] private UnityEngine.UI.Button emailPopupButton;
+    [SerializeField] private UnityEngine.UI.Button localGuestLoginButton;
+
 
     public event System.Action OnGoogleLoginClicked;
     public event System.Action OnEmailLoginClicked;
+    public event System.Action OnLocalGuestLoginClicked;
+
 
     private void Awake()
     {
@@ -18,6 +22,10 @@ public class LoginView : MonoBehaviour
 
         if (emailPopupButton != null)
             emailPopupButton.onClick.AddListener(() => OnEmailLoginClicked?.Invoke());
+        if (localGuestLoginButton != null)
+        {
+            localGuestLoginButton.onClick.AddListener(() => OnLocalGuestLoginClicked?.Invoke());
+        }
     }
 
     public void SetPanelActive(bool active)

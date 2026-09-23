@@ -146,7 +146,7 @@ public class UserProfileRequest : BaseRequestData
     {
         return await ExecuteLogOperationCoreAsync(async () =>
         {
-            string json = UnityEngine.JsonUtility.ToJson(this);
+            string json = JsonConvert.SerializeObject(this);
             await GetTargetRef().SetRawJsonValueAsync(json).AsUniTask().AttachExternalCancellation(ct);
             return true;
         }, () => $"Nick: {nickname}, Lv: {accountLevel}, Stage: {currentStage} 저장"

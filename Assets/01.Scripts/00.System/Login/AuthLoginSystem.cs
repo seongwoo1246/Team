@@ -20,6 +20,9 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
 
     public event Action<bool, string> OnAuthStateChanged;
 
+    //
+    public bool isLocalTestMode = false;
+
     /// <summary>
     /// Firebase 의존성 확인 및 FirebaseAuth 초기화를 비동기로 완료 보장
     /// </summary>

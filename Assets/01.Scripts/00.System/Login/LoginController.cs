@@ -9,6 +9,8 @@ using UtilDebug = DebugLogger<LoginController>;
 
 public class LoginController : MonoBehaviour
 {
+    private const string PREFS_LOCAL_GUEST_ACTIVE = "IS_LOCAL_GUEST_ACTIVE";
+
     [Header("로그인 메인 View")]
     [SerializeField] private LoginView loginView;
 
@@ -25,11 +27,14 @@ public class LoginController : MonoBehaviour
 
     private void Awake()
     {
-        if(loginView != null)
+        if (loginView != null)
         {
-            if(googleLogin != null)
+            if (googleLogin != null)
                 loginView.OnGoogleLoginClicked += () => HandleGoogleLoginClicked();
             loginView.OnEmailLoginClicked += () => HandleEmailLoginClicked();
+
+            // 로컬 게스트 로그인 버튼 이벤트 바인딩
+            loginView.OnLocalGuestLoginClicked += () => HandleLocalGuestLoginClicked();
         }
 
         if (nicknamePopupUI != null)
@@ -38,12 +43,12 @@ public class LoginController : MonoBehaviour
         if (googleLogin != null)
             googleLogin.OnLogStatus += OnGoogleLoginStatusChanged;
 
-        if(emailLoginPopupUI != null)
+        if (emailLoginPopupUI != null)
             emailLoginPopupUI.OnStatusChanged += OnAuthStatusChanged;
 
         SetAllUIActive(false);
     }
-    
+
     private void OnDestroy()
     {
         if (loginView != null)
@@ -51,6 +56,8 @@ public class LoginController : MonoBehaviour
             if (googleLogin != null)
                 loginView.OnGoogleLoginClicked -= () => HandleGoogleLoginClicked();
             loginView.OnEmailLoginClicked -= () => HandleEmailLoginClicked();
+
+            loginView.OnLocalGuestLoginClicked -= () => HandleLocalGuestLoginClicked();
         }
 
         if (nicknamePopupUI != null)
@@ -62,14 +69,31 @@ public class LoginController : MonoBehaviour
         if (emailLoginPopupUI != null)
             emailLoginPopupUI.OnStatusChanged -= OnAuthStatusChanged;
     }
-    private void HandleGoogleLoginClicked()
-    {
-        googleLogin?.RequestGoogleLogin();
-    }
+    private void HandleGoogleLoginClicked() => googleLogin?.RequestGoogleLogin();
+    private void HandleEmailLoginClicked()=>  emailLoginPopupUI?.OpenPopup();
 
-    private void HandleEmailLoginClicked()
+    /// <summary>
+    /// 로컬 게스트 로그인 버튼 클릭 시 호출
+    /// </summary>
+    private void HandleLocalGuestLoginClicked()
     {
-        emailLoginPopupUI?.OpenPopup();
+        UtilDebug.Log("로컬 게스트 로그인 시작");
+        UserManager.Instance.IsLocalMode = true;
+
+        // 3. 로컬 데이터가 이미 존재하는지 확인
+        if (UserManager.Instance.HasLocalSaveData())
+        {
+            // 기존 세이브가 있으면 바로 계정 정보 로드 및 로비 진입 진행
+            PlayerPrefs.SetInt(PREFS_LOCAL_GUEST_ACTIVE, 1);
+            PlayerPrefs.Save();
+            ProcessUserVerificationAsync(UserManager.Instance.LocalGuestUID, this.GetCancellationTokenOnDestroy()).Forget();
+        }
+        else
+        {
+            // 신규 게스트 유저: 닉네임 입력 팝업 직접 오픈
+            UtilDebug.Log("[LoginController] 신규 게스트 계정 -> 닉네임 팝업 오픈");
+            nicknamePopupUI?.Open();
+        }
     }
 
     /// <summary>
@@ -85,8 +109,16 @@ public class LoginController : MonoBehaviour
 
         try
         {
-            // 1. 기존 로그인 세션이 남아있는지 확인 ( 자동 로그인 검사 )
-            if (AuthLoginSystem.Instance.CurrentUser != null)
+            // 1. 로컬 게스트로 플레이하던 유저인지 체크 (재접속 자동 로그인)
+            if (PlayerPrefs.GetInt("IS_LOCAL_GUEST_ACTIVE", 0) == 1 && UserManager.Instance.HasLocalSaveData())
+            {
+                UtilDebug.Log("이전 로컬 게스트 세션 감지: 로컬 자동 로그인 진행");
+                UserManager.Instance.IsLocalMode = true;
+                ProcessUserVerificationAsync(UserManager.Instance.LocalGuestUID, ct).Forget();
+            }
+
+            // 2. Firebase 기존 로그인 세션이 남아있는지 확인 ( 자동 로그인 검사 )
+            else if (AuthLoginSystem.Instance.CurrentUser != null)
             {
                 UtilDebug.Log("기존 세션 감지 : 자동 로그인 진행");
                 ProcessUserVerificationAsync(AuthLoginSystem.Instance.UserId, ct).Forget();
@@ -114,14 +146,17 @@ public class LoginController : MonoBehaviour
     {
         if (!isFlowActive) return;
 
-        if(!isLoggedIn)
+        // 로컬 모드 진행 중에는 Firebase Auth 변경 무시
+        if (UserManager.Instance.IsLocalMode) return;
+
+        if (!isLoggedIn)
         {
             UserManager.Instance.ClearLocalData();
             loadingPopupUI?.ForceHide();
             loginView?.SetPanelActive(true);
             return;
         }
-        
+
         // 로그인 상태로 바뀌었을 때 검증 비동기 실행
         ProcessUserVerificationAsync(AuthLoginSystem.Instance.UserId, this.GetCancellationTokenOnDestroy()).Forget();
     }

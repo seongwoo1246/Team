@@ -258,21 +258,26 @@ public class SettingsPopupController : MonoBehaviour
         {
             UtilDebug.Log("로그아웃 프로세스 시작");
 
-            // 1. 현재 데이터 최종 플러시 (유실 방지)
+            // 1. 현재 데이터 최종 플러시
             if (GameManager.Instance != null)
             {
                 await GameManager.Instance.FlushGameDataAsync();
             }
 
-            // 2. Firebase Auth 로그아웃 실행
+            // 2. 로컬 게스트 세션 플래그 해제 (로그인 화면이 다시 뜨게 함)
+            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+            PlayerPrefs.Save();
+
+            // 3. Firebase Auth 로그아웃 실행 (로컬 모드여도 안전하게 호출 가능)
             AuthLoginSystem.Instance.SignOut();
 
-            // 3. 로컬 런타임 유저 정보 초기화
+            // 4. 런타임 유저 정보 초기화
+            UserManager.Instance.IsLocalMode = false;
             UserManager.Instance.ClearLocalData();
 
             ClosePopup();
 
-            // 4. 로그인/초기 씬으로 이동
+            // 5. 초기 타이틀 씬으로 복귀
             await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
         }
         catch (System.Exception ex)
