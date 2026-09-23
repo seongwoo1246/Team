@@ -19,7 +19,7 @@ public class MailboxUi : MonoBehaviour
     [SerializeField] private Button OpenButton; // 열기 버튼
     [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 우편이 있다고 알려줄 빨간 알림
 
-
+    [SerializeField] private GameObject dim;
     //[제일 핵심] 내가 스폰한 우편UI만을 스폰 디스폰 하기 위해 만든 바구니 역할
     private List<MailItemUi> activeMailItems = new List<MailItemUi>();
 
@@ -111,6 +111,10 @@ public class MailboxUi : MonoBehaviour
 
     public void OpenWindow()
     {
+
+        dim.gameObject.SetActive(true);
+        dim.transform.SetAsLastSibling();
+        gameObject.transform.SetAsLastSibling();
         gameObject.SetActive(true);
         // 혹시 모르니 먼저 한 번 빼고 넣기
         MailBoxManager.OnMailboxUpdated -= RefreshUi;
@@ -123,6 +127,7 @@ public class MailboxUi : MonoBehaviour
 
     public void CloseWindow()
     {
+        dim.gameObject.SetActive(false);
         gameObject.SetActive(false);
 
         //[중요] 메모리 누수방지를 위해 여기서 해제 해줘야함
