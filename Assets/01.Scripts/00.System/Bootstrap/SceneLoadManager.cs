@@ -5,6 +5,7 @@ using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 using UtilDebug = DebugLogger<SceneLoadManager>;
 public class SceneLoadManager : Singleton<SceneLoadManager>
 {
@@ -194,6 +195,8 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
         // 비동기 에셋 로드 및 생성
         for (int i = 0; i < sortedLoadables.Count; i++)
         {
+            UtilDebug.Log($"[Init 검사] ({sortedLoadables[i].LoadOrder}) {sortedLoadables[i].GetType().Name} OnSceneLoadCreate 시작");
+
             await sortedLoadables[i].OnSceneLoadCreate(scene);
             if (loadingView != null)
             {
@@ -210,7 +213,18 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
 
         foreach (var loadable in sortedLoadables)
         {
-            loadable.Init(scene);
+            if (loadable == null) continue;
+
+            string targetName = loadable.GetType().Name;
+            try
+            {
+                loadable.Init(scene);
+            }
+            catch (System.Exception ex)
+            {
+                UtilDebug.LogError($"[{targetName}] Init() 실행 중 Null 예외 발생: {ex.Message}\n{ex.StackTrace}");
+                throw;
+            }
         }
     }
 

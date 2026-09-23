@@ -182,7 +182,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
 
     /// <summary>
     /// 재료를 더한다 (황금 고블린 처치, 보스 클리어 등에서 호출)
-    /// </summary>
+    /// </summary>App
     /// <param name="amount">추가할 개수 (0 이하는 무시)</param>
     public void Add(int amount)
     {
@@ -306,9 +306,10 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         }
         // 보상 팝업 UI 표시
         int granted = _materialCount - countBefore;
+
         if (granted > 0 && RewardManager.Instance != null && RewardManager.Instance.GetUpgardMaterial != null)
         {
-            RewardManager.Instance.GetUpgardMaterial.text = granted.ToString();
+            //RewardManager.Instance.GetUpgardMaterial.text = granted.ToString();
         }
 
         // 오프라인 정산 완료 즉시 서버 최종 접속 시간을 현재로 갱신
