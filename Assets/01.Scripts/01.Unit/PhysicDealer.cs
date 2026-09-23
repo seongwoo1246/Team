@@ -57,7 +57,7 @@ public class PhysicDealer : CharacterBase
             return;
         }
 
-        target.TakeDamage(Power * powerStrikeMultiplier);
+        DealDamage(target, powerStrikeMultiplier);
     }
 
     /// <summary>스킬2: 휩쓸기. 사거리 안 적 전체에게 동시에 피해</summary>
@@ -68,8 +68,6 @@ public class PhysicDealer : CharacterBase
         {
             return;
         }
-
-        float damage = Power * cleaveMultiplier;
 
         for (int i = 0; i < count; i++)
         {
@@ -84,7 +82,7 @@ public class PhysicDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            DealDamage(target, cleaveMultiplier);
         }
     }
 

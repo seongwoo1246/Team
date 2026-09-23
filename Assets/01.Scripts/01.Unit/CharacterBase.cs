@@ -67,6 +67,19 @@ public class CharacterBase : MonoBehaviour, IEntity
         "공격속도(강화 트랙+신발 장비)만큼 실제로 짧아짐")]
     [SerializeField] private float skill2Cooldown = 20f;
 
+    [Header("데미지 표시")]
+    [Tooltip("공격이 적중했을 때 대상 머리 위에 뜨는 데미지 숫자 프리팹")]
+    [SerializeField] private DamagePopup damagePopupPrefab;
+
+    [Tooltip("체력바보다 위로 얼마나 더 띄울지")]
+    [SerializeField] private float damagePopupHeightAboveHealthBar = 0.3f;
+
+    // 데미지 팝업 풀 예열 개수 (광역 스킬이 한 번에 여러 명을 때려도 모자라지 않게)
+    private const int DAMAGE_POPUP_POOL_SIZE = 10;
+
+    // 데미지 팝업 풀을 이미 등록했는지 (캐릭터 전체가 공유하는 static이라 한 번만 등록하면 됨)
+    private static bool _damagePopupPoolRegistered = false;
+
     // 씬에 존재하는 모든 캐릭터 목록. 죽으면 SetActive(false)로 꺼져서 물리 탐지(OverlapCircle)에 안 잡히기 때문에,
     // "죽은 아군 찾기"(힐러 부활 스킬 등)처럼 비활성 상태도 찾아야 하는 경우 이 목록을 대신 쓴다
     private static readonly List<CharacterBase> _allCharacters = new List<CharacterBase>();
@@ -85,6 +98,8 @@ public class CharacterBase : MonoBehaviour, IEntity
     private float _currentHP;
     private float _currentMaxHP;
     private float _currentPower;
+
+    private float _currentRawPower;
 
     // AttackSpeed 트랙이 반영된 실제 공격 간격 (attackInterval 을 속도 계수로 나눈 값)
     private float _currentAttackInterval;
@@ -265,6 +280,12 @@ public class CharacterBase : MonoBehaviour, IEntity
 
         _allCharacters.Add(this);
 
+        if (!_damagePopupPoolRegistered && damagePopupPrefab != null)
+        {
+            ObjectPoolManagerTest.Instance.RegisterPool<DamagePopup>(DamagePopup.PoolKey, damagePopupPrefab.gameObject, DAMAGE_POPUP_POOL_SIZE);
+            _damagePopupPoolRegistered = true;
+        }
+
         RecalculateStats();
         _currentHP = _currentMaxHP;
     }
@@ -333,6 +354,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         {
             _currentMaxHP = 1f;
             _currentPower = 0f;
+            _currentRawPower = 0f;
             _currentAttackInterval = attackInterval;
             return;
         }
@@ -350,6 +372,7 @@ public class CharacterBase : MonoBehaviour, IEntity
 
         _currentMaxHP = StatCalculator.GetTaperedMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
         _currentPower = effectivePower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
+        _currentRawPower = rawPower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
 
         float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;
         float equipmentSpeedFactor = 1f + GetEquippedBonusRatio(EquipmentSlot.Shoes);
@@ -590,10 +613,56 @@ public class CharacterBase : MonoBehaviour, IEntity
     protected virtual void PerformAttack()
     {
         IEntity target = GetLowestHpEntity(enemyLayer);
-        if (target != null && !target.IsDead)
+        DealDamage(target);
+    }
+
+    /// <summary>
+    /// 대상에게 실제 피해를 입힌다. 매 타격마다 치명타 확률(_currentCritChance)을 직접 굴려서
+    /// 치명타면 치명타 배율만큼 더 세게, 아니면 기본 피해만 들어간다 (평균은 항상 Power와 같음)
+    /// 피해 직후 대상 머리 위에 데미지 숫자를 띄운다 (damagePopupPrefab이 있을 때만)
+    /// 딜러 클래스의 평타/스킬은 target.TakeDamage()를 직접 부르지 말고 전부 이 함수를 거쳐간다
+    /// </summary>
+    /// <param name="target">피해를 입힐 대상</param>
+    /// <param name="multiplier">평타 대비 배율 (스킬 데미지 배율 등, 기본 1배)</param>
+    protected void DealDamage(IEntity target, float multiplier = 1f)
+    {
+        if (target == null || target.IsDead)
         {
-            target.TakeDamage(_currentPower);
+            return;
         }
+
+        bool isCritical = UnityEngine.Random.value < _currentCritChance;
+        float baseDamage = _currentRawPower * multiplier;
+        float damage = isCritical ? baseDamage * (1f + _currentCritBonus) : baseDamage;
+
+        target.TakeDamage(damage);
+        ShowDamagePopup(target, damage, isCritical);
+    }
+
+    /// <summary>
+    /// damagePopupPrefab이 지정돼 있으면 대상 체력바보다 위쪽에 데미지 숫자 팝업을 띄운다 (비주얼 전용)
+    /// 몬스터마다 체력바 높이가 달라서, 대상의 체력바(MonsterHealthBar)를 직접 찾아 그 위치 기준으로 띄운다
+    /// 체력바를 못 찾으면 대상 위치를 그대로 기준으로 쓴다
+    /// </summary>
+    private void ShowDamagePopup(IEntity target, float damage, bool isCritical)
+    {
+        if (damagePopupPrefab == null || target is not Component targetComponent)
+        {
+            return;
+        }
+
+        MonsterHealthBar healthBar = targetComponent.GetComponentInChildren<MonsterHealthBar>();
+        Vector3 basePosition = healthBar != null ? healthBar.transform.position : targetComponent.transform.position;
+        Vector3 spawnPosition = basePosition + new Vector3(0f, damagePopupHeightAboveHealthBar, 0f);
+
+        DamagePopup popup = ObjectPoolManagerTest.Instance.Spawn<DamagePopup>(DamagePopup.PoolKey);
+        if (popup == null)
+        {
+            return;
+        }
+
+        popup.transform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
+        popup.Show(damage, isCritical);
     }
 
     // 공격 직전 훅. 기본은 아무것도 안함 (이펙트/사운드 추가용)
