@@ -29,6 +29,9 @@ public class MailboxUi : MonoBehaviour ,ILoadable
 
     private void Awake()
     {
+        gameObject.SetActive(false);
+
+
         if(closeButton != null)
         {
             closeButton.onClick.AddListener(CloseWindow);
