@@ -48,14 +48,24 @@ public class SettingsPopupController : MonoBehaviour
 
     private void Awake()
     {
+
+       
+      
         //슬라이더 값을 음악 소리로 넘겨주기
-        if(bgmvolume != null)
+        if (bgmvolume != null)
         {
             bgmvolume.onValueChanged.AddListener(SoundManager.Instance.SetBGMVolume);
+
+            float bgm = PlayerPrefs.GetFloat("BGMSound", 0.5f);
+            bgmvolume.value = bgm;
+            
         }
         if(sfxVolume != null)
         {
             sfxVolume.onValueChanged.AddListener(SoundManager.Instance.SetSFXVolume);
+
+            float sfx = PlayerPrefs.GetFloat("SFXSound", 0.5f);
+            sfxVolume.value = sfx;
         }
 
 
