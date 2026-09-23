@@ -91,7 +91,10 @@ public sealed class EquipmentDropCollector : MonoBehaviour, ILoadable
         equipmentInventory.AddItem(item);
 
         // 김주연 - 서버 인벤토리에도 저장 (여태 로컬 리스트에만 쌓이고 서버엔 저장 안 되던 문제)
-        UserManager.Instance.AddEquipmentAsync(item.InstanceId, item.ToDTO(), this.destroyCancellationToken).Forget();
+        if (!UserManager.Instance.IsLocalMode)
+        {
+            UserManager.Instance.AddEquipmentAsync(item.InstanceId, item.ToDTO(), this.destroyCancellationToken).Forget();
+        }
     }
 
     #region 김주연 - 서버 저장 인벤토리/장착 상태 복원

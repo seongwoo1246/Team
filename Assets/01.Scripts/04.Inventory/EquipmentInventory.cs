@@ -107,24 +107,56 @@ public class EquipmentInventory : MonoBehaviour, ILoadable, ISyncable
         return item != null;
     }
 
-    #region 인벤토리 조작 - 홍준호? 김주연?
+    #region 인벤토리 조작 - 홍준호? 김주연? / 로컬 저장 - 송태훈
 
     // 장비 추가
     public void AddItem(EquippedItem item)
     {
-        if (item == null)
+        if (item == null || string.IsNullOrEmpty(item.InstanceId))
             return;
 
-        items.Add(item);
+        if (!items.Contains(item))
+        {
+            items.Add(item);
+        }
+
+        // [핵심] UserInfo 메모리 및 로컬 세이브 데이터 즉시 동기화
+        var invData = UserManager.Instance.CurrentUser?.Inventory?.Data;
+        if (invData != null)
+        {
+            if (invData.equipments == null)
+                invData.equipments = new Dictionary<string, EquipmentSaveDTO>();
+
+            invData.equipments[item.InstanceId] = item.ToDTO();
+
+            // 로컬 모드일 때 파일 즉시 쓰기
+            if (UserManager.Instance.IsLocalMode)
+            {
+                UserManager.Instance.SaveLocalUserData();
+            }
+        }
     }
 
     // 장비를 인벤토리에서 제거
     public bool RemoveItem(EquippedItem item)
     {
-        if (item == null)
-            return false;
+        if (item == null) return false;
 
-        return items.Remove(item);
+        bool removed = items.Remove(item);
+        if (removed)
+        {
+            var invData = UserManager.Instance.CurrentUser?.Inventory?.Data;
+            if (invData != null && invData.equipments != null)
+            {
+                invData.equipments.Remove(item.InstanceId);
+
+                if (UserManager.Instance.IsLocalMode)
+                {
+                    UserManager.Instance.SaveLocalUserData();
+                }
+            }
+        }
+        return removed;
     }
 
     // 장비를 종류 별로 불러옴
