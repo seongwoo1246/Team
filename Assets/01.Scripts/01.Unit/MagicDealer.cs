@@ -48,7 +48,6 @@ public class MagicDealer : CharacterBase
             return;
         }
 
-        float damage = Power * areaDamageMultiplier;
         int hitCount = 0;
 
         for (int i = 0; i < count; i++)
@@ -69,7 +68,7 @@ public class MagicDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            DealDamage(target, areaDamageMultiplier);
             hitCount++;
         }
     }
@@ -94,7 +93,7 @@ public class MagicDealer : CharacterBase
             return;
         }
 
-        target.TakeDamage(Power * fireballMultiplier);
+        DealDamage(target, fireballMultiplier);
     }
 
     /// <summary>스킬2: 메테오. maxTargets 제한 없이 사거리 안 적 전체에게 피해</summary>
@@ -105,8 +104,6 @@ public class MagicDealer : CharacterBase
         {
             return;
         }
-
-        float damage = Power * meteorMultiplier;
 
         for (int i = 0; i < count; i++)
         {
@@ -121,7 +118,7 @@ public class MagicDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            DealDamage(target, meteorMultiplier);
         }
     }
 

@@ -50,7 +50,7 @@ public class PaladinDealer : CharacterBase
             return;
         }
 
-        target.TakeDamage(Power * shieldBashMultiplier);
+        DealDamage(target, shieldBashMultiplier);
         Heal(MaxHP * shieldBashHealRatio);
     }
 
