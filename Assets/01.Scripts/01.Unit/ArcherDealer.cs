@@ -1,7 +1,6 @@
 // 작성자: 김주연
 /*
 궁수 - 원거리 다단히트형 물리 딜러. 치명타율이 높고 체력은 낮은 대신, 스킬로 여러 대상/여러 발을 때림
-PhysicDealer(전사)는 그대로 두고, CharacterBase를 직접 상속해서 독자적으로 구현함
 */
 
 using UnityEngine;
@@ -32,7 +31,22 @@ public class ArcherDealer : CharacterBase
     // 관통 사격용 OverlapCircle 결과 재사용 버퍼
     private readonly Collider2D[] _piercingBuffer = new Collider2D[MAX_TARGET_BUFFER];
 
-   
+    // 화살 풀 예열 개수
+    private const int ARROW_POOL_SIZE = 10;
+
+    private static bool _arrowPoolRegistered = false;
+
+    protected override void Awake()
+    {
+        base.Awake();
+
+        if (!_arrowPoolRegistered && arrowPrefab != null)
+        {
+            ObjectPoolManagerTest.Instance.RegisterPool<Arrow>(Arrow.PoolKey, arrowPrefab.gameObject, ARROW_POOL_SIZE);
+            _arrowPoolRegistered = true;
+        }
+    }
+
     protected override void PerformAttack()
     {
         IEntity target = GetLowestHpEntity(EnemyLayer);
@@ -52,7 +66,13 @@ public class ArcherDealer : CharacterBase
             return;
         }
 
-        Arrow arrow = Instantiate(arrowPrefab, transform.position, Quaternion.identity);
+        Arrow arrow = ObjectPoolManagerTest.Instance.Spawn<Arrow>(Arrow.PoolKey);
+        if (arrow == null)
+        {
+            return;
+        }
+
+        arrow.transform.SetPositionAndRotation(transform.position, Quaternion.identity);
         arrow.Fire(targetComponent.transform.position);
     }
 
