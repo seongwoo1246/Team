@@ -72,7 +72,7 @@ public class EquipmentInventorySlot : MonoBehaviour
         {
             Debug.LogError("버튼 문제");
             button.onClick.RemoveAllListeners();
-            button.onClick.AddListener(OnSlotClicked);
+            button.onClick.AddListener(OnSellSlotClicked);
         }
     }
 
