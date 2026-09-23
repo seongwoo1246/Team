@@ -1,13 +1,22 @@
 // 작성자: 김주연
 /*
+궁수가 쏘는 화살 발사체
 */
 
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public sealed class Arrow : MonoBehaviour
+public sealed class Arrow : MonoBehaviour, IPoolObject
 {
+    public const string PoolKey = "Arrow";
+
+    // 풀 예열 개수
+    private const int POOL_INITIAL_SIZE = 10;
+
+    string IPoolObject.PoolKey => PoolKey;
+    int IPoolObject.InitialSize => POOL_INITIAL_SIZE;
+
     [Header("비행 속도")]
     [SerializeField] private float _moveSpeed = 15f;
 
@@ -15,10 +24,25 @@ public sealed class Arrow : MonoBehaviour
 
     [SerializeField] private float _maxLifetime = 2f;
 
+    private CancellationTokenSource _cts;
+
     public void Fire(Vector3 targetPosition)
     {
-        FlyToTargetAsync(targetPosition, this.GetCancellationTokenOnDestroy()).Forget();
+        FlyToTargetAsync(targetPosition, _cts.Token).Forget();
     }
+
+    public void OnSpawn()
+    {
+        _cts = new CancellationTokenSource();
+    }
+
+    public void OnDespawn()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+    }
+
     private async UniTaskVoid FlyToTargetAsync(Vector3 targetPosition, CancellationToken token)
     {
         Vector3 direction = (targetPosition - transform.position).normalized;
@@ -38,6 +62,6 @@ public sealed class Arrow : MonoBehaviour
             await UniTask.Yield(PlayerLoopTiming.Update, token);
         }
 
-        Destroy(gameObject);
+        ObjectPoolManagerTest.Instance.Despawn(PoolKey, this);
     }
 }
