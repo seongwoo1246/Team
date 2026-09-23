@@ -13,7 +13,7 @@ using Debug = DebugLogger<ADManager>;
 /// <summary>
 /// 지금은 아니지만 나중에 광고를 넣어야 하게 될 때 필요한 클래스(이번 프로젝트에서는 짧은 아무 동영상으로 대체함)
 /// </summary>
-public class ADManager : Singleton<ADManager>
+public class ADManager : MonoBehaviour
 {
     [Header("광고(x) UI들")]
     [SerializeField] private GameObject adPanel; // 광고 패널
@@ -36,10 +36,8 @@ public class ADManager : Singleton<ADManager>
     public RewardType type;
     public double amount = 0;
 
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
-
         if(adPanel != null ) adPanel.SetActive(false);
         if (closeAdBtn != null)
         {
@@ -51,7 +49,7 @@ public class ADManager : Singleton<ADManager>
        
     }
 
-    protected override void OnDestroy()
+    private void OnDestroy()
     {
         //메모리 누수방지용 토큰취소
         adCancellationTokenSource? .Cancel();

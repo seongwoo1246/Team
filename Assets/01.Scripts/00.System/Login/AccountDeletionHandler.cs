@@ -13,6 +13,20 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 {
     public async UniTask<bool> ProcessAccountDeletionAsync(CancellationToken ct = default)
     {
+        // 1. 로컬 분기
+        if (UserManager.Instance.IsLocalMode)
+        {
+            UtilDebug.Log("[AccountDeletionHandler] 로컬 게스트 계정 데이터 삭제 시작");
+
+            // 로컬 PlayerPrefs 삭제 및 메모리 정리 실행
+            await UserManager.Instance.DeleteUserDataAsync(UserManager.Instance.LocalGuestUID, ct);
+
+            // 타이틀 씬으로 복귀
+            await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
+            return true;
+        }
+
+        // 2. 서버 분기
         string uid = AuthLoginSystem.Instance.UserId;
         if (string.IsNullOrEmpty(uid))
         {

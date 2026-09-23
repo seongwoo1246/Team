@@ -18,7 +18,7 @@ record 버튼 열 때 OnOpenRankUI();를 실행해서 랭킹표에 데이터를 
 /// <summary>
 /// 여러 카테고리의 랭킹 데이터를 관리하고 탭 전환을 처리하는 UI 관리 스크립트
 /// </summary>
-public class RankingUi : Singleton<RankingUi> , ILoadable
+public class RankingUi : MonoBehaviour , ILoadable
 {
     private static readonly RankColor[] CachedColors = new RankColor[]
     {
@@ -51,11 +51,16 @@ public class RankingUi : Singleton<RankingUi> , ILoadable
     // 랭킹중에서는 가장 빨라야함
     public int LoadOrder => 25;
 
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
-        isDDOL = true;
-        this.gameObject.SetActive(false);
+        ServiceLocator.Register<RankingUi>(this);
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
         // 각 딕셔너리에 미리 크기 지정
         top3CategoryDataDict[RankCategoty.Damage] = new UserRankData[3];
         top3CategoryDataDict[RankCategoty.ClearTime] = new UserRankData[3];
@@ -67,6 +72,12 @@ public class RankingUi : Singleton<RankingUi> , ILoadable
 
         //게임 시작 시 로컬 저장소에서 데이터 불러오기
         LoadLocalData();
+        this.gameObject.SetActive(false);
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        return;
     }
 
     private void LoadLocalData()
@@ -204,20 +215,5 @@ public class RankingUi : Singleton<RankingUi> , ILoadable
     private void CloseWindow()
     {
         this.gameObject.SetActive(false);
-    }
-
-    public UniTask OnSceneLoadCreate(SceneId scene)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Init(SceneId scene)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void OnSceneDestory(SceneId scene)
-    {
-        throw new NotImplementedException();
     }
 }

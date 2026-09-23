@@ -81,7 +81,7 @@ public class Test_EquipmentGacha : MonoBehaviour
                 equipmentInventory.AddItem(item);
 
                 // 서버 인벤토리 DTO 저장 태스크 준비
-                if(UserManager.Instance != null && UserManager.Instance.CurrentUser != null)
+                if(!UserManager.Instance.IsLocalMode && UserManager.Instance.CurrentUser != null)
                 {
                     saveTask.Add(UserManager.Instance.AddEquipmentAsync(item.InstanceId, item.ToDTO(), ct));
                 }
@@ -98,6 +98,12 @@ public class Test_EquipmentGacha : MonoBehaviour
             {
                 // 이벤트 핸들러를 만들어서 처리하던가 해야함
                 await UserManager.Instance.UpdateGoldAsync(GoldWallet.Instance.Balance, ct);
+            }
+            
+            // 로컬 모드일 때 디스크 저장 및 강제 플러시
+            if (UserManager.Instance != null && UserManager.Instance.IsLocalMode)
+            {
+                UserManager.Instance.SaveLocalUserData();
             }
 
             UtilDebug.Log($"{gachaCost}골드를 사용하여 장비 10개 뽑기");

@@ -130,16 +130,19 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
 
         for (int i = 0; i < SLOT_COUNT; i++) _formation[i] = null;
 
-        if (allCharacters != null)
+        if (allCharacters != null && allCharacters.Length > 0)
         {
+            // 2. 서버/로컬 세이브 데이터 기반으로 슬롯 배치
             foreach (var character in allCharacters)
             {
                 if (character == null || character.StatData == null) continue;
 
-                if (charDict.TryGetValue(character.StatData.Id, out var saveData))
+                string charId = character.StatData.Id;
+
+                if (charDict.TryGetValue(charId, out var saveData))
                 {
-                    // 1. 장비 복원 (equippedItems가 있을 때만)
-                    if (saveData.equippedItems != null)
+                    // 장비 복원
+                    if (saveData.equippedItems != null && equipmentInventory != null)
                     {
                         foreach (var slotPair in saveData.equippedItems)
                         {
@@ -153,22 +156,38 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
                         }
                     }
 
-                    // 2. 파티 슬롯 배정 (장비 유무와 무관하게 항상 실행)
+                    // 파티 슬롯 배정 (0, 1, 2 슬롯 유효성 검사)
                     if (saveData.partySlot >= 0 && saveData.partySlot < SLOT_COUNT)
                     {
-                        _formation[saveData.partySlot] = character;
+                        // 이미 해당 슬롯에 배정된 캐릭터가 없다면 배정
+                        if (_formation[saveData.partySlot] == null)
+                        {
+                            _formation[saveData.partySlot] = character;
+                        }
+                        else
+                        {
+                            UtilDebug.LogWarning($"슬롯 {saveData.partySlot} 중복 충돌 감지 ({character.name}) -> 빈 슬롯으로 재배치 예정");
+                        }
                     }
                 }
+
                 character.RefreshStatsFromUpgradeSystem();
             }
 
-
-            // Fallback (비어있으면 앞 3명) - 방어코드 리펙토링하면 없앨 수 있음
-            if (_formation[0] == null && _formation[1] == null && _formation[2] == null)
+            // 3. [안전장치] 빈 슬롯이 생겼을 경우(예: 0번만 차고 1, 2번이 비었을 때) 미편성 캐릭터로 자동 채움
+            for (int slot = 0; slot < SLOT_COUNT; slot++)
             {
-                for (int i = 0; i < SLOT_COUNT && i < allCharacters.Length; i++)
+                if (_formation[slot] == null)
                 {
-                    _formation[i] = allCharacters[i];
+                    // allCharacters 중 아직 _formation에 포함되지 않은 캐릭터 탐색
+                    for (int i = 0; i < allCharacters.Length; i++)
+                    {
+                        if (allCharacters[i] != null && System.Array.IndexOf(_formation, allCharacters[i]) < 0)
+                        {
+                            _formation[slot] = allCharacters[i];
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -249,13 +268,28 @@ public sealed class PartyFormationManager : MonoBehaviour, ILoadable
         UpdateAllSkillButtons();
         FormationChanged?.Invoke((CharacterBase[])_formation.Clone());
 
+        // 슬롯 맵 생성 및 저장 호출
+        SyncPartySlotsToUserMemory();
+    }
+
+    /// <summary>
+    /// 현재 _formation 배열 상태를 UserManager 및 세이브 데이터에 정확히 동기화
+    /// </summary>
+    private void SyncPartySlotsToUserMemory()
+    {
+        if (allCharacters == null) return;
+
         var slotMap = new Dictionary<string, int>();
         for (int i = 0; i < allCharacters.Length; i++)
         {
-            CharacterBase charcterbase = allCharacters[i];
-            int slotIndex = System.Array.IndexOf(_formation, charcterbase);
-            slotMap[character.StatData.Id] = slotIndex; // 편성에 없으면 -1, 있으면 0~2
+            CharacterBase charBase = allCharacters[i];
+            if (charBase == null || charBase.StatData == null) continue;
+
+            // _formation 배열 안에 있으면 0~2, 없으면 -1
+            int slotIndex = System.Array.IndexOf(_formation, charBase);
+            slotMap[charBase.StatData.Id] = slotIndex;
         }
+
         UserManager.Instance.UpdateAllPartySlotAsync(slotMap, this.destroyCancellationToken).Forget();
     }
 

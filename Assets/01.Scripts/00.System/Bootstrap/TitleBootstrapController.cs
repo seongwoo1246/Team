@@ -51,11 +51,14 @@ public class TitleBootstrapController : MonoBehaviour
         view.SetLoadingVisible(false);
         await loginController.LoginFlowAsync(ct);
 
-        // STEP 4. CDN 에셋 번들 일괄 검사 및 다운로드
-        view.SetLoadingVisible(true);
-        view.UpdateState("패치 데이터 확인 중...", 0.0f);
-        await ExecuteStepWithRetryAsync(() => StepCheckAndDownloadAssetsAsync(ct),
-            "데이터 다운로드에 실패했습니다. 다시 시도", ct);
+        // STEP 4. CDN 에셋 번들 일괄 검사 및 다운로드 ( 로컬이 아닐 경우에만 )
+        if(UserManager.Instance.IsLocalMode)
+        {
+            view.SetLoadingVisible(true);
+            view.UpdateState("패치 데이터 확인 중...", 0.0f);
+            await ExecuteStepWithRetryAsync(() => StepCheckAndDownloadAssetsAsync(ct),
+                "데이터 다운로드에 실패했습니다. 다시 시도", ct);
+        }
 
         view.UpdateState("다운로드 완료", 1.0f);
 

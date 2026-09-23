@@ -45,25 +45,57 @@ public class UserManager : NonMonoSingleton<UserManager>
     public async UniTask<(bool exists, UserInfo data)> LoadUserInfoAsync(string uid, CancellationToken ct = default)
     {
         // 로컬 분기
-        if(IsLocalMode)
+        if (IsLocalMode)
         {
             if (!HasLocalSaveData())
             {
-                UtilDebug.Log("로컬 저장 데이터 없음 -> 닉네임 입력 창으로 이동");
+                UtilDebug.Log("[로컬] 저장 데이터 없음 -> 닉네임 생성 화면으로");
                 CurrentUser = null;
                 return (false, null);
             }
 
             try
             {
-                string json = PlayerPrefs.GetString(LOCAL_SAVE_DATA_KEY);
-                CurrentUser = JsonConvert.DeserializeObject<UserInfo>(json);
-                UtilDebug.Log($"로컬 저장 데이터 로드 성공 (닉네임: {CurrentUser.Profile.nickname})");
+                string json = PlayerPrefs.GetString(LOCAL_SAVE_DATA_KEY, string.Empty);
+                if (string.IsNullOrEmpty(json))
+                {
+                    CurrentUser = null;
+                    return (false, null);
+                }
+
+                var settings = new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    MissingMemberHandling = MissingMemberHandling.Ignore
+                };
+
+                CurrentUser = JsonConvert.DeserializeObject<UserInfo>(json, settings);
+
+                // [Null 검증] 역직렬화 후 필수 데이터 누락 시 안전 복원
+                if (CurrentUser == null || CurrentUser.Profile == null || CurrentUser.Characters == null || CurrentUser.Inventory == null)
+                {
+                    UtilDebug.LogError("[로컬] 세이브 파일 손상 감지 -> 초기화 처리");
+                    PlayerPrefs.DeleteKey(LOCAL_SAVE_DATA_KEY);
+                    PlayerPrefs.Save();
+                    CurrentUser = null;
+                    return (false, null);
+                }
+
+                // 하위 딕셔너리 null 방어
+                if (CurrentUser.Characters.characterDictionary == null)
+                    CurrentUser.Characters.characterDictionary = new();
+
+                if (CurrentUser.Inventory.Data == null)
+                    CurrentUser.Inventory.ExcuteGetAsync(ct).Forget(); // 기본 세팅 보장
+
+                string nick = CurrentUser.Profile.nickname ?? "게스트";
+                UtilDebug.Log($"[로컬] 데이터 로드 완료 (닉네임: {nick})");
                 return (true, CurrentUser);
             }
             catch (Exception ex)
             {
-                UtilDebug.LogError($"로컬 데이터 로드 실패: {ex.Message}");
+                UtilDebug.LogError($"[로컬] 데이터 로드 실패: {ex.Message}");
+                CurrentUser = null;
                 return (false, null);
             }
         }
@@ -226,10 +258,25 @@ public class UserManager : NonMonoSingleton<UserManager>
     public void SaveLocalUserData()
     {
         if (CurrentUser == null) return;
-        string json = JsonConvert.SerializeObject(CurrentUser, Formatting.Indented);
-        PlayerPrefs.SetString(LOCAL_SAVE_DATA_KEY, json);
-        PlayerPrefs.Save();
-        UtilDebug.Log("[로컬] PlayerPrefs 디스크 저장 완료");
+
+        try
+        {
+            // 순환 참조 방지 및 깔끔한 포맷팅 저장
+            var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.Indented
+            };
+
+            string json = JsonConvert.SerializeObject(CurrentUser, settings);
+            PlayerPrefs.SetString(LOCAL_SAVE_DATA_KEY, json);
+            PlayerPrefs.Save();
+            UtilDebug.Log("[로컬] PlayerPrefs 디스크 저장 완료");
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"[로컬] 저장 중 직렬화 오류 발생: {ex.Message}");
+        }
     }
 
     /// <summary>
@@ -287,20 +334,42 @@ public class UserManager : NonMonoSingleton<UserManager>
     }
 
     /// <summary>
-    /// 캐릭터 장비 장착(스왑)
+    /// 캐릭터 장비 장착(스왑) - 로컬 즉시 저장 
     /// </summary>
     public async UniTask<bool> EquipItemAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
     {
-        if (CurrentUser == null) return false;
+        if (CurrentUser == null || CurrentUser.Characters == null) return false;
+
+        // 1. 해당 캐릭터 데이터가 딕셔너리에 없으면 안전하게 생성
+        if (!CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+        {
+            charData = new CharacterSaveData
+            {
+                characterId = charId,
+                isUnlocked = true,
+                partySlot = -1,
+                equippedItems = new Dictionary<string, string>()
+            };
+            CurrentUser.Characters.characterDictionary[charId] = charData;
+        }
+
+        if (charData.equippedItems == null)
+        {
+            charData.equippedItems = new Dictionary<string, string>();
+        }
+
+        // 2. 슬롯에 instanceId 등록
+        string slotKey = slot.ToString();
+        charData.equippedItems[slotKey] = instanceId;
+
+        // 3. 로컬 모드일 때 즉시 디스크 반영
         if (IsLocalMode)
         {
-            if (CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
-            {
-                charData.equippedItems[slot.ToString()] = instanceId;
-                SaveLocalUserData();
-            }
-            return true; // 서버 통신 차단
+            SaveLocalUserData();
+            return true;
         }
+
+        // 서버 모드 통신
         return await CurrentUser.Characters.SetEquippedSlotAsync(charId, slot, instanceId, ct);
     }
 
@@ -347,9 +416,24 @@ public class UserManager : NonMonoSingleton<UserManager>
     /// </summary>
     public async UniTask<bool> AddEquipmentAsync(string instanceId, EquipmentSaveDTO newEquip, CancellationToken ct = default)
     {
-        if (CurrentUser == null) return false;
+        if (CurrentUser == null || CurrentUser.Inventory == null || string.IsNullOrEmpty(instanceId) || newEquip == null)
+            return false;
+
+        if (CurrentUser.Inventory.Data == null)
+            CurrentUser.Inventory.ExcuteGetAsync(ct).Forget();
+
+        if (CurrentUser.Inventory.Data.equipments == null)
+            CurrentUser.Inventory.Data.equipments = new Dictionary<string, EquipmentSaveDTO>();
+
+        // 메모리 딕셔너리에 저장
         CurrentUser.Inventory.Data.equipments[instanceId] = newEquip;
-        if (IsLocalMode) { SaveLocalUserData(); return true; } // 로컬 파일 즉시 반영
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
         return await CurrentUser.Inventory.AddEquipmentAsync(instanceId, newEquip, ct);
     }
 
@@ -403,9 +487,23 @@ public class UserManager : NonMonoSingleton<UserManager>
         // 로컬 분기
         foreach (var kvp in slotMap)
         {
-            if (CurrentUser.Characters.characterDictionary.TryGetValue(kvp.Key, out var charData))
+            string charId = kvp.Key;
+            int slotIndex = kvp.Value;
+
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
             {
-                charData.partySlot = kvp.Value;
+                charData.partySlot = slotIndex; // 0, 1, 2 또는 -1
+            }
+            else
+            {
+                // 누락된 캐릭터가 있다면 새로 생성하여 등록
+                CurrentUser.Characters.characterDictionary[charId] = new CharacterSaveData
+                {
+                    characterId = charId,
+                    isUnlocked = true,
+                    partySlot = slotIndex,
+                    equippedItems = new Dictionary<string, string>()
+                };
             }
         }
 
@@ -567,7 +665,8 @@ public class UserManager : NonMonoSingleton<UserManager>
             PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
             PlayerPrefs.Save();
             ClearLocalData();
-            UtilDebug.Log("[로컬] 데이터 완전 삭제 완료");
+            IsLocalMode = false;
+            UtilDebug.Log("[로컬] PlayerPrefs 로컬 세이브 데이터 및 세션 완전 초기화 완료");
             return true;
         }
 

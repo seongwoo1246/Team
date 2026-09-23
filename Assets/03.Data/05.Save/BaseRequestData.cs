@@ -108,7 +108,7 @@ public class UserProfileRequest : BaseRequestData
     {
         this.nickname = nickname;
         this.accountLevel = 1;
-        this.currentStage = 1;
+        this.currentStage = 0;
         this.lastLoginTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         this.gold = 0;
         this.dia = 0;
@@ -376,7 +376,8 @@ public class InventoryRequest : BaseRequestData
 {
     protected override string RootDomain => Inventories;
 
-    public InventorySaveData Data { get; private set; } = new();
+    [JsonProperty]
+    public InventorySaveData Data { get; set; } = new();
     public InventoryRequest(string uid) : base(uid) { }
 
     #region 인벤토리 전체 동기화 API

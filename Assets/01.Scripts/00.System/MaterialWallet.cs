@@ -17,9 +17,10 @@
    - 플러시 동기화: ISyncable 구현을 통한 GameManager 일괄 수집 지원
  */
 
-using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 using UtilDebug = DebugLogger<MaterialWallet>;
 /// <summary>
@@ -41,7 +42,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     //private const string LAST_SEEN_UTC_KEY = "MaterialWallet_LastSeenUtc"; - 메서드 미사용으로 변경함으로서 변수 미사용
 
     // 보유 재료 개수
-    private int _materialCount;
+    [SerializeField] private int _materialCount;
 
     // 지금까지 쌓인 시간(초). secondsPerMaterial을 채우면 1개 지급하고 0으로 리셋됨
     private float _accumulatedSeconds;
@@ -181,7 +182,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
 
     /// <summary>
     /// 재료를 더한다 (황금 고블린 처치, 보스 클리어 등에서 호출)
-    /// </summary>
+    /// </summary>App
     /// <param name="amount">추가할 개수 (0 이하는 무시)</param>
     public void Add(int amount)
     {
@@ -286,7 +287,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     private void ApplyOfflineTimeFromServer()
     {
         var profile = UserManager.Instance.CurrentUser?.Profile;
-        if (profile != null || profile.lastLoginTimestamp <= 0) return;
+        if (profile == null || profile.lastLoginTimestamp <= 0) return;
 
         long nowSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         long lastLogin = profile.lastLoginTimestamp;
@@ -305,9 +306,10 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         }
         // 보상 팝업 UI 표시
         int granted = _materialCount - countBefore;
+
         if (granted > 0 && RewardManager.Instance != null && RewardManager.Instance.GetUpgardMaterial != null)
         {
-            RewardManager.Instance.GetUpgardMaterial.text = granted.ToString();
+            //RewardManager.Instance.GetUpgardMaterial.text = granted.ToString();
         }
 
         // 오프라인 정산 완료 즉시 서버 최종 접속 시간을 현재로 갱신
@@ -319,8 +321,14 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     /// </summary>
     private void SaveAccumulatedSecond()
     {
-        PlayerPrefs.SetFloat(ACCUMULATED_SECONDS_KEY, _accumulatedSeconds);
-        PlayerPrefs.Save();
+        var inv = UserManager.Instance.CurrentUser?.Inventory;
+        if (inv != null)
+        {
+            if (inv.Data == null) inv.Data = new InventorySaveData();
+            if (inv.Data.consumables == null) inv.Data.consumables = new Dictionary<string, int>();
+
+            inv.Data.consumables[MATERIAL_KEY] = _materialCount;
+        }
     }
 
 }

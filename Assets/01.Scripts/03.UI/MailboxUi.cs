@@ -1,5 +1,4 @@
-﻿using Cysharp.Threading.Tasks;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 //담당자 - 정성우
@@ -7,7 +6,7 @@ using UnityEngine.UI;
 /// <summary>
 /// 전체 우편함 팝업 패널 제어 스크립트 (패널UI한태 직접 붙여주는 스크립트)
 /// </summary>
-public class MailboxUi : MonoBehaviour ,ILoadable
+public class MailboxUi : MonoBehaviour
 {
     [Header("Ui 패널 안에 들어갈 내용들")]
     [SerializeField] private Transform contentParent; // 스크롤뷰의 content의 트랜스폼
@@ -29,9 +28,6 @@ public class MailboxUi : MonoBehaviour ,ILoadable
 
     private void Awake()
     {
-        gameObject.SetActive(false);
-
-
         if(closeButton != null)
         {
             closeButton.onClick.AddListener(CloseWindow);
@@ -46,25 +42,7 @@ public class MailboxUi : MonoBehaviour ,ILoadable
 
         //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
         ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
-
-    }
-
-    private void OnEnable()
-    {
-        // 혹시 모르니 먼저 한 번 빼고 넣기
-        MailBoxManager.OnMailboxUpdated -= RefreshUi;
-        //[중요] 서버 데이터 변경 이벤트 구독
-        MailBoxManager.OnMailboxUpdated += RefreshUi;
-
-        //팝업 열릴 시  즉시 Ui 갱신
-        RefreshUi();
-    }
-
-    private void OnDisable()
-    {
-        //[중요] 메모리 누수방지를 위해 여기서 해제 해줘야함
-        MailBoxManager.OnMailboxUpdated -= RefreshUi;
-        ClearMailList();
+        gameObject.SetActive(false);
     }
 
 
@@ -131,29 +109,24 @@ public class MailboxUi : MonoBehaviour ,ILoadable
         }
     }
 
+    public void OpenWindow()
+    {
+        gameObject.SetActive(true);
+        // 혹시 모르니 먼저 한 번 빼고 넣기
+        MailBoxManager.OnMailboxUpdated -= RefreshUi;
+        //[중요] 서버 데이터 변경 이벤트 구독
+        MailBoxManager.OnMailboxUpdated += RefreshUi;
+
+        //팝업 열릴 시  즉시 Ui 갱신
+        RefreshUi();
+    }
 
     public void CloseWindow()
     {
         gameObject.SetActive(false);
-    }
 
-    public void OpenWindow()
-    {
-        gameObject.SetActive(true);
-    }
-
-    public UniTask OnSceneLoadCreate(SceneId scene)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void Init(SceneId scene)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    public void OnSceneDestory(SceneId scene)
-    {
-        throw new System.NotImplementedException();
+        //[중요] 메모리 누수방지를 위해 여기서 해제 해줘야함
+        MailBoxManager.OnMailboxUpdated -= RefreshUi;
+        ClearMailList();
     }
 }

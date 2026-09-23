@@ -79,8 +79,8 @@ public static class GameEvents
     public static event Action OnStageCleared;
     // 로그인 하고 로그 아웃한 시간을 구해서 얼마나 플레이하는검사할 때 할 이벤트
     public static event Action<double> OnPlayTime;
-   
-    
+
+
 
 
 
@@ -88,7 +88,7 @@ public static class GameEvents
     public static void TriggerOnGoldObtained(double amount) => OnGoldObtained?.Invoke(amount);
     public static void TriggerOnStageCleared() => OnStageCleared?.Invoke();
     public static void TriggerOnPlayTime(double times) => OnPlayTime?.Invoke(times);
-    
+
 
 }
 #endregion
@@ -96,7 +96,7 @@ public static class GameEvents
 /// <summary>
 /// 업적 데이터를 로컬과 서버와 동기화 하여 관리하는 스크립트
 /// </summary>
-public class AchievementManager : Singleton<AchievementManager> , ILoadable
+public class AchievementManager : MonoBehaviour, ILoadable
 {
     [SerializeField] private AchievementSlot slot;
     [SerializeField] private Transform contentParent;
@@ -115,34 +115,42 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     //오브젝트 풀링 보다는 늦어야함
     public int LoadOrder => 30;
 
-    protected override void Awake()
+    private  void Awake()
     {
-        base.Awake();
+        SceneLoadManager.Instance.RegisterLoadable(this);
+        ServiceLocator.Register<AchievementManager>(this);
+    }
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
         InitializeDictionary();
         LoadAchievements();
-
-        gameObject.SetActive(false);
-        
-        if (ObjcetPoolManager.Instance != null )
+        if (ObjcetPoolManager.Instance != null)
         {
             ObjcetPoolManager.Instance.RegisterPool<AchievementSlot>(enumType.UI, slot, 4);
         }
-        
-        if(openBtn != null)
+
+        if (openBtn != null)
         {
 
             openBtn.onClick.RemoveAllListeners();
             openBtn.onClick.AddListener(OpenUI);
             openBtn.gameObject.SetActive(true);
         }
-        if(closeBtn != null)
+        if (closeBtn != null)
         {
             closeBtn.onClick.RemoveAllListeners();
             closeBtn.onClick.AddListener(closeUI);
-           
         }
 
-      
+        gameObject.SetActive(false);
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        EventHanlerUnregist();
+        ServiceLocator.Unregister<AchievementManager>();
     }
 
     // UI 슬롯들이 구독할 전용 이벤트 (변경된 업적의 id를 전달 )
@@ -151,39 +159,38 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
 
     public void OpenUI()
     {
-       
+
         gameObject.SetActive(true);
-        if(BackGround != null) BackGround.gameObject.SetActive(true);
-        if(closeBtn != null) closeBtn.gameObject.SetActive(true);
+        if (BackGround != null) BackGround.gameObject.SetActive(true);
+        if (closeBtn != null) closeBtn.gameObject.SetActive(true);
+
+        EventHanlerRegist();
 
         ClearActiveSlots();
 
-        foreach (var ach  in achievements)
+        foreach (var ach in achievements)
         {
             AchievementSlot newslot = ObjcetPoolManager.Instance.Spawn<AchievementSlot>(enumType.UI);
 
-
             if (newslot != null)
             {
-               
+
                 newslot.transform.SetParent(contentParent, false);
                 newslot.BindData(ach);
 
                 activeSlots.Add(newslot);
             }
         }
-
-       
     }
 
 
     public void closeUI()
     {
-       
         ClearActiveSlots();
+        EventHanlerUnregist();
+
         slot.gameObject.SetActive(false);
-        BackGround.gameObject.SetActive(false);   
-       
+        BackGround.gameObject.SetActive(false);
     }
 
     /// <summary>
@@ -191,29 +198,31 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     /// </summary>
     private void ClearActiveSlots()
     {
-        foreach(var slot in activeSlots)
+        foreach (var slot in activeSlots)
         {
-            ObjcetPoolManager.Instance.Despawn<AchievementSlot>(enumType.UI,slot);
+            ObjcetPoolManager.Instance.Despawn<AchievementSlot>(enumType.UI, slot);
         }
         activeSlots.Clear();
     }
 
-
-    private void OnEnable()
+    private void EventHanlerRegist()
     {
+        // 방어 코드
+        GameEvents.OnEnemyKilled -= HandleEnemyKilled;
+        GameEvents.OnGoldObtained -= HandleGoldObtained;
+        GameEvents.OnPlayTime -= HandlePlayTime;
+        GameEvents.OnStageCleared -= HandleStageCleared;
+
         //게임 내 주요 이벤트 구독 예정
         GameEvents.OnEnemyKilled += HandleEnemyKilled;
         GameEvents.OnGoldObtained += HandleGoldObtained;
         GameEvents.OnPlayTime += HandlePlayTime;
         GameEvents.OnStageCleared += HandleStageCleared;
-       
-
-
     }
 
-    private void OnDisable()
+    private void EventHanlerUnregist()
     {
-        // 구독했으면 구독해제도 같이 해주기
+        // 구독 해제
         GameEvents.OnEnemyKilled -= HandleEnemyKilled;
         GameEvents.OnGoldObtained -= HandleGoldObtained;
         GameEvents.OnPlayTime -= HandlePlayTime;
@@ -227,7 +236,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
 
         ach.currentProgress += amount;
 
-        if(ach.currentProgress>=ach.targetProgress)
+        if (ach.currentProgress >= ach.targetProgress)
         {
             ach.currentProgress = ach.targetProgress;
             UnlockAchievement(ach);
@@ -238,11 +247,11 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
         OnAchievementUpdated?.Invoke(id);
     }
 
-   
+
     private void UnlockAchievement(Achievement ach)
     {
-        if(ach.isClaimed ==true||ach.isUnLocked ==true)
-        {  return; }
+        if (ach.isClaimed == true || ach.isUnLocked == true)
+        { return; }
 
         ach.isUnLocked = true;
         ach.isClaimed = true;
@@ -256,28 +265,28 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     private void InitializeDictionary()
     {
         achievementsDictionary.Clear();
-        foreach(var ach  in achievements)
+        foreach (var ach in achievements)
         {
             achievementsDictionary[ach.id] = ach;
         }
     }
 
-    
+
     private void AchievementClearReward(Achievement ach)
     {
-        switch(ach.rewardType)
+        switch (ach.rewardType)
         {
             case RewardType.Gold:
-               
+
                 GoldWallet.Instance.Add(ach.rewardAmount);
                 break;
 
-            case RewardType.Diamond: 
-                
+            case RewardType.Diamond:
+
                 break;
 
-            case RewardType.Item: 
-                
+            case RewardType.Item:
+
                 break;
         }
     }
@@ -291,7 +300,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     {
         AchievementSaveDataList saveDataList = new AchievementSaveDataList();
 
-        foreach(var pair in  achievementsDictionary)
+        foreach (var pair in achievementsDictionary)
         {
             Achievement ach = pair.Value;
             saveDataList.list.Add(new AchievementSaveData
@@ -303,7 +312,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
             });
         }
 
-        string json = JsonUtility.ToJson(saveDataList,true);
+        string json = JsonUtility.ToJson(saveDataList, true);
         File.WriteAllText(SavePath, json);
         Debug.Log($"저장 위치  : {SavePath}");
     }
@@ -313,7 +322,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     /// </summary>
     public void LoadAchievements()
     {
-        if(!File.Exists(SavePath))
+        if (!File.Exists(SavePath))
         {
             return;
         }
@@ -321,9 +330,9 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
         string json = File.ReadAllText(SavePath);
         AchievementSaveDataList saveDataList = JsonUtility.FromJson<AchievementSaveDataList>(json);
 
-        foreach(var saveData in saveDataList.list)
+        foreach (var saveData in saveDataList.list)
         {
-            if(achievementsDictionary.TryGetValue(saveData.id, out Achievement ach))
+            if (achievementsDictionary.TryGetValue(saveData.id, out Achievement ach))
             {
                 ach.currentProgress = saveData.currentProgress;
                 ach.isUnLocked = saveData.isUnLocked;
@@ -361,7 +370,7 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     /// </summary>
     private void HandleStageCleared()
     {
-        AddProgress(10003,1);
+        AddProgress(10003, 1);
     }
 
     /// <summary>
@@ -370,24 +379,8 @@ public class AchievementManager : Singleton<AchievementManager> , ILoadable
     /// <param name="times"></param>
     private void HandlePlayTime(double times)
     {
-        AddProgress(10004,times);
+        AddProgress(10004, times);
     }
-
-    public UniTask OnSceneLoadCreate(SceneId scene)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void Init(SceneId scene)
-    {
-        throw new NotImplementedException();
-    }
-
-    public void OnSceneDestory(SceneId scene)
-    {
-        throw new NotImplementedException();
-    }
-
     #endregion
 
 }
