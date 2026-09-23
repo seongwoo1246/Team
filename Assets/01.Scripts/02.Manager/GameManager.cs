@@ -177,7 +177,11 @@ public class GameManager : Singleton<GameManager>
             // 2. 유저 최종 접속 시간 갱신 및 RTDB 통째 일괄 커밋
             if (UserManager.Instance != null && UserManager.Instance.CurrentUser != null)
             {
-                await UserManager.Instance.UpdateLastLoginTimeAsync(ct);
+                // Profile 객체가 살아있는지 한 번 더 확인
+                if (UserManager.Instance.CurrentUser.Profile != null)
+                {
+                    await UserManager.Instance.UpdateLastLoginTimeAsync(ct);
+                }
                 await UserManager.Instance.SaveAllInfoAsync(ct);
             }
 

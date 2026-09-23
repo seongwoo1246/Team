@@ -290,18 +290,21 @@ public class MailBoxManager : Singleton<MailBoxManager> ,ILoadable
 
     }
 
-    public UniTask OnSceneLoadCreate(SceneId scene)
-    {
-        throw new NotImplementedException();
-    }
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
 
     public void Init(SceneId scene)
     {
-        throw new NotImplementedException();
+        if (string.IsNullOrEmpty(saveFilePath))
+        {
+            saveFilePath = Path.Combine(Application.persistentDataPath, "local_mails.json");
+        }
+
+        LoadMailsFromLocal();
+        Debug.Log($"[{scene}] MailBoxManager 초기화 완료 (우편 수: {mailDictionary.Count}개)");
     }
 
     public void OnSceneDestory(SceneId scene)
     {
-        throw new NotImplementedException();
+        return;
     }
 }
