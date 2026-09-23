@@ -21,23 +21,23 @@ MonoBehaviour:
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 1132d8c95ceaceb4c9559cdb7fefc231
-    m_Address: Char_Mage
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 16be3324a98077844b92e9b03fe2846a
     m_Address: Monster_BossOrc
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 20aabbca5dd8e0348a8360fe6d0a2448
-    m_Address: Char_Warrior
+  - m_GUID: 1da41584da2865640a7511bbe7fc791a
+    m_Address: Char_Healer
     m_ReadOnly: 0
     m_SerializedLabels:
     - Character
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 230b65af62c0923459e782f1ba210047
+    m_Address: DamagePopup
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 2631ecf0a8966a14887ec5d1ac3144d0
     m_Address: Monster_Hog
@@ -57,8 +57,8 @@ MonoBehaviour:
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3e2e038019ac54c449cfa1ec2b0adea2
-    m_Address: Char_Healer
+  - m_GUID: 37b76c8aa377cab468b482835588cd67
+    m_Address: Char_Mage
     m_ReadOnly: 0
     m_SerializedLabels:
     - Character
@@ -81,11 +81,23 @@ MonoBehaviour:
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e58c876db438ef40b99b7f3ec597d25
+    m_Address: Char_Paladin
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 8ce0863686f297b47acc1989308256ca
     m_Address: Monster_GnollChief
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9f3b275bed635a445903dddeb16fdc5d
+    m_Address: Char_Warrior
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: a8a5d6e173615e84a859521f27d6a2bb
     m_Address: Monster_GoldenGoblin
@@ -105,8 +117,20 @@ MonoBehaviour:
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d44cea1ed83393547ab6195aad5a2e8c
+    m_Address: Char_Archer
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: d6f3c1b0f81da2f4195c67a5f6d1257f
     m_Address: Monster_Slime
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2cf0f43bf1857b4e9569eb6b6d2f328
+    m_Address: Arrow
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
@@ -116,18 +140,6 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: f2917db505b567a4484b56d89854bd4f
-    m_Address: Char_Paladin
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: fdb8da190de3d204e8e9abda961f8989
-    m_Address: Char_Archer
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Character
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
