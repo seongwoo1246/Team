@@ -11,6 +11,10 @@ using UnityEngine;
 /// </summary>
 public class ArcherDealer : CharacterBase
 {
+    [Header("화살 비주얼")]
+    [Tooltip("평타를 쏠 때 날아가는 화살 프리팹 (비주얼 전용, 데미지는 즉시 따로 적용됨)")]
+    [SerializeField] private Arrow arrowPrefab;
+
     [Header("스킬1: 관통 사격")]
     [Tooltip("관통 사격 데미지 배율 (평타 대비, 맞는 대상마다 각각 적용됨)")]
     [SerializeField] private float piercingShotMultiplier = 1.2f;
@@ -28,6 +32,30 @@ public class ArcherDealer : CharacterBase
     // 관통 사격용 OverlapCircle 결과 재사용 버퍼
     private readonly Collider2D[] _piercingBuffer = new Collider2D[MAX_TARGET_BUFFER];
 
+   
+    protected override void PerformAttack()
+    {
+        IEntity target = GetLowestHpEntity(EnemyLayer);
+        if (target == null || target.IsDead)
+        {
+            return;
+        }
+
+        FireArrowAt(target);
+        DealDamage(target);
+    }
+
+    private void FireArrowAt(IEntity target)
+    {
+        if (arrowPrefab == null || target is not Component targetComponent)
+        {
+            return;
+        }
+
+        Arrow arrow = Instantiate(arrowPrefab, transform.position, Quaternion.identity);
+        arrow.Fire(targetComponent.transform.position);
+    }
+
     /// <summary>
     /// 관통 사격. 사거리 안 적 중 가까운 순서로 최대 piercingShotMaxTargets명에게 각각 피해를 준다
     /// </summary>
@@ -39,7 +67,6 @@ public class ArcherDealer : CharacterBase
             return;
         }
 
-        float damage = Power * piercingShotMultiplier;
         int hitCount = 0;
 
         for (int i = 0; i < count && hitCount < piercingShotMaxTargets; i++)
@@ -55,7 +82,8 @@ public class ArcherDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            FireArrowAt(target);
+            DealDamage(target, piercingShotMultiplier);
             hitCount++;
         }
     }
@@ -71,7 +99,6 @@ public class ArcherDealer : CharacterBase
             return;
         }
 
-        float damage = Power * rapidShotMultiplier;
         for (int i = 0; i < rapidShotCount; i++)
         {
             if (target.IsDead)
@@ -79,7 +106,8 @@ public class ArcherDealer : CharacterBase
                 break;
             }
 
-            target.TakeDamage(damage);
+            FireArrowAt(target);
+            DealDamage(target, rapidShotMultiplier);
         }
     }
 
