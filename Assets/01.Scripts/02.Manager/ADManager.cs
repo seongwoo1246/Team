@@ -248,7 +248,7 @@ public class ADManager : Singleton<ADManager>
         if(isRewarded)
         {
             ADRewards(reward, amount);
-            Debug.Log("여기서 보상 지급 해주면 됨");
+            
         }
         else
         {

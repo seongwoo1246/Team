@@ -29,10 +29,37 @@ public class SettingsPopupController : MonoBehaviour
     [SerializeField] private Button deleteConfirmYesButton;
     [SerializeField] private Button deleteConfirmNoButton;
 
+    #region 담당자- 정성우 소리 관련 작성
+
+    [Header("Ui 버튼들")]
+    [SerializeField] private GameObject bgmOnBtn;
+    [SerializeField] private GameObject bgmOffBtn;
+    [SerializeField] private GameObject sfxOnBtn;
+    [SerializeField] private GameObject sfxOffBtn;
+    [SerializeField] private Slider bgmvolume;
+    [SerializeField] private Slider sfxVolume;
+
+
+    
+
+    #endregion
+
     private bool _isProcessing = false;
 
     private void Awake()
     {
+        //슬라이더 값을 음악 소리로 넘겨주기
+        if(bgmvolume != null)
+        {
+            bgmvolume.onValueChanged.AddListener(SoundManager.Instance.SetBGMVolume);
+        }
+        if(sfxVolume != null)
+        {
+            sfxVolume.onValueChanged.AddListener(SoundManager.Instance.SetSFXVolume);
+        }
+
+
+
         // 닫기 버튼 바인딩
         if (closeButton != null)
         {
@@ -82,7 +109,48 @@ public class SettingsPopupController : MonoBehaviour
                 if (deleteConfirmPanel != null) deleteConfirmPanel.SetActive(false);
             });
         }
+
+
+
     }
+
+    #region 담당자 - 정성우 소리 관련 함수들
+    public void MuteOnOffBGM()
+    {
+        if(SoundManager.Instance != null)
+        {
+            bool isMuted = !SoundManager.Instance.FadeOutSource.mute;
+
+            SoundManager.Instance.FadeInSource.mute = isMuted;
+            SoundManager.Instance.FadeOutSource.mute = isMuted;
+
+            bgmOnBtn.gameObject.SetActive(!isMuted);
+            bgmOffBtn.gameObject.SetActive(isMuted);
+
+            PlayerPrefs.SetInt("BGMMute", isMuted ? 1 : 0);
+            
+        }
+       
+
+    }
+    public void MuteOnOffSFX()
+    {
+        if (SoundManager.Instance != null)
+        {
+            bool isMuted = !SoundManager.Instance.sfxSource.mute;
+
+            SoundManager.Instance.sfxSource.mute = isMuted;
+
+            sfxOnBtn.gameObject.SetActive(!isMuted);
+            sfxOffBtn.gameObject.SetActive(isMuted);
+
+            PlayerPrefs.SetInt("SFXMute", isMuted ? 1 : 0);
+          
+        }
+           
+    }
+
+    #endregion
 
     /// <summary>
     /// 로비의 [Setting] 버튼 OnClick에 연결하여 팝업 오픈
@@ -117,6 +185,8 @@ public class SettingsPopupController : MonoBehaviour
         {
             gameObject.SetActive(false);
         }
+
+        PlayerPrefs.Save();
         Time.timeScale = 1;
     }
 

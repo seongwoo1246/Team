@@ -40,6 +40,11 @@ public sealed class FormationCharacterButton : MonoBehaviour
     [Tooltip("편성에 안 들어가있을 때 배경색")]
     [SerializeField] private Color unselectedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
 
+    public void SetCharacter(CharacterBase newCharacter)
+    {
+        character = newCharacter;
+    }
+
     /// <summary>버튼 OnClick에 연결. 이 캐릭터를 편성에 넣거나 뺀다</summary>
     public void OnClickToggle()
     {

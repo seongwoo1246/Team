@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Debug = DebugLogger<SoundManager>;
 //담당자 - 정성우
 /*
@@ -19,11 +20,13 @@ public struct SoundData
 
 public class SoundManager : Singleton<SoundManager> 
 {
+    
+
 
     [Header("Audio Sources")]
-    [SerializeField] private AudioSource FadeOutSource;
-    [SerializeField] private AudioSource FadeInSource;
-    [SerializeField] private AudioSource sfxSource;
+    [SerializeField] public AudioSource FadeOutSource;
+    [SerializeField] public AudioSource FadeInSource;
+    [SerializeField] public AudioSource sfxSource;
 
     [Header("오디오 소스 리스트")]
     [SerializeField] private List<SoundData> bgmList;
@@ -48,6 +51,9 @@ public class SoundManager : Singleton<SoundManager>
 
         SetBGMVolume(PlayerPrefs.GetFloat("BGMSound", 0.5f));
         SetSFXVolume(PlayerPrefs.GetFloat("SFXSound", 0.5f));
+
+       
+        
 
         playBGM("불꽃속산길1");
       
@@ -125,13 +131,16 @@ public class SoundManager : Singleton<SoundManager>
         volume = Mathf.Clamp01(volume);
         if(FadeOutSource != null)
         {
+           
+            
+            FadeInSource.volume = volume;
             FadeOutSource.volume = volume;
         }
 
 
 
         PlayerPrefs.SetFloat("BGMSound", volume);
-        PlayerPrefs.Save();
+       
     }
 
     public void SetSFXVolume(float volume)
@@ -141,37 +150,16 @@ public class SoundManager : Singleton<SoundManager>
 
         if (sfxSource != null)
         {
+            
+           
            sfxSource.volume = volume;
         }
 
         PlayerPrefs.SetFloat("SFXSound", volume);
-        PlayerPrefs.Save();
+       
     }
 
-    public void MuteOnOffBGM()
-    {
-        if(FadeOutSource.mute == false)
-        {
-            FadeOutSource.mute = true;
-        }
-        else if(FadeOutSource.mute == true)
-        {
-            FadeOutSource.mute = false;
-        }
-
-    }
-    public void MuteOnOffSFX()
-    {
-        if(sfxSource.mute == false)
-        {
-            sfxSource.mute = true;
-        }
-        else if(sfxSource.mute == true)
-        {
-            sfxSource.mute = false;
-        }
-
-    }
+   
 
 
     /// <summary>

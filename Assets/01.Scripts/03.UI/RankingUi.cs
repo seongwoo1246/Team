@@ -44,7 +44,7 @@ public class RankingUi : Singleton<RankingUi> , ILoadable
     public List<UserRankData> ClearTimeList=new List<UserRankData>();
 
     //카테고리 종류별 탑 3를 가지는 딕셔너리
-    private Dictionary<RankCategoty, UserRankData[]> top3CategoryDataDict = new Dictionary<RankCategoty, UserRankData[]>();
+   private Dictionary<RankCategoty, UserRankData[]> top3CategoryDataDict = new Dictionary<RankCategoty, UserRankData[]>();
     
     private RankCategoty currentCategory = RankCategoty.Damage;
 
@@ -55,6 +55,7 @@ public class RankingUi : Singleton<RankingUi> , ILoadable
     {
         base.Awake();
         isDDOL = true;
+        this.gameObject.SetActive(false);
         // 각 딕셔너리에 미리 크기 지정
         top3CategoryDataDict[RankCategoty.Damage] = new UserRankData[3];
         top3CategoryDataDict[RankCategoty.ClearTime] = new UserRankData[3];
@@ -202,7 +203,7 @@ public class RankingUi : Singleton<RankingUi> , ILoadable
     }
     private void CloseWindow()
     {
-        this.gameObject.SetActive(true);
+        this.gameObject.SetActive(false);
     }
 
     public UniTask OnSceneLoadCreate(SceneId scene)

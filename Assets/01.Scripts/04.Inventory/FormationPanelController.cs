@@ -73,6 +73,7 @@ public sealed class FormationPanelController : MonoBehaviour
             {
                 partyFormationManager.FormationChanged += OnFormationChanged;
                 _isBound = true;
+                BindCharacterButtons();
             }
             else
             {
@@ -86,6 +87,50 @@ public sealed class FormationPanelController : MonoBehaviour
         }
 
         RefreshAll();
+    }
+    private void BindCharacterButtons()
+    {
+        if (characterButtons == null || partyFormationManager == null)
+        {
+            return;
+        }
+
+        CharacterBase[] allCharacters = partyFormationManager.GetAllCharacters();
+        if (allCharacters == null)
+        {
+            return;
+        }
+
+        const string buttonNamePrefix = "FormationChar_";
+        const string statDataIdPrefix = "char_";
+
+        for (int i = 0; i < characterButtons.Length; i++)
+        {
+            if (characterButtons[i] == null)
+            {
+                continue;
+            }
+
+            string key = characterButtons[i].gameObject.name.Replace(buttonNamePrefix, string.Empty).ToLower();
+
+            CharacterBase matched = null;
+            for (int j = 0; j < allCharacters.Length; j++)
+            {
+                if (allCharacters[j] != null && allCharacters[j].StatData != null
+                    && allCharacters[j].StatData.Id == statDataIdPrefix + key)
+                {
+                    matched = allCharacters[j];
+                    break;
+                }
+            }
+
+            if (matched == null)
+            {
+                DebugLogger<FormationPanelController>.LogWarning($"'{characterButtons[i].gameObject.name}'에 매칭되는 캐릭터를 찾지 못함");
+            }
+
+            characterButtons[i].SetCharacter(matched);
+        }
     }
 
     /// <summary>완료 버튼 OnClick에 연결. 정확히 3명일 때만 호출되도록 완료 버튼 자체가 그때만 활성화됨</summary>
