@@ -371,11 +371,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6132052561516956581, guid: feab754eeef01dc41989c39a10455bff, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: -465.72577
+      value: -3665.173
       objectReference: {fileID: 0}
     - target: {fileID: 6132052561516956581, guid: feab754eeef01dc41989c39a10455bff, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 49078.883
+      value: 386259.72
       objectReference: {fileID: 0}
     - target: {fileID: 6219122157340063722, guid: feab754eeef01dc41989c39a10455bff, type: 3}
       propertyPath: m_SizeDelta.y
@@ -15103,19 +15103,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 7536331936808024959}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 5301465989529504829}
-        m_TargetAssemblyTypeName: RankingUi, Assembly-CSharp
-        m_MethodName: CloseWindow
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!224 &3053019913441086630
 RectTransform:
   m_ObjectHideFlags: 0
@@ -29180,19 +29168,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1692542187880599815}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 9004847260369137505}
-        m_TargetAssemblyTypeName: 
-        m_MethodName: 
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &5756198324670504243
 MonoBehaviour:
   m_ObjectHideFlags: 0
