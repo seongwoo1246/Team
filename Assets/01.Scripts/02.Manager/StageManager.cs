@@ -57,10 +57,6 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     [Tooltip("파밍 몬스터가 동시에 존재할 수 있는 최대 마리 수")]
     [SerializeField] private int maxFarmingMonsterCount = 5;
 
-    [Header("황금 고블린 (특별 강화재료)")]
-    [Tooltip("황금 고블린 프리팹. 파밍 중 아주 낮은 확률로 일반 몬스터랑 별개로 추가 스폰됨 (마릿수 상한과 무관)")]
-    [field: SerializeField] public Monster goldenGoblinPrefab { get; private set; }
-
     [Tooltip("파밍 소환 틱마다 황금 고블린이 스폰될 확률 (0~1). 아주 낮게 잡을 것 (예: 0.001 = 0.1%)")]
     [SerializeField] private float goldenGoblinSpawnChance = 0.001f;
 
@@ -242,8 +238,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             UtilDebug.LogError("MonsterSpawner를 ServiceLocator에서 찾을 수 없습니다.");
         }
 
-        if (imageManager != null) { imageManager = GetComponent<ImageManager>(); }
-        if(rankingUi != null) {rankingUi = GetComponent<RankingUi>(); }
+       
 
         // 서버 프로필에서 클리어 스테이지 동기화
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -486,7 +481,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 
         int level = Mathf.Max(farmingMonsterLevel, _maxClearedStage);
         // 황금 고블린도 파밍 중이므로 harmless: true (실제 피해는 안 줌)
-        spawner.Spawn("Monster_GoldenGoblin", level, harmless: true);
+        spawner.Spawn("mon_golden_goblin", level, harmless: true);
     }
 
     /// <summary>

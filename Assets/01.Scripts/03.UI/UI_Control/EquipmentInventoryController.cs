@@ -29,14 +29,6 @@ public class EquipmentInventoryController : MonoBehaviour
     [Header("장비 중복 장착 안내창")]
     [SerializeField] private GameObject alreadyEquippedPanel;
 
-    [Header("장착 장비 슬롯")]
-    //[SerializeField] private EquipmentInventorySlot weaponSlot;
-    //[SerializeField] private EquipmentInventorySlot armorSlot;
-    //[SerializeField] private EquipmentInventorySlot pantsSlot;
-    //[SerializeField] private EquipmentInventorySlot glovesSlot;
-    //[SerializeField] private EquipmentInventorySlot ringSlot;
-    //[SerializeField] private EquipmentInventorySlot shoesSlot;
-
     [Header("장비 강화")]
     [Tooltip("탭을 바꿀 때 이전 부위의 '+N%' 강화 결과 표시를 같이 지워주기 위한 참조")]
     [SerializeField] private EquipmentEnhanceButton enhanceButton;
@@ -120,13 +112,6 @@ public class EquipmentInventoryController : MonoBehaviour
 
         if (character == null)
             return;
-
-        //weaponSlot.SetEquippedItem(character.GetEquipped(EquipmentSlot.Weapon));
-        //armorSlot.SetEquippedItem(character.GetEquipped(EquipmentSlot.Armor));
-        //pantsSlot.SetEquippedItem(character.GetEquipped(EquipmentSlot.Pants));
-        //glovesSlot.SetEquippedItem(character.GetEquipped(EquipmentSlot.Gloves));
-        //ringSlot.SetEquippedItem(character.GetEquipped(EquipmentSlot.Ring));
-        //shoesSlot.SetEquippedItem(character.GetEquipped(EquipmentSlot.Shoes));
     }
 
     private void RefreshInventory(EquipmentSlot slot)
