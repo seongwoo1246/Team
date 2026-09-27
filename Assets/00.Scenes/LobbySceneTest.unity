@@ -15516,7 +15516,7 @@ MonoBehaviour:
   mailItemPrefeb: {fileID: 6496942752162278317, guid: 48429db7755026241838b5a40c040b14, type: 3}
   emptyStateNotion: {fileID: 2941136236876049446}
   closeButton: {fileID: 4966259702329688941}
-  OpenButton: {fileID: 0}
+  OpenButton: {fileID: 7172689569810528386}
   LobbyRedDot: {fileID: 3757554727572672234}
   dim: {fileID: 586887325}
 --- !u!222 &2955041670100798741
@@ -18649,6 +18649,7 @@ RectTransform:
   m_Children:
   - {fileID: 6848881555500239790}
   - {fileID: 6115722343448126576}
+  - {fileID: 8421900483176453371}
   - {fileID: 7963990262265063526}
   - {fileID: 8054615265807275915}
   - {fileID: 586887328}
@@ -34378,7 +34379,6 @@ RectTransform:
   - {fileID: 5159363447912377343}
   - {fileID: 538749941341526905}
   - {fileID: 8485937760195723369}
-  - {fileID: 8421900483176453371}
   - {fileID: 5049916079335584098}
   m_Father: {fileID: 6115722343448126576}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -34863,7 +34863,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RankingUi
   OpenBtn: {fileID: 1489288096376851444}
-  dim: {fileID: 0}
+  dim: {fileID: 586887325}
   slots:
   - {fileID: 3210716891748627969}
   - {fileID: 8530988030804151323}
@@ -41186,7 +41186,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 8445932007627460158}
-  m_Father: {fileID: 7061608613852570476}
+  m_Father: {fileID: 3637296298916221176}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!224 &8431180869365722172
 RectTransform:
