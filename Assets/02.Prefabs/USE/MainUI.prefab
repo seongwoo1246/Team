@@ -2584,6 +2584,11 @@ MonoBehaviour:
   equipmentInventory: {fileID: 7430814704058844327}
   gachaCost: 0
   notEnoughGoldPanel: {fileID: 8300907228933163010}
+  gachaResultPanel: {fileID: 0}
+  resultGrid: {fileID: 0}
+  resultSlotPrefab: {fileID: 0}
+  resultButton: {fileID: 0}
+  gachaResultBlocker: {fileID: 0}
 --- !u!1 &1328037362371549895
 GameObject:
   m_ObjectHideFlags: 0
@@ -7339,6 +7344,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CharacterSelectController
   equipmentInventoryController: {fileID: 3162716777207732267}
+  characterImage: {fileID: 0}
+  warriorSprite: {fileID: 0}
+  mageSprite: {fileID: 0}
+  healerSprite: {fileID: 0}
+  paladinSprite: {fileID: 0}
+  archerSprite: {fileID: 0}
 --- !u!1 &3190009574956066359
 GameObject:
   m_ObjectHideFlags: 0
@@ -10566,6 +10577,7 @@ MonoBehaviour:
   shopPanel: {fileID: 7591391037595971045}
   rankingPanel: {fileID: 6053063861941889472}
   challengePanel: {fileID: 8156634205051022700}
+  characterSelectController: {fileID: 0}
 --- !u!1 &4776625753606333801
 GameObject:
   m_ObjectHideFlags: 0
@@ -17906,8 +17918,8 @@ RectTransform:
   m_Children:
   - {fileID: 973007093171669385}
   - {fileID: 4857246689095147776}
-  - {fileID: 3790198312573459766}
   - {fileID: 1611839860360204776}
+  - {fileID: 3790198312573459766}
   m_Father: {fileID: 5707785290382916453}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.15}

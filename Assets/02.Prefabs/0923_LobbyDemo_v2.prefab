@@ -75,6 +75,81 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &117113577837240394
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 15224968859797503}
+  - component: {fileID: 5560403180827292580}
+  - component: {fileID: 2420404051585306203}
+  m_Layer: 0
+  m_Name: 'GachaResultBlocker '
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &15224968859797503
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 117113577837240394}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1896159121655580968}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -144}
+  m_SizeDelta: {x: 980, y: 1820}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &5560403180827292580
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 117113577837240394}
+  m_CullTransparentMesh: 1
+--- !u!114 &2420404051585306203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 117113577837240394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
 --- !u!1 &119399607186910846
 GameObject:
   m_ObjectHideFlags: 0
@@ -902,6 +977,7 @@ MonoBehaviour:
   - {fileID: 0}
   challengeTimeLimit: 60
   goldMultiplierPerClearedStage: 0.03
+  imageManager: {fileID: 0}
 --- !u!1 &888233040821899866
 GameObject:
   m_ObjectHideFlags: 0
@@ -1065,7 +1141,7 @@ Transform:
   m_GameObject: {fileID: 1047354877222904644}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -677, y: 324, z: 0}
+  m_LocalPosition: {x: -700, y: 350, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2780,6 +2856,7 @@ MonoBehaviour:
   closeButton: {fileID: 8745598812145107914}
   OpenButton: {fileID: 7172689568701150357}
   LobbyRedDot: {fileID: 5437884018621127997}
+  dim: {fileID: 0}
 --- !u!1 &1980243752943774569
 GameObject:
   m_ObjectHideFlags: 0
@@ -3599,7 +3676,7 @@ Transform:
   m_GameObject: {fileID: 2862921490390157742}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -694, y: 54, z: 0}
+  m_LocalPosition: {x: -700, y: 50, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -9101,6 +9178,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RankingUi
   OpenBtn: {fileID: 1489288097553369059}
   CloseBtn: {fileID: 64100172730012571}
+  dim: {fileID: 0}
   slots:
   - {fileID: 3210716890576304662}
   - {fileID: 8530988031775113228}
@@ -9895,7 +9973,7 @@ Transform:
   m_GameObject: {fileID: 7417900499134328191}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -682, y: 194, z: 0}
+  m_LocalPosition: {x: -700, y: 200, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -10125,6 +10203,7 @@ MonoBehaviour:
   BackGround: {fileID: 7529191139952614084}
   openBtn: {fileID: 7238022870458773353}
   closeBtn: {fileID: 6341119376239733946}
+  dim: {fileID: 0}
   achievements:
   - id: 10001
     title: "\uBAAC\uC2A4\uD130\uB97C \uC7A1\uC544\uB77C"
@@ -11995,6 +12074,14 @@ PrefabInstance:
       propertyPath: m_SizeDelta.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 748417624668628732, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 48.1529
+      objectReference: {fileID: 0}
+    - target: {fileID: 748417624668628732, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -0.9222
+      objectReference: {fileID: 0}
     - target: {fileID: 1696324193894165317, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
       propertyPath: m_Sprite
       value: 
@@ -12208,6 +12295,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 268637539604367509, guid: 60bdd0bbf72c65a4f8bfdb12629f4aa7, type: 3}
     - target: {fileID: 8573879633265717653, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
+      propertyPath: gachaResultBlocker
+      value: 
+      objectReference: {fileID: 117113577837240394}
+    - target: {fileID: 8573879633265717653, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
       propertyPath: equipmentDatas.Array.size
       value: 10
       objectReference: {fileID: 0}
@@ -12371,6 +12462,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8696761858511252395, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3395871397585464445}
+    - targetCorrespondingSourceObject: {fileID: 3790198312573459766, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 15224968859797503}
     - targetCorrespondingSourceObject: {fileID: 3790198312573459766, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8874728217226661557}
