@@ -204,10 +204,7 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     public virtual void Spon()
     {
-        if(SoundManager.Instance != null)
-        {
-            SoundManager.Instance.playSFX("코인획득2");
-        }
+        
        
        if(animator != null) animator.SetBool("isDeath", false);
        if(BOWanimator!=null) BOWanimator.SetBool("isDeath", false);
