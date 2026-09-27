@@ -212,7 +212,7 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable,
 
             var ct = this.destroyCancellationToken;
             var profile = UserManager.Instance.CurrentUser?.Profile;
-            if(profile != null)
+            if(profile != null && !UserManager.Instance.IsLocalMode)
             {
                 profile.UpdateSingleFieldAsync(StringConsts.UserConstants.AccountLevel, _level, ct).Forget();
                 profile.UpdateSingleFieldAsync(StringConsts.UserConstants.CurrentStage, _currentExp, ct).Forget();

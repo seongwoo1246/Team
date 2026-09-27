@@ -67,7 +67,8 @@ abstract public class BaseRequestData
         }
         catch (Exception ex)
         {
-            UtilDebug.LogErrorWithTag(tag, $"{prefix} 실패 {ex.Message}");
+            string details = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+            UtilDebug.LogErrorWithTag(tag, $"{prefix} 실패: {details}");
             return false;
         }
 #else
@@ -167,12 +168,42 @@ public class UserProfileRequest : BaseRequestData
     /// <param name="value">변경할 값</param>
     public async UniTask<bool> UpdateSingleFieldAsync(string fieldName, object value, CancellationToken ct = default)
     {
+        // 1. 로컬 게스트 모드이거나 UID가 없으면 서버 쓰기 스킵
+        if (UserManager.Instance.IsLocalMode || string.IsNullOrEmpty(uid) || uid == UserManager.Instance.LocalGuestUID)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrEmpty(fieldName))
+        {
+            UtilDebug.LogWarningWithTag("[UserProfileRequest]", "필드명이 비어 있습니다.");
+            return false;
+        }
+
+        // 2. Firebase가 안전하게 파싱할 수 있도록 기본 타입 변환
+        object safeValue = value switch
+        {
+            int i => (long)i,
+            float f => (double)f,
+            Enum e => Convert.ToInt64(e),
+            _ => value
+        };
+
         return await ExecuteLogOperationCoreAsync(async () =>
         {
-            await GetTargetRef().Child(fieldName).SetValueAsync(value).AsUniTask().AttachExternalCancellation(ct);
+            var targetRef = GetTargetRef().Child(fieldName);
+
+            if (safeValue == null)
+            {
+                await targetRef.RemoveValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            }
+            else
+            {
+                await targetRef.SetValueAsync(safeValue).AsUniTask().AttachExternalCancellation(ct);
+            }
+
             return true;
-        }, () => $"Field: {fieldName}, Value: {value} 갱신"
-        );
+        }, () => $"Field: {fieldName}, Value: {safeValue} 갱신");
     }
 
     /// <summary>

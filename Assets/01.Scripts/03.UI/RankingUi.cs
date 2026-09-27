@@ -211,14 +211,15 @@ public class RankingUi : MonoBehaviour , ILoadable
 
     public void OpenWindow()
     {
-        dim.SetActive(true);
-        dim.transform.SetAsLastSibling();
-        this.transform.SetAsLastSibling();
+        //dim.SetActive(true);
+        //dim.transform.SetAsLastSibling();
         this.gameObject.SetActive(true);
+        this.transform.SetAsLastSibling();
+       
     }
     public void CloseWindow()
     {
-        dim.SetActive(false);
+        //dim.SetActive(false);
         
         this.gameObject.SetActive(false);
     }

@@ -440,7 +440,9 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
         //    damageRank.AddRecordAndSave(RankCategoty.Damage, damage);
         //}
 
-        CheckEnrage();
+            CheckEnrage();
+        
+       
 
         if (willDie)
         {
@@ -456,10 +458,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     /// </summary>
     private void CheckEnrage()
     {
-       if(SoundManager.Instance != null)
-        {
-            SoundManager.Instance.playSFX("심장소리");
-        }
+      
 
         if (_isEnraged || Kind != MonsterKind.Boss || _maxHP <= 0f)
         {
@@ -469,6 +468,11 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
         if (_currentHP / _maxHP > enrageHpRatio)
         {
             return;
+        }
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("심장소리");
         }
 
         _isEnraged = true;
