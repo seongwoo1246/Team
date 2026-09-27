@@ -1,5 +1,5 @@
 ﻿/*
-담담자 - 홍준호
+담당자 - 홍준호
  최하단 바텀 패널 버튼용 
  패널 이동용 스크립트
  */
@@ -15,6 +15,8 @@ public class UI_Navigator : MonoBehaviour
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject rankingPanel;
     [SerializeField] private GameObject challengePanel;
+
+    [SerializeField] private CharacterSelectController characterSelectController;
 
     public void OpenMain()
     {
@@ -32,6 +34,12 @@ public class UI_Navigator : MonoBehaviour
 
         CloseAllPanels();
         characterPanel.SetActive(true);
+
+        // 캐릭터 패널 진입 시, 초기 화면 전사로 설정
+        if (characterSelectController != null)
+        {
+            characterSelectController.SelectWarrior();
+        }
     }
 
     public void OpenShop()

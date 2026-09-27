@@ -1,4 +1,6 @@
 ﻿/*
+  작업자 - 홍준호
+  캐릭터 패널 상단 캐릭터 선택 담당 스크립트
  */
 
 /* 공동 작업자 - 송태훈
@@ -16,6 +18,16 @@ public class CharacterSelectController : MonoBehaviour, ILoadable
 {
     [Header("장비 UI")]
     [SerializeField] private EquipmentInventoryController equipmentInventoryController;
+
+    [Header("캐릭터 이미지")]
+    [SerializeField] private UnityEngine.UI.Image characterImage;
+
+    [Header("캐릭터 이미지")]
+    [SerializeField] private Sprite warriorSprite;
+    [SerializeField] private Sprite mageSprite;
+    [SerializeField] private Sprite healerSprite;
+    [SerializeField] private Sprite paladinSprite;
+    [SerializeField] private Sprite archerSprite;
 
     private readonly Dictionary<AttackType, CharacterBase> _characterMap = new();
     private AttackType currentAttackType = AttackType.Physical;
@@ -68,12 +80,43 @@ public class CharacterSelectController : MonoBehaviour, ILoadable
     private void SelectType(AttackType type)
     {
         currentAttackType = type;
+        RefreshCharacterImage();
         if (equipmentInventoryController != null)
         {
             equipmentInventoryController.RefreshEquippedSlots();
         }
     }
 
+    private void RefreshCharacterImage()
+    {
+        if (characterImage == null)
+            return;
+
+        switch (currentAttackType)
+        {
+            case AttackType.Physical:
+                characterImage.sprite = warriorSprite;
+                break;
+
+            case AttackType.Magic:
+                characterImage.sprite = mageSprite;
+                break;
+
+            case AttackType.Heal:
+                characterImage.sprite = healerSprite;
+                break;
+
+            case AttackType.Paladin:
+                characterImage.sprite = paladinSprite;
+                break;
+
+            case AttackType.Archer:
+                characterImage.sprite = archerSprite;
+                break;
+        }
+
+        characterImage.enabled = characterImage.sprite != null;
+    }
 
     public UniTask OnSceneLoadCreate(SceneId scene)
     {
