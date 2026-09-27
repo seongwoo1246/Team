@@ -146,6 +146,10 @@ public class CharacterSelectController : MonoBehaviour, ILoadable
 
         UtilDebug.Log("캐릭터 선택 컨트롤러 매핑 완료");
         SelectWarrior();
+        if(equipmentInventoryController != null)
+        {
+            equipmentInventoryController.gameObject.SetActive(false);
+        }
     }
 
     public void OnSceneDestory(SceneId scene)
