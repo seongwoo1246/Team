@@ -64,6 +64,8 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     [Range(0f, 1f)]
     [SerializeField] private float enrageTintStrength = 0.6f;
 
+    public RankingUi rankingUi;
+
     // 레벨 기준으로 계산된 실시간값
     private float _currentHP;
     private float _maxHP;
@@ -168,6 +170,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     {
         // Animator가 루트가 아니라 자식(bone_main 등)에 붙어있는 프리팹이 있어서 자식까지 찾는다
         animator = GetComponentInChildren<Animator>();
+        rankingUi = GetComponent<RankingUi>();
         _rigidbody = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_spriteRenderer != null)
@@ -432,13 +435,11 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             OnDamaged(damage);
         }
 
-        // 맞을 때마다(전투 핫패스) FindAnyObjectByType으로 씬 전체를 뒤지던 걸 다른 곳(StageManager)이랑
-        // 똑같이 RankingUi.Instance로 바꿈 - 김주연
-        //RankingUi damageRank = RankingUi.Instance;
-        //if (damageRank != null)
-        //{
-        //    damageRank.AddRecordAndSave(RankCategoty.Damage, damage);
-        //}
+       if(rankingUi != null)
+        {
+            rankingUi.AddRecordAndSave(RankCategoty.Damage, damage);
+        }
+        
 
             CheckEnrage();
         

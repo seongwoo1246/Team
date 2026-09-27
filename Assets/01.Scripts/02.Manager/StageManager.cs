@@ -151,6 +151,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 
     //성우가 만든 변수들
    public ImageManager imageManager;
+    public RankingUi rankingUi;
     public double PartyEquipmentGoldBonusRatio
     {
         get
@@ -241,7 +242,8 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             UtilDebug.LogError("MonsterSpawner를 ServiceLocator에서 찾을 수 없습니다.");
         }
 
-        //if (imageManager != null) { imageManager = GetComponent<ImageManager>(); }
+        if (imageManager != null) { imageManager = GetComponent<ImageManager>(); }
+        if(rankingUi != null) {rankingUi = GetComponent<RankingUi>(); }
 
         // 서버 프로필에서 클리어 스테이지 동기화
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -522,9 +524,12 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         if (bossDefeated)
         {
 
-            // 이 부분 RankingUI의 gameObject.SetActive가 false여서 실행 안될건데?
-            //RankingUi clearTimeRank = RankingUi.Instance;
-            //RankingUi.Instance.AddRecordAndSave(RankCategoty.ClearTime, MathF.Max(0, (Time.time - _challengeStartTime)));
+           
+           if(rankingUi != null)
+            {
+                rankingUi.AddRecordAndSave(RankCategoty.ClearTime, MathF.Max(0, (Time.time - _challengeStartTime)));
+            }
+            
             GameEvents.TriggerOnStageCleared();
             OnStageCleared(stageNumber);
         }
@@ -737,6 +742,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// </summary>
     private bool IsTimeUp()
     {
+
         if (challengeTimeLimit <= 0f)
         {
             return false;
