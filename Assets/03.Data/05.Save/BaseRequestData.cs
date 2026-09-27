@@ -127,6 +127,11 @@ public class UserProfileRequest : BaseRequestData
     {
         return await ExecuteLogOperationCoreAsync(async () =>
         {
+            DatabaseReference targetRef = GetTargetRef();
+
+            // 서버와 강제 동기화 보장 설정
+            targetRef.KeepSynced(true);
+
             DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
             if (snapshot.Exists && snapshot.Value != null)
             {
