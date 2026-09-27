@@ -25,6 +25,12 @@ public class UserManager : NonMonoSingleton<UserManager>
         base.Init();
         try
         {
+            var app = Firebase.FirebaseApp.DefaultInstance;
+            var db = FirebaseDatabase.GetInstance(app);
+
+            // 로컬 디스크 캐시로 인한 구버전 데이터 로드 방지
+            db.SetPersistenceEnabled(true);
+
             rootRef = FirebaseDatabase.DefaultInstance.RootReference;
         }
         catch (Exception ex)
@@ -101,6 +107,8 @@ public class UserManager : NonMonoSingleton<UserManager>
         }
 
         // 서버 분기
+        FirebaseDatabase.DefaultInstance.GoOnline();
+
         try
         {
             UserInfo tempUser = new UserInfo(uid, string.Empty);
