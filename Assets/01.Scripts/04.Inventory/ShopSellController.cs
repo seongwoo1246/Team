@@ -1,4 +1,9 @@
-﻿using System.Collections.Generic;
+﻿/*
+담당자 - 홍준호
+ 상점 패널 판매창 관리용 스크립트
+ */
+
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
