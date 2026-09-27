@@ -111,8 +111,9 @@ public class MailboxUi : MonoBehaviour
 
         dim.gameObject.SetActive(true);
         dim.transform.SetAsLastSibling();
-        gameObject.transform.SetAsLastSibling();
         gameObject.SetActive(true);
+        gameObject.transform.SetAsLastSibling();
+        
         // 혹시 모르니 먼저 한 번 빼고 넣기
         MailBoxManager.OnMailboxUpdated -= RefreshUi;
         //[중요] 서버 데이터 변경 이벤트 구독
