@@ -28,7 +28,6 @@ public class RankingUi : MonoBehaviour , ILoadable
     };
 
     [SerializeField] private Button OpenBtn;
-    [SerializeField] private Button CloseBtn;
     [SerializeField] private GameObject dim;
     /// <summary>
     /// 랭킹 슬롯 UI을 여기 넣어주면 된다.
@@ -47,6 +46,8 @@ public class RankingUi : MonoBehaviour , ILoadable
    private Dictionary<RankCategoty, UserRankData[]> top3CategoryDataDict = new Dictionary<RankCategoty, UserRankData[]>();
     
     private RankCategoty currentCategory = RankCategoty.Damage;
+
+    private bool isOnRanking = false;
 
     // 랭킹중에서는 가장 빨라야함
     public int LoadOrder => 25;
@@ -69,8 +70,7 @@ public class RankingUi : MonoBehaviour , ILoadable
         damageTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.Damage));
         clearTimeTapBtn.onClick.AddListener(() => OnClickTap(RankCategoty.ClearTime));
         OpenBtn.onClick.AddListener(OpenWindow);
-        CloseBtn.onClick.AddListener(CloseWindow);
-
+      
         //게임 시작 시 로컬 저장소에서 데이터 불러오기
         LoadLocalData();
         this.gameObject.SetActive(false);
@@ -211,16 +211,23 @@ public class RankingUi : MonoBehaviour , ILoadable
 
     public void OpenWindow()
     {
-        //dim.SetActive(true);
-        //dim.transform.SetAsLastSibling();
-        this.gameObject.SetActive(true);
-        this.transform.SetAsLastSibling();
+        if(isOnRanking == false)
+        {
+            dim.SetActive(true);
+            dim.transform.SetAsLastSibling();
+            this.gameObject.SetActive(true);
+            this.transform.SetAsLastSibling();
+            isOnRanking = true;
+        }
+        else if(isOnRanking == true)
+        {
+            dim.SetActive(false);
+
+            this.gameObject.SetActive(false);
+            isOnRanking = false;
+        }
+      
        
     }
-    public void CloseWindow()
-    {
-        //dim.SetActive(false);
-        
-        this.gameObject.SetActive(false);
-    }
+   
 }
