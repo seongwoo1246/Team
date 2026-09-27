@@ -241,7 +241,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             UtilDebug.LogError("MonsterSpawner를 ServiceLocator에서 찾을 수 없습니다.");
         }
 
-        if (imageManager != null) { imageManager = GetComponent<ImageManager>(); }
+        //if (imageManager != null) { imageManager = GetComponent<ImageManager>(); }
 
         // 서버 프로필에서 클리어 스테이지 동기화
         var profile = UserManager.Instance.CurrentUser?.Profile;

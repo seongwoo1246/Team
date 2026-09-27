@@ -15,14 +15,14 @@ MonoBehaviour:
   m_GroupName: Remote_Group
   m_GUID: e3cf36a5337fd264b8ab347f12116a25
   m_SerializeEntries:
-  - m_GUID: 0fa794a40a2569349b0686d11790e20f
-    m_Address: Monster_Mushman
+  - m_GUID: 00a9c3a7cfc71584c9351708fdeeb94d
+    m_Address: Monster_AssassinWolf
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 16be3324a98077844b92e9b03fe2846a
-    m_Address: Monster_BossOrc
+  - m_GUID: 0f7480c22491f5e49bc1631a60787602
+    m_Address: Monster_Mushman
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
@@ -39,19 +39,13 @@ MonoBehaviour:
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2631ecf0a8966a14887ec5d1ac3144d0
-    m_Address: Monster_Hog
+  - m_GUID: 2820743b10346014593b68d099563a75
+    m_Address: Monster_Spider
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 2ab7e76b41bcf9b41891f12fa0aff426
-    m_Address: Monster_FishmanLoad
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 3441bc314e516364e8bf6ca9a17748c1
+  - m_GUID: 294233b241df04048b81c8e2cf10d100
     m_Address: Monster_Crab
     m_ReadOnly: 0
     m_SerializedLabels:
@@ -63,20 +57,26 @@ MonoBehaviour:
     m_SerializedLabels:
     - Character
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 4269a7a871b47254298a2f599c947203
-    m_Address: Monster_Spider
+  - m_GUID: 739228e31cb133a438a18f235f8871e5
+    m_Address: Monster_Larva
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 48ae8a0a389f24041816d3b1a3a07e66
+  - m_GUID: 77f898431448c7b46b26b27615b8d49c
+    m_Address: Monster_Slime
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b613dba573bdcf47ab719b550b13b67
     m_Address: Monster_Golem
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 6a9ac2cd11bf48846b783cef205c4a4b
-    m_Address: Monster_AssassinWolf
+  - m_GUID: 7bc9525fe88da0b4a8e96cf31e2fc4e7
+    m_Address: Monster_GoldenGoblin
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
@@ -87,8 +87,8 @@ MonoBehaviour:
     m_SerializedLabels:
     - Character
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 8ce0863686f297b47acc1989308256ca
-    m_Address: Monster_GnollChief
+  - m_GUID: 813a0478e0729404d9ea34d7e1ab9b8e
+    m_Address: Monster_Hog
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
@@ -99,20 +99,26 @@ MonoBehaviour:
     m_SerializedLabels:
     - Character
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: a8a5d6e173615e84a859521f27d6a2bb
-    m_Address: Monster_GoldenGoblin
+  - m_GUID: a323016bce33b99418fb8b26fcadf296
+    m_Address: Monster_OgreKing
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: c6f7256c467b106498c738e31d0333d6
+  - m_GUID: a8c813504289d64408bf038ff3c738e8
     m_Address: Monster_Bat
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: ce8d986ed318cdc43872dcb72c44265a
-    m_Address: Monster_Larva
+  - m_GUID: b50f2553631ca994ba582c753964b5bc
+    m_Address: Monster_BossOrc
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b82dc0f0d582fba45a013599b9443e56
+    m_Address: Monster_GnollChief
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
@@ -123,20 +129,14 @@ MonoBehaviour:
     m_SerializedLabels:
     - Character
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d6f3c1b0f81da2f4195c67a5f6d1257f
-    m_Address: Monster_Slime
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - Init_Pool
-    FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: e2cf0f43bf1857b4e9569eb6b6d2f328
     m_Address: Arrow
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: e5369b755514d484ba50cf4ddc245e32
-    m_Address: Monster_OgreKing
+  - m_GUID: fdcaa714ab2e7c4438d471a910e6ba65
+    m_Address: Monster_FishmanLoad
     m_ReadOnly: 0
     m_SerializedLabels:
     - Init_Pool
