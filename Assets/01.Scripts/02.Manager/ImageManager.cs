@@ -5,13 +5,10 @@ using UnityEngine.UI;
 
 public class ImageManager : MonoBehaviour
 {
-
-
-
     [Header("배경")]
-    [SerializeField] Image BattleImage;
-    [SerializeField] Image BattleImage1;
-    [SerializeField] Image BattleImage2;
+    [SerializeField] GameObject BattleImage;
+    [SerializeField] GameObject BattleImage1;
+    [SerializeField] GameObject BattleImage2;
 
     [Header("dim")]
     [SerializeField] Image dim;
@@ -33,7 +30,7 @@ public class ImageManager : MonoBehaviour
             Color color = dim.color;
             color.a = 0f;
             dim.color = color;
-
+            dim.gameObject.SetActive(false);
         }
     }
 
@@ -134,9 +131,9 @@ public class ImageManager : MonoBehaviour
                     break;
                 }
 
-                ScrollImage(BattleImage);
-                ScrollImage(BattleImage1);
-                ScrollImage(BattleImage2);
+                ScrollObject(BattleImage);
+                ScrollObject(BattleImage1);
+                ScrollObject(BattleImage2);
 
                 await UniTask.Yield(PlayerLoopTiming.Update, token);
 
@@ -156,19 +153,22 @@ public class ImageManager : MonoBehaviour
     /// <summary>
     /// 화면이 스크롤 되는 함수
     /// </summary>
-    /// <param name="image"></param>
-    private void ScrollImage(Image image)
+    /// <param name="targetGo"></param>
+    private void ScrollObject(GameObject targetGo)
     {
-        if (image == null) return;
+        if (targetGo == null) return;
 
-        RectTransform rect = image.rectTransform;
-        rect.anchoredPosition += Vector2.left * moveSpeed * Time.deltaTime;
+        Transform tr = targetGo.transform;
+        Vector2 pos = tr.localPosition;
 
-        // 왼쪽 화면 밖으로 완전히 벗어나면 오른쪽으로 이동
-        if(rect.anchoredPosition.x < resetPosition)
+        pos.x -= moveSpeed * Time.deltaTime;
+
+        if(pos.x < resetPosition)
         {
-            rect.anchoredPosition = new Vector2(startPosition,rect.anchoredPosition.y);
+            pos.x = startPosition;
         }
+
+        tr.localPosition = pos;
         
     }
 
@@ -197,35 +197,15 @@ public class ImageManager : MonoBehaviour
 
     public void BattleImageView()
     {
-        BattleImage.gameObject.SetActive(true);
-        BattleImage1.gameObject.SetActive(true);
-        BattleImage2.gameObject.SetActive(true);
+        if (BattleImage != null) BattleImage.SetActive(true);
+        if (BattleImage1 != null) BattleImage1.SetActive(true);
+        if (BattleImage2 != null) BattleImage2.SetActive(true);
     }
+
     public void BattleImageNoView()
     {
-        BattleImage.gameObject.SetActive(false);
-        BattleImage1.gameObject.SetActive(false);
-        BattleImage2.gameObject.SetActive(false);
+        if (BattleImage != null) BattleImage.SetActive(false);
+        if (BattleImage1 != null) BattleImage1.SetActive(false);
+        if (BattleImage2 != null) BattleImage2.SetActive(false);
     }
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
