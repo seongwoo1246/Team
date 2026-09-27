@@ -166,16 +166,21 @@ public class LoginController : MonoBehaviour
     {
         loadingPopupUI?.ShowLoading("유저 계정 정보 확인 중...");
         var (exists, data) = await UserManager.Instance.LoadUserInfoAsync(uid, ct);
+
+        loadingPopupUI?.ForceHide();
+
         if (exists)
         {
-            loadingPopupUI?.ForceHide();
             loginCompletionSource?.TrySetResult(true);
         }
         else
         {
-            loginView?.SetPanelActive(false);
-            loadingPopupUI?.ForceHide();
-            nicknamePopupUI?.Open();
+            // 서버 또는 로컬에서 삭제된 계정이면 기존 세션을 끊고 메인 로그인 패널을 노출
+            AuthLoginSystem.Instance.SignOut();
+            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+            PlayerPrefs.Save();
+
+            loginView?.SetPanelActive(true);
         }
     }
     private void OnNicknameSubmitted(string nickname)

@@ -7,6 +7,7 @@ RTDB : Realtime Database (Firebase)
 
 using Cysharp.Threading.Tasks;
 using System.Threading;
+using UnityEngine;
 using UtilDebug = DebugLogger<AccountDeletionHandler>;
 
 public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
@@ -20,6 +21,9 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 
             // 로컬 PlayerPrefs 삭제 및 메모리 정리 실행
             await UserManager.Instance.DeleteUserDataAsync(UserManager.Instance.LocalGuestUID, ct);
+            AuthLoginSystem.Instance.SignOut();
+            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+            PlayerPrefs.Save();
 
             // 타이틀 씬으로 복귀
             await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
@@ -50,10 +54,15 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
             return false;
         }
 
+        // 명시적 로그아웃 및 로컬 세션 플래그 제거
+        AuthLoginSystem.Instance.SignOut();
+        PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+        PlayerPrefs.Save();
+
         // 3. 로컬 캐시 메모리 제거
         UserManager.Instance.ClearLocalData();
 
-        // 로그인 기능과 전체적인 틀을 만들면 해제
+        // 4. Bootstrap 씬으로 전환
         await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
         return true;
     }

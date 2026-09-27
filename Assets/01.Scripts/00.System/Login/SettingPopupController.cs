@@ -325,7 +325,15 @@ public class SettingsPopupController : MonoBehaviour
         {
             UtilDebug.Log("계정 삭제 프로세스 시작");
 
+            // Time.timeScale = 1 복구 및 UI 상태를 안전하게 종료합니다.
+            ClosePopup();
+
+            // 계정 삭제 및 씬 전환 요청
             bool success = await AccountDeletionHandler.Instance.ProcessAccountDeletionAsync(ct);
+
+            // 씬 전환으로 인해 컴포넌트 파괴 시 UI 조작 중단
+            if (this == null || gameObject == null) return;
+
             if (success)
             {
                 ClosePopup();
@@ -342,7 +350,9 @@ public class SettingsPopupController : MonoBehaviour
         }
         finally
         {
-            _isProcessing = false;
+            // 오브젝트가 살아있을 때만 플래그 해제
+            if(this != null)
+                _isProcessing = false;
         }
     }
     #endregion
