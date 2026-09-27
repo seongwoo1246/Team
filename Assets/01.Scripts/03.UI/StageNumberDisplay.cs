@@ -47,7 +47,7 @@ public sealed class StageNumberDisplay : MonoBehaviour, ILoadable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         try { TryBindStageManager(); ApplyCurrentState(); }
         catch (System.Exception ex) { DebugLogger<StageNumberDisplay>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
     }

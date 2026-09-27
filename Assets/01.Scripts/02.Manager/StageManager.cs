@@ -227,7 +227,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     #region 김주연 - ServiceLocator로 스포너 연결
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
 
         if (ServiceLocator.TryGet<MonsterSpawner>(out MonsterSpawner spawnerService))
         {

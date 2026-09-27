@@ -48,7 +48,7 @@ public sealed class BottomNavModeGate : MonoBehaviour, ILoadable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         try { TryBindStageManager(); ApplyCurrentMode(); }
         catch (System.Exception ex) { UtilDebug.LogError($"초기화 중 예외 발생: {ex.Message}"); }
     }

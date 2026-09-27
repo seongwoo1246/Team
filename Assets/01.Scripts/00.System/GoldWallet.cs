@@ -91,7 +91,7 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         if (_isInitialized) return;
 
         UtilDebug.Log($"[{scene}] GoldWallet 초기화 및 UserInfo 매칭 시작");

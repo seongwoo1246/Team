@@ -15,8 +15,8 @@ MonoBehaviour:
   m_GroupName: Remote_Scenes
   m_GUID: 646b5e3af7d3a504bbaccea0da2d46d0
   m_SerializeEntries:
-  - m_GUID: a38fa7d1e19a57543b03988b935bafb5
-    m_Address: LobbySceneTest
+  - m_GUID: fdb706a6d457d7e418207610827b1b75
+    m_Address: LobbyScene
     m_ReadOnly: 0
     m_SerializedLabels:
     - Remote_Scenes

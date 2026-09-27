@@ -80,7 +80,7 @@ public sealed class UpgradeStatCard : MonoBehaviour, ILoadable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         try { TryBindUpgradeSystem(); RefreshDisplay(); }
         catch (System.Exception ex) { DebugLogger<UpgradeStatCard>.LogError($"{track} 카드 초기화 중 예외 발생: {ex.Message}"); }
     }

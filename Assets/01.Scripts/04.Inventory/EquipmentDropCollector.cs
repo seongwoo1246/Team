@@ -43,7 +43,7 @@ public sealed class EquipmentDropCollector : MonoBehaviour, ILoadable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
 
         TryBindStageManager();
         //RestoreSavedEquipment();

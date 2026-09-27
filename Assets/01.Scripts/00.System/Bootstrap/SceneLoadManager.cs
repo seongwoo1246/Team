@@ -129,7 +129,7 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
                 {
                     case SceneId.BootstrapScene: await SoundManager.Instance.FadeSound("불꽃속산길1", 3f); break;
 
-                    case SceneId.LobbySceneTest: await SoundManager.Instance.FadeSound("픽셀풍노래1", 3f); break;
+                    case SceneId.LobbyScene: await SoundManager.Instance.FadeSound("픽셀풍노래1", 3f); break;
                 }
             }
 

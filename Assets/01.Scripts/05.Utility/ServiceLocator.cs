@@ -1,24 +1,14 @@
 ﻿/* 담당자 - 송태훈
  */
 
-using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System;
 using UtilDebug = DebugLogger;
-public interface ILoadable
-{
-    int LoadOrder { get; }
-    UniTask OnSceneLoadCreate(SceneId scene);
-    void Init(SceneId scene);
-
-    void OnSceneDestory(SceneId scene);
-}
 
 public enum SceneId
 {
-    None, BootstrapScene, LobbySceneTest
+    None, BootstrapScene, LobbyScene
 }
-
 public enum ServiceLifetime
 {
     Global, // 싱글톤

@@ -80,7 +80,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         if (_isInitialized) return;
 
         UtilDebug.Log($"[{scene}] MaterialWallet 초기화 및 서버 인벤토리 연동");

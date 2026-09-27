@@ -1,4 +1,13 @@
-﻿/// <summary>
+﻿public interface ILoadable
+{
+    int LoadOrder { get; }
+    Cysharp.Threading.Tasks.UniTask OnSceneLoadCreate(SceneId scene);
+    void Init(SceneId scene);
+
+    void OnSceneDestory(SceneId scene);
+}
+
+/// <summary>
 /// 문자열 고유 Id를 가지는 데이터 에셋용 인터페이스
 /// </summary>
 public interface IIdentifiable

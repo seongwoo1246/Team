@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 파밍 ↔ 챌린지 모드가 바뀔 때, 검은 화면이 한쪽에서 들어와 화면을 가렸다가 반대쪽으로
 빠져나가면서 자연스럽게 전환되는 와이프연출
@@ -59,7 +59,7 @@ public sealed class ModeTransitionWipe : MonoBehaviour, ILoadable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         TryBindStageManager();
     }
 

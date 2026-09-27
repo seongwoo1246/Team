@@ -44,7 +44,7 @@ public sealed class StageFailPanel : MonoBehaviour, ILoadable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         try { TryBindStageManager(); }
         catch (System.Exception ex) { DebugLogger<StageFailPanel>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
     }

@@ -66,7 +66,7 @@ public class TitleBootstrapController : MonoBehaviour
         view.UpdateState("로비로 이동 중...", 1.0f);
         await UniTask.Delay(150, cancellationToken: ct);
 
-        SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.LobbySceneTest).Forget();
+        SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.LobbyScene).Forget();
     }
 
     #region STEP 1. 인프로 초기화

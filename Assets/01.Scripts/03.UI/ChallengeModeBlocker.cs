@@ -42,7 +42,7 @@ public sealed class ChallengeModeBlocker : MonoBehaviour, ILoadable
     public UniTask OnSceneLoadCreate(SceneId scene)=> UniTask.CompletedTask;
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         TryBindStageManager();
         ApplyCurrentMode();
     }

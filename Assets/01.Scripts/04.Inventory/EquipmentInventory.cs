@@ -39,7 +39,7 @@ public class EquipmentInventory : MonoBehaviour, ILoadable, ISyncable
 
     public void Init(SceneId scene)
     {
-        if (scene != SceneId.LobbySceneTest) return;
+        if (scene != SceneId.LobbyScene) return;
         if (_isInitialized) return;
 
         LoadInventoryFromServer();
