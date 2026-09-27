@@ -171,16 +171,14 @@ public class LoginController : MonoBehaviour
 
         if (exists)
         {
+            // 기존 유저: 로그인 성공 완료
             loginCompletionSource?.TrySetResult(true);
         }
         else
         {
-            // 서버 또는 로컬에서 삭제된 계정이면 기존 세션을 끊고 메인 로그인 패널을 노출
-            AuthLoginSystem.Instance.SignOut();
-            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
-            PlayerPrefs.Save();
-
-            loginView?.SetPanelActive(true);
+            // 신규 유저: 메인 로그인 패널 숨기고 닉네임 입력 창 열기
+            loginView?.SetPanelActive(false);
+            nicknamePopupUI?.Open();
         }
     }
     private void OnNicknameSubmitted(string nickname)

@@ -130,10 +130,11 @@ public class UserProfileRequest : BaseRequestData
         {
             DatabaseReference targetRef = GetTargetRef();
 
-            // 서버와 강제 동기화 보장 설정
-            targetRef.KeepSynced(true);
-
-            DataSnapshot snapshot = await GetTargetRef().GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            DataSnapshot snapshot = await targetRef.GetValueAsync()
+            .AsUniTask()
+            .AttachExternalCancellation(ct)
+            .Timeout(System.TimeSpan.FromSeconds(5));
+            
             if (snapshot.Exists && snapshot.Value != null)
             {
                 string json = snapshot.GetRawJsonValue();
