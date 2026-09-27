@@ -1,5 +1,5 @@
 ﻿/* 담당자 - 송태훈
- */ 
+ */
 
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -8,6 +8,7 @@ public class SceneLoadingView : MonoBehaviour
 {
     [SerializeField] private CanvasGroup loadingCanvasGroup;
     [SerializeField] private UnityEngine.UI.Slider progressSlider;
+    [SerializeField] private TMPro.TextMeshProUGUI progressText;
 
     private void Awake()
     {
@@ -16,7 +17,16 @@ public class SceneLoadingView : MonoBehaviour
     public void ResetProgress()
     {
         if (progressSlider != null) progressSlider.value = 0f;
+        UpdateProgressText(0f);
     }
+    private void UpdateProgressText(float value)
+    {
+        if (progressText != null)
+        {
+            progressText.text = $"Loading... {(int)(value * 100f)}%";
+        }
+    }
+
 
     public async UniTask FadeAsync(float targetAlpha, float duration, System.Threading.CancellationToken ct)
     {
@@ -52,7 +62,9 @@ public class SceneLoadingView : MonoBehaviour
                 if (this == null || progressSlider == null || ct.IsCancellationRequested) return;
 
                 elapsed += Time.unscaledDeltaTime;
-                progressSlider.value = Mathf.Lerp(startValue, targetValue, elapsed / duration);
+                float current = Mathf.Lerp(startValue, targetValue, elapsed / duration);
+                progressSlider.value = current;
+                UpdateProgressText(current);
 
                 await UniTask.Yield(PlayerLoopTiming.Update, ct);
             }
@@ -60,6 +72,7 @@ public class SceneLoadingView : MonoBehaviour
             if (this != null && progressSlider != null)
             {
                 progressSlider.value = targetValue;
+                UpdateProgressText(targetValue);
             }
         }
         catch (System.OperationCanceledException)
@@ -74,7 +87,7 @@ public class SceneLoadingView : MonoBehaviour
 
     public void ForceHide()
     {
-        if(loadingCanvasGroup != null)
+        if (loadingCanvasGroup != null)
         {
             loadingCanvasGroup.alpha = 0f;
             loadingCanvasGroup.blocksRaycasts = false;

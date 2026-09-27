@@ -16,12 +16,12 @@ MonoBehaviour:
   m_GUID: 2d94eeee82208164198ebf2ca66aae62
   m_SerializeEntries:
   - m_GUID: 1575ba33df0062249a82ee0a07f4a179
-    m_Address: BootStrapScene
+    m_Address: BootstrapScene
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
   - m_GUID: 19601760a450ca247bcd1c70cb5470ab
-    m_Address: Assets/02.Prefabs/External/Test/SceneLoadManager.prefab
+    m_Address: SceneLoadManager
     m_ReadOnly: 0
     m_SerializedLabels:
     - Bootstrap_Local
@@ -30,6 +30,12 @@ MonoBehaviour:
     m_Address: Assets/03.Data/04.Font/Orbit-Regular SDF.asset
     m_ReadOnly: 0
     m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d0010ac64045a794c9deb61280230c03
+    m_Address: BootstrapContext
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Bootstrap_Local
     FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}

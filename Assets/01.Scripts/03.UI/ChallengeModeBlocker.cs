@@ -66,7 +66,10 @@ public sealed class ChallengeModeBlocker : MonoBehaviour, ILoadable
     {
         if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
         {
-            stageMng.ModeChanged -= OnModeChanged;
+            if(stageMng !=  null)
+            {
+                stageMng.ModeChanged -= OnModeChanged;
+            }
         }
     }
 

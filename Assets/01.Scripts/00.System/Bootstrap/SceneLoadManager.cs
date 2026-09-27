@@ -5,7 +5,6 @@ using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 using UtilDebug = DebugLogger<SceneLoadManager>;
 public class SceneLoadManager : Singleton<SceneLoadManager>
 {
@@ -104,20 +103,24 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
                 await UnityEngine.SceneManagement.SceneManager
                     .LoadSceneAsync(nextScene.ToString())
                     .ToUniTask(cancellationToken: this.destroyCancellationToken);
+
+                // BootstrapScene에서는 인게임 매니저 초기화 건너뛰기
+                CleanupDeadLoadables();
             }
             else
             {
                 await AddressableManager.Instance.LoadSceneAsync(nextScene.ToString());
+
+                if (loadingView != null)
+                    await loadingView.UpdateSliderSmoothAsync(0.5f, 0.2f, this.destroyCancellationToken);
+
+                // 5. 새 씬 매니저 순차 초기화 ( 오름차순 )
+
+                await LTSManagerInitAsync(nextScene);
+                // 6. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기
+                await LTSBootstrapRunnerAsync(nextScene);
             }
 
-            if (loadingView != null)
-                await loadingView.UpdateSliderSmoothAsync(0.5f, 0.2f, this.destroyCancellationToken);
-
-            // 5. 새 씬 매니저 순차 초기화 ( 오름차순 )
-            await LTSManagerInitAsync(nextScene);
-
-            // 6. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기
-            await LTSBootstrapRunnerAsync(nextScene);
 
             #region 사운드를 위해서 넣은 함수들
             if (SoundManager.Instance != null)
@@ -223,7 +226,7 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
             catch (System.Exception ex)
             {
                 UtilDebug.LogError($"[{targetName}] Init() 실행 중 Null 예외 발생: {ex.Message}\n{ex.StackTrace}");
-                throw;
+                //throw; 로딩화면 멈추는 것 방지
             }
         }
     }
