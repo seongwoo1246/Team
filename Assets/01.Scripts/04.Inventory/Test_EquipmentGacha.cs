@@ -31,6 +31,7 @@ public class Test_EquipmentGacha : MonoBehaviour
     [SerializeField] private Transform resultGrid;
     [SerializeField] private GameObject resultSlotPrefab;
     [SerializeField] private UnityEngine.UI.Button resultButton;
+    [SerializeField] private GameObject gachaResultBlocker;
 
     private bool _isDrawing = false;
 
@@ -180,8 +181,7 @@ public class Test_EquipmentGacha : MonoBehaviour
 
 
     // 가챠에서 뽑은 장비 10개를 결과창에 표시
-    private async UniTask ShowGachaResult(
-    System.Collections.Generic.List<EquippedItem> resultItems)
+    private async UniTask ShowGachaResult(System.Collections.Generic.List<EquippedItem> resultItems)
     {
         if (gachaResultPanel == null)
         {
@@ -215,6 +215,12 @@ public class Test_EquipmentGacha : MonoBehaviour
 
         // 결과창 먼저 열기
         gachaResultPanel.SetActive(true);
+
+        // 확인 버튼 이외 다른 버튼들 막기
+        if (gachaResultBlocker != null)
+        {
+            gachaResultBlocker.SetActive(true);
+        }
 
         // 장비를 하나씩 순서대로 표시
         foreach (EquippedItem item in resultItems)
@@ -256,6 +262,11 @@ public class Test_EquipmentGacha : MonoBehaviour
         if (gachaResultPanel != null)
         {
             gachaResultPanel.SetActive(false);
+        }
+
+        if (gachaResultBlocker != null)
+        {
+            gachaResultBlocker.SetActive(false);
         }
     }
 
