@@ -1,8 +1,13 @@
-﻿using System;
+﻿/*
+ 담당자 - 홍준호
+ 아이템 슬롯 인벤토리, 상점창 표기용 스크립트
+ */
+
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UtilDebug = DebugLogger<EquipmentInventorySlot>;
+
 public class EquipmentInventorySlot : MonoBehaviour
 {
     [Header("텍스트")]
@@ -13,15 +18,24 @@ public class EquipmentInventorySlot : MonoBehaviour
     [Header("아이콘")]
     [SerializeField] private Image iconImage;
 
-    [Header("상점 판매 선택 테두리")]
-    [SerializeField] private Outline selectedOutline;
+    [Header("프레임")]
+    [SerializeField] private Image frameImage;
 
-    [Header("장착 중 표시 테두리")]
-    [SerializeField] private Outline equippedOutline;
+    // 아이템 기본 프레임
+    [SerializeField] private Sprite normalFrame;
+
+    // 장비 장착시 녹색 프레임
+    [SerializeField] private Sprite equippedFrame;
+
+    // 판매창 선택시 적색 프레임
+    [SerializeField] private Sprite selectedFrame;
 
     private EquippedItem equippedItem;
     private EquipmentInventoryController controller;
     private Action<EquippedItem> sellClickAction;
+
+    private bool isSelected;
+    private bool isEquippedDisplay;
 
 
     // 일반 장비 인벤토리에서 사용
@@ -30,6 +44,7 @@ public class EquipmentInventorySlot : MonoBehaviour
         equippedItem = item;
         controller = inventoryController;
         sellClickAction = null;
+        isEquippedDisplay = false;
 
         SetSelected(false);
 
@@ -57,6 +72,7 @@ public class EquipmentInventorySlot : MonoBehaviour
         equippedItem = item;
         controller = null;
         sellClickAction = onClick;
+        isEquippedDisplay = false;
 
         SetSelected(false);
 
@@ -70,7 +86,6 @@ public class EquipmentInventorySlot : MonoBehaviour
 
         if (TryGetComponent<Button>(out var button))
         {
-            Debug.LogError("버튼 문제");
             button.onClick.RemoveAllListeners();
             button.onClick.AddListener(OnSellSlotClicked);
         }
@@ -83,6 +98,7 @@ public class EquipmentInventorySlot : MonoBehaviour
         equippedItem = item;
         controller = null;
         sellClickAction = null;
+        isEquippedDisplay = true;
 
         SetSelected(false);
 
@@ -109,9 +125,10 @@ public class EquipmentInventorySlot : MonoBehaviour
             return;
         }
 
-        // 김주연 - 등급(하급/중급/상급) 표시 추가
         if (nameText != null)
+        {
             nameText.text = "[" + EquipmentGradeHelper.GetDisplayName(equippedItem.Grade) + "] " + equippedItem.Data.NameKr;
+        }
 
         if (enhanceText != null)
             enhanceText.text = $"+{equippedItem.EnhanceLevel}";
@@ -126,11 +143,8 @@ public class EquipmentInventorySlot : MonoBehaviour
             iconImage.enabled = equippedItem.Data.Icon != null;
         }
 
-        // 일반 인벤토리에서만 장착 여부 표시
-        if (equippedOutline != null)
-        {
-            equippedOutline.enabled = controller != null && equippedItem.IsEquipped;
-        }
+        // 프레임 상태 갱신
+        RefreshFrame();
     }
 
 
@@ -151,16 +165,42 @@ public class EquipmentInventorySlot : MonoBehaviour
             iconImage.enabled = false;
         }
 
-        if (equippedOutline != null)
-            equippedOutline.enabled = false;
+        if (frameImage != null)
+            frameImage.sprite = normalFrame;
     }
 
 
-    // 선택 테두리 표시/숨김
+    // 프레임 상태 갱신
+    private void RefreshFrame()
+    {
+        if (frameImage == null)
+            return;
+
+        // 판매창에서 선택된 아이템 → 빨간색
+        if (isSelected)
+        {
+            frameImage.sprite = selectedFrame;
+            return;
+        }
+
+        // 장착 중인 아이템 → 초록색
+        if (isEquippedDisplay ||
+            (controller != null && equippedItem != null && equippedItem.IsEquipped))
+        {
+            frameImage.sprite = equippedFrame;
+            return;
+        }
+
+        // 기본 상태 → 회색
+        frameImage.sprite = normalFrame;
+    }
+
+
+    // 선택 프레임 표시/숨김
     public void SetSelected(bool selected)
     {
-        if (selectedOutline != null)
-            selectedOutline.enabled = selected;
+        isSelected = selected;
+        RefreshFrame();
     }
 
 
@@ -187,5 +227,30 @@ public class EquipmentInventorySlot : MonoBehaviour
     public EquippedItem GetItem()
     {
         return equippedItem;
+    }
+
+    // 가챠 결과창
+    public void SetResultItem(EquippedItem item)
+    {
+        equippedItem = item;
+        controller = null;
+        sellClickAction = null;
+
+        isSelected = false;
+        isEquippedDisplay = false;
+
+        if (equippedItem == null || equippedItem.Data == null)
+        {
+            ClearDisplay();
+            return;
+        }
+
+        RefreshDisplay();
+
+        // 결과창에서는 클릭 기능 없음
+        if (TryGetComponent<Button>(out var button))
+        {
+            button.onClick.RemoveAllListeners();
+        }
     }
 }
