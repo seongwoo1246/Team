@@ -161,8 +161,8 @@ public class AchievementManager : MonoBehaviour, ILoadable
 
     public void OpenUI()
     {
-       // dim.SetActive(true);
-        //dim.transform.SetAsLastSibling();
+        dim.SetActive(true);
+        dim.transform.SetAsLastSibling();
         gameObject.transform.SetAsLastSibling();
         gameObject.SetActive(true);
         if (BackGround != null) BackGround.gameObject.SetActive(true);
@@ -193,7 +193,7 @@ public class AchievementManager : MonoBehaviour, ILoadable
         ClearActiveSlots();
         EventHanlerUnregist();
 
-       // dim.SetActive(false);
+        dim.SetActive(false);
         slot.gameObject.SetActive(false);
         BackGround.gameObject.SetActive(false);
     }
