@@ -53,7 +53,7 @@ public class RankingUi : MonoBehaviour , ILoadable
 
     private void Awake()
     {
-        ServiceLocator.Register<RankingUi>(this);
+        ServiceLocator.Register<RankingUi>(this, ServiceLifetime.Local);
         SceneLoadManager.Instance.RegisterLoadable(this);
     }
 

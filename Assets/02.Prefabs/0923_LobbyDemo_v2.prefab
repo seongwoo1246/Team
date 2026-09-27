@@ -3108,8 +3108,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.0007324219, y: -0.000022258593}
-  m_SizeDelta: {x: -1093.0444, y: 0}
+  m_AnchoredPosition: {x: -136.60808, y: 14395.106}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!114 &1247884557435832700
 MonoBehaviour:
@@ -3456,7 +3456,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &97835481015221713
 Transform:
   m_ObjectHideFlags: 0
@@ -3490,7 +3490,7 @@ MonoBehaviour:
   mailItemPrefeb: {fileID: 6496942752162278317, guid: 48429db7755026241838b5a40c040b14, type: 3}
   emptyStateNotion: {fileID: 1391427149778313186}
   closeButton: {fileID: 8745598812145107914}
-  OpenButton: {fileID: 0}
+  OpenButton: {fileID: 7172689568701150357}
   LobbyRedDot: {fileID: 5437884018621127997}
 --- !u!1 &1971485050942590118
 GameObject:
@@ -9530,7 +9530,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &8421900482201262316
 Transform:
   m_ObjectHideFlags: 0
@@ -13443,6 +13443,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8797384903656832121, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
   m_PrefabInstance: {fileID: 3371507152708178974}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &7172689568701150357 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5567430786154029195, guid: b93d0991f7bd6a840aa964856d7f3e5e, type: 3}
+  m_PrefabInstance: {fileID: 3371507152708178974}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
 --- !u!1001 &6914263785139024633
 PrefabInstance:
   m_ObjectHideFlags: 0
