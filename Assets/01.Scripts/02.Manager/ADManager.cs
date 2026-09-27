@@ -46,7 +46,8 @@ public class ADManager : MonoBehaviour
         }
         if (openAdBtn != null) openAdBtn.onClick.AddListener(() => OnClickAdRewardButton(type, amount));
         if (AdSkipTimeText != null) AdSkipTimeText.gameObject.SetActive(false);
-       
+
+        SoundManager.Instance.playBGM("픽셀풍노래1");
     }
 
     private void OnDestroy()
@@ -77,8 +78,11 @@ public class ADManager : MonoBehaviour
         var token = adCancellationTokenSource.Token;
 
         VideoClip selectedClip = RewardADList[UnityEngine.Random.Range(0, RewardADList.Count)];
-        int skipDuratuon = UnityEngine.Random.Range(10, 15);
+        int skipDuratuon = UnityEngine.Random.Range(3, 5);
 
+        SoundManager.Instance.SetBGMVolume(0);
+        SoundManager.Instance.SetSFXVolume(0);
+      
         //UI 활성화 및 영상 재생
         SetupAdUi(selectedClip);
         openAdBtn.gameObject.SetActive(false);
@@ -108,7 +112,7 @@ public class ADManager : MonoBehaviour
                 videoPlayer.clip = null;
                 videoPlayer.loopPointReached -= endHandler;
             }
-
+            
             return isCompleted;
         }
         catch (OperationCanceledException)
@@ -119,6 +123,8 @@ public class ADManager : MonoBehaviour
         }
         finally
         {
+            SoundManager.Instance.SetBGMVolume(0.2f);
+            SoundManager.Instance.SetSFXVolume(0.2f);
             CloseRewardAD();
         }
     }
