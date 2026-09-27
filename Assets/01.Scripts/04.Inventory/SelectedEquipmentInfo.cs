@@ -1,4 +1,9 @@
-﻿using UnityEngine;
+﻿/*
+담당자 - 홍준호
+ 인벤토리 장비 스탯 정보 패널용 스크립트
+ */
+
+using UnityEngine;
 using TMPro;
 
 public class SelectedEquipmentInfo : MonoBehaviour

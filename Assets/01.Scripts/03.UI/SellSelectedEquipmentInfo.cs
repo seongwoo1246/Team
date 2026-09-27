@@ -1,4 +1,9 @@
-﻿using TMPro;
+﻿/*
+담당자 - 홍준호
+ 상점 패널 판매창 장비 정보 확인용 스크립트
+ */
+
+using TMPro;
 using UnityEngine;
 
 public class SellSelectedEquipmentInfo : MonoBehaviour
