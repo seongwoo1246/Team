@@ -29,6 +29,7 @@ _maxClearedStage는 PlayerPrefs에 저장해서 앱을 다시 켜도 배율/오�
 using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UtilDebug = DebugLogger<StageManager>;
 
@@ -147,6 +148,9 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     // 파티원 중 누구든 바지(Pants=골드획득) 장비를 끼고 있으면 보너스를 전부 더한 값 (7% 하나면 0.07)
     // 골드획득은 캐릭터 개인 스탯이 아니라 파티 전체 골드에 적용되는 값이라, 누가 잡았는지와 상관없이
     // 파티 중 아무나 끼고 있으면 항상 적용됨. GoldWallet이 분당 골드를 계산할 때 이 값을 읽어감
+
+    //성우가 만든 변수들
+   public ImageManager imageManager;
     public double PartyEquipmentGoldBonusRatio
     {
         get
@@ -197,6 +201,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         ServiceLocator.Register<StageManager>(this, ServiceLifetime.Local);
         SceneLoadManager.Instance.RegisterLoadable(this);
         GameManager.Instance.RegisterSyncable(this);
+       
     }
 
     #region ILoadable + ISyncable 구현부 - 송태훈
@@ -235,6 +240,8 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         {
             UtilDebug.LogError("MonsterSpawner를 ServiceLocator에서 찾을 수 없습니다.");
         }
+
+        //if (imageManager != null) { imageManager = GetComponent<ImageManager>(); }
 
         // 서버 프로필에서 클리어 스테이지 동기화
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -324,7 +331,8 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             return;
         }
         _lastModeChangeTime = Time.time;
-
+        
+      
         RestartFlow();
         _currentMode = StageMode.Farming;
         ModeChanged?.Invoke(_currentMode);
@@ -338,9 +346,10 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// 클리어 화면에서 "다음 스테이지" 버튼을 눌렀을 때 UI가 호출
     /// </summary>
     /// <param name="clearedStageNumber">방금 클리어한 스테이지 번호</param>
-    public void ContinueToNextStage(int clearedStageNumber)
+    public async Task ContinueToNextStage(int clearedStageNumber)
     {
-        EnterChallenge(clearedStageNumber + 1);
+
+      await  EnterChallenge(clearedStageNumber + 1);
     }
 
     /// <summary>
@@ -348,14 +357,14 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// 실패 화면에서 "다시 하기" 버튼을 눌렀을 때 UI가 호출
     /// </summary>
     /// <param name="failedStageNumber">다시 시도할 스테이지 번호</param>
-    public void RetryStage(int failedStageNumber)
+    public async Task RetryStage(int failedStageNumber)
     {
         if(SoundManager.Instance != null)
         {
             SoundManager.Instance.playSFX("되감기");
         }
        
-        EnterChallenge(failedStageNumber);
+       await EnterChallenge(failedStageNumber);
     }
 
     /// <summary>
@@ -363,11 +372,16 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// 웨이브 구성/등장 몬스터/보스는 roster가 스테이지 번호로 계산
     /// </summary>
     /// <param name="stageNumber">진행할 스테이지 번호 (1 이상)</param>
-    public void EnterChallenge(int stageNumber)
+    public async Task EnterChallenge(int stageNumber)
     {
-        if(SoundManager.Instance !=  null)
+        if (SoundManager.Instance != null)
         {
             SoundManager.Instance.playBGM("부서진왕관");
+        }
+        if (imageManager != null)
+        {
+            await imageManager.FadeDim();
+            imageManager.BattleImageView();
         }
         if (roster == null || stageNumber < 1)
         {
@@ -427,6 +441,11 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             UtilDebug.LogWarning("파밍 몬스터 프리팹이 비어있음");
             return;
         }
+        if (imageManager != null)
+        {
+            await imageManager.FadeDim();
+            imageManager.BattleImageNoView();
+        }
 
         _aliveInFarming = 0;
 
@@ -475,17 +494,24 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// <param name="token">파밍 복귀 등으로 챌린지를 멈출 때 쓰는 취소 토큰</param>
     private async UniTaskVoid RunChallengeLoopAsync(int stageNumber, CancellationToken token)
     {
+       
         int waveCount = roster.GetWaveCount(stageNumber);
         for (int waveIndex = 0; waveIndex < waveCount; waveIndex++)
         {
             _currentWaveNumber = waveIndex + 1;
             
             TriggerPartyMoveAnimation();
+          
             bool waveCleared = await RunWaveAsync(stageNumber, token);
             if (!waveCleared)
             {
+                
                 HandleChallengeFailure(stageNumber);
                 return;
+            }
+            else if(waveCleared)
+            {
+                await imageManager.MoveBackGround(()=> imageManager.isMoving ==true);
             }
         }
 
@@ -504,6 +530,7 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         }
         else if (IsPartyWiped() || IsTimeUp())
         {
+           
             HandleChallengeFailure(stageNumber);
         }
     }
@@ -532,9 +559,14 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     private async UniTask<bool> RunWaveAsync(int stageNumber, CancellationToken token)
     {
         _aliveInWave = 0;
+        if (imageManager != null)
+        {
+            imageManager.StopMoveBackGround();
+        }
 
         for (int spawnIndex = 0; spawnIndex < roster.MonstersPerWave; spawnIndex++)
         {
+
             if (IsPartyWiped() || IsTimeUp())
             {
                 return false;
@@ -582,6 +614,10 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         }
 
         bool bossDefeated = false;
+        if (imageManager != null)
+        {
+            imageManager.StopMoveBackGround();
+        }
 
         void OnBossDied(Monster deadBoss)
         {
@@ -718,6 +754,10 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     /// <param name="stageNumber">실패한 스테이지 번호</param>
     private void HandleChallengeFailure(int stageNumber)
     {
+        if (imageManager != null)
+        {
+            imageManager.StopMoveBackGround();
+        }
         string reason = IsPartyWiped() ? "파티 전멸" : "제한 시간 초과";
         UtilDebug.LogWarning($"{reason}로 스테이지 {stageNumber} 실패");
 

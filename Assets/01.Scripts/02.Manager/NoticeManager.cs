@@ -51,6 +51,7 @@ public class NoticeManager : MonoBehaviour
 
     private async void Start()
     {
+        
         // 씬 시작시 토큰 생성(씬 파괴시 메모리 누수 방지)
         var token = this.GetCancellationTokenOnDestroy();
         await FetchAndShowNoticeAsync(token);
@@ -186,6 +187,7 @@ public class NoticeManager : MonoBehaviour
     /// </summary>
     private void CloseNoticeUI()
     {
+        
         noticePopupUi.SetActive(false);
 
         //동적으로 할당받은 이미지 텍스쳐를 즉시 언로드 (GC 부담 완화)

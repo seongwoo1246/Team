@@ -20,8 +20,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: 19601760a450ca247bcd1c70cb5470ab
-    m_Address: SceneLoadManager
+  - m_GUID: 46f0d2c9f4ef8a44dad0427b1ca3ac9e
+    m_Address: Assets/02.Prefabs/02.UIPrefabs/Title/SceneLoadManager.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
     - Bootstrap_Local
@@ -31,8 +31,8 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
     FlaggedDuringContentUpdateRestriction: 0
-  - m_GUID: d0010ac64045a794c9deb61280230c03
-    m_Address: BootstrapContext
+  - m_GUID: d9ef8d3970c34804696a946c1f38f24d
+    m_Address: Assets/02.Prefabs/02.UIPrefabs/Title/BootstrapContext.prefab
     m_ReadOnly: 0
     m_SerializedLabels:
     - Bootstrap_Local

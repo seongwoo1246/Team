@@ -29,7 +29,7 @@ public class RankingUi : MonoBehaviour , ILoadable
 
     [SerializeField] private Button OpenBtn;
     [SerializeField] private Button CloseBtn;
-
+    [SerializeField] private GameObject dim;
     /// <summary>
     /// 랭킹 슬롯 UI을 여기 넣어주면 된다.
     /// </summary>
@@ -61,6 +61,7 @@ public class RankingUi : MonoBehaviour , ILoadable
 
     public void Init(SceneId scene)
     {
+        
         // 각 딕셔너리에 미리 크기 지정
         top3CategoryDataDict[RankCategoty.Damage] = new UserRankData[3];
         top3CategoryDataDict[RankCategoty.ClearTime] = new UserRankData[3];
@@ -208,12 +209,17 @@ public class RankingUi : MonoBehaviour , ILoadable
     }
 
 
-    private void OpenWindow()
+    public void OpenWindow()
     {
+        dim.SetActive(true);
+        dim.transform.SetAsLastSibling();
+        this.transform.SetAsLastSibling();
         this.gameObject.SetActive(true);
     }
-    private void CloseWindow()
+    public void CloseWindow()
     {
+        dim.SetActive(false);
+        
         this.gameObject.SetActive(false);
     }
 }

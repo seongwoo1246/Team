@@ -106,6 +106,8 @@ public class AchievementManager : MonoBehaviour, ILoadable
     [SerializeField] private Button openBtn;
     [SerializeField] private Button closeBtn;
 
+    [SerializeField] private GameObject dim;
+
     // 업적을 담아두는 리스트와 딕셔너리
     public List<Achievement> achievements = new List<Achievement>();
     public Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
@@ -159,7 +161,9 @@ public class AchievementManager : MonoBehaviour, ILoadable
 
     public void OpenUI()
     {
-
+        dim.SetActive(true);
+        dim.transform.SetAsLastSibling();
+        gameObject.transform.SetAsLastSibling();
         gameObject.SetActive(true);
         if (BackGround != null) BackGround.gameObject.SetActive(true);
         if (closeBtn != null) closeBtn.gameObject.SetActive(true);
@@ -189,6 +193,7 @@ public class AchievementManager : MonoBehaviour, ILoadable
         ClearActiveSlots();
         EventHanlerUnregist();
 
+        dim.SetActive(false);
         slot.gameObject.SetActive(false);
         BackGround.gameObject.SetActive(false);
     }

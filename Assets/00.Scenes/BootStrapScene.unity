@@ -355,7 +355,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1488039401}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56457d659f5e6004da30c48ddce2eed4, type: 3}
+  m_Script: {fileID: 11500000, guid: ac9f3ecb8ebd148429b3cb65359e010b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TitleBootstrapRunner
   curtainCanvas: {fileID: 2134419852}
