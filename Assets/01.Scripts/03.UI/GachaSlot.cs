@@ -1,6 +1,12 @@
 ﻿using TMPro;
 using UnityEngine;
 //담당자 - 정성우
+/*
+가챠를 돌리면 여기서 보여지면서 나올 예정이였던 스크립트 하지만 상점 매니저를 안쓰게 되면서 같이 뭍혀버린 스크립트이다. 
+
+ */
+
+
 public class GachaSlot : MonoBehaviour, IPoolable
 {
     // 결과창 보여주는 텍스트
