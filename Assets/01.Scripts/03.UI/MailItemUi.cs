@@ -4,7 +4,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 //담당자 - 정성우
-
+/*
+ 우편물 내용물을 담당하는 스크립트로
+ */
 
 
 /// <summary>
