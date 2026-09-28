@@ -1,24 +1,15 @@
 ﻿/* 담담자 - 송태훈
- 
- 
- 
+비동기 작업 대기 시 스피너 회전 연출과 함께 상태 진행 메시지를 표시하는 범용 로딩 팝업
  */
-
 using Cysharp.Threading.Tasks;
-using TMPro;
 using UnityEngine;
 using UtilDebug = DebugLogger<LoadingStatusPopupUI>;
-
-/// <summary>
-/// 로딩 팝업. 얘는 조금만 더 다듬고 수정한 뒤에 DDOL Panel로 냅둬서 전체적인 로딩 UI로 사용해도 괜찮을듯?
-/// </summary>
-
 
 public class LoadingStatusPopupUI : MonoBehaviour
 {
     [Header("UI 바인딩")]
-    [SerializeField] private TMP_Text statusText;
-    [SerializeField] private RectTransform spinner; // 회전시킬 스피너 아이콘 (선택 사항)
+    [SerializeField] private TMPro.TMP_Text statusText;
+    [SerializeField] private RectTransform spinner; // 회전시킬 스피너 아이콘
 
     [Header("설정")]
     [SerializeField] private float defaultDisplayTime = 0.5f;  // 기본 최소 유지 시간
@@ -58,6 +49,9 @@ public class LoadingStatusPopupUI : MonoBehaviour
             statusText.text = message;
     }
 
+    /// <summary>
+    /// 팝업이 활성화된 시점부터 계산하여 설정된 최소 노출 시간 동안 대기(Unscaled Time 기준)한 뒤 부드럽게 창을 닫습니다
+    /// </summary>
     public async UniTask HideAsync(float minDisPlayTime = -1f)
     {
         if(!gameObject.activeSelf) return;
@@ -76,7 +70,7 @@ public class LoadingStatusPopupUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 안내 메시지를 일정 시간 보여준 뒤 닫습니다. (실패/완료 알림용)
+    /// 특정 완료 메시지나 에러 안내를 화면에 일정 시간 유지시킨 후 자동으로 숨깁니다 (실패/완료 알림용)
     /// </summary>
     public async UniTask ShowMessageAndHideAsync(string message, float delaySeconds = 1.5f)
     {

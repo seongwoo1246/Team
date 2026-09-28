@@ -1,6 +1,8 @@
-﻿// 담당자 - 송태훈
+﻿/* 담당자 - 송태훈
+Addressable을 초기화하고 진입용 로컬 프리팹들을 일괄 로드 및 인스턴스화
+컨트롤러 연결 . 초기 부트스트랩 시퀀스 가동
+ */
 using Cysharp.Threading.Tasks;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UtilDebug = DebugLogger<TitleBootstrapRunner>;
@@ -26,7 +28,7 @@ public class TitleBootstrapRunner : MonoBehaviour
             return;
         }
 
-        IList<GameObject> prefabs = await Addressables.LoadAssetsAsync<GameObject>(locations,null).ToUniTask(cancellationToken: ct);
+        System.Collections.Generic.IList<GameObject> prefabs = await Addressables.LoadAssetsAsync<GameObject>(locations,null).ToUniTask(cancellationToken: ct);
          
         TitleBootstrapController bootstrapController = null;
 

@@ -1,6 +1,6 @@
 ﻿/* 담당자 - 송태훈
- 각 씬 별 데이터 캐싱 및 조회 총괄 매니저
-많은 수정이 필요함
+Addressables 기반으로 전역 정적 기획 데이터("Static_Data")를 비동기 일괄 로드 및 캐싱하는 매니저
+IIdentifiable 기반 다중 데이터와 GameConfig 등 단일 데이터 조회를 위한 제네릭 접근 API를 제공
  */
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
@@ -27,6 +27,10 @@ public class DataManager : Singleton<DataManager>, ILoadable
     }
 
     #region ILoadable 구현
+    /// <summary>
+    /// Addressables를 통해 'Static_Data' 라벨의 전역 기획 SO들을 비동기 로드하여 타입별 캐시에 자동 분류 등록
+    /// 원래는 각 씬 별로 필요한 SO만 로드할 수 있도록 설계하였으나 씬이 총 2개 뿐이여서 그러하지 못함
+    /// </summary>
     public async UniTask OnSceneLoadCreate(SceneId scene)
     {
         // 초기화 1회 진행 시 스킵
@@ -60,10 +64,10 @@ public class DataManager : Singleton<DataManager>, ILoadable
     public void OnSceneDestory(SceneId scene)
     {  /* 전역 데이터이므로 씬 전환 시 캐시를 비우지 않고 영구 유지 */ }
     #endregion
+    
     /// <summary>
     /// 로드된 SO를 IIdentifiable 여부에 따라 자동으로 캐시에 등록
     /// </summary>
-    /// <param name="asset"></param>
     private void RegisterAsset(ScriptableObject asset)
     {
         if (asset == null) return;

@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 궁수가 쏘는 화살 발사체
 */
@@ -62,6 +62,6 @@ public sealed class Arrow : MonoBehaviour, IPoolObject
             await UniTask.Yield(PlayerLoopTiming.Update, token);
         }
 
-        ObjectPoolManagerTest.Instance.Despawn(PoolKey, this);
+        AddressPoolManager.Instance.Despawn(PoolKey, this);
     }
 }

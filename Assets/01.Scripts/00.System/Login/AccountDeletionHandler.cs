@@ -1,18 +1,20 @@
 ﻿/*담담자 - 송태훈
-Firebase에 로그인한 사용자의 계정을 삭제하는 기능을 담당하는 스크립트
-LoginSystemTest를 통해 Firebase Auth 계정을 삭제하고, UserDataManager를 통해 RTDB에 저장된 사용자 데이터를 삭제
-LogingScene이 아닌 LobbyScene에서 계정 삭제 후 로그인 화면으로 이동하도록 구현 예정 중
-RTDB : Realtime Database (Firebase)
+로컬 계정 및 서버 연동 계정의 탈퇴 처리를 총괄하는 NonMono 싱글톤 핸들러
+로컬 세이브 및 Firebase RTDB 데이터와 Auth 인증 계정을 순차 삭제하고 타이틀(부트스트랩) 씬으로 복귀
  */
 
 using Cysharp.Threading.Tasks;
-using System.Threading;
-using UnityEngine;
 using UtilDebug = DebugLogger<AccountDeletionHandler>;
 
 public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 {
-    public async UniTask<bool> ProcessAccountDeletionAsync(CancellationToken ct = default)
+    /// <summary>
+    /// 로컬 모드일 때는 PlayerPrefs 및 로컬 세이브 데이터를 삭제
+    /// 서버 모드일 때는 RTDB 데이터를 선 삭제한 뒤 Firebase Auth 계정을 삭제 후 세션 초기화
+    /// </summary>
+    /// <param name="ct"></param>
+    /// <returns></returns>
+    public async UniTask<bool> ProcessAccountDeletionAsync(System.Threading.CancellationToken ct = default)
     {
         // 1. 로컬 분기
         if (UserManager.Instance.IsLocalMode)
@@ -22,8 +24,8 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
             // 로컬 PlayerPrefs 삭제 및 메모리 정리 실행
             await UserManager.Instance.DeleteUserDataAsync(UserManager.Instance.LocalGuestUID, ct);
             AuthLoginSystem.Instance.SignOut();
-            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
-            PlayerPrefs.Save();
+            UnityEngine.PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+            UnityEngine.PlayerPrefs.Save();
 
             // 타이틀 씬으로 복귀
             await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
@@ -56,8 +58,8 @@ public class AccountDeletionHandler : NonMonoSingleton<AccountDeletionHandler>
 
         // 명시적 로그아웃 및 로컬 세션 플래그 제거
         AuthLoginSystem.Instance.SignOut();
-        PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
-        PlayerPrefs.Save();
+        UnityEngine.PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+        UnityEngine.PlayerPrefs.Save();
 
         // 3. 로컬 캐시 메모리 제거
         UserManager.Instance.ClearLocalData();

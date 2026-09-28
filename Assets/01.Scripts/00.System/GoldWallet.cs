@@ -12,7 +12,11 @@
   - GoldGain 강화 배율(UpgradeSystem)은 AddPassiveGold 안에서 자동 적용됨
 
 경제 시스템을 GameManager 쪽에서 관리하기로 하면 이 클래스만 교체하면 됩니다
-*/
+
+공동 작성자: 송태훈
+ILoadable, ISyncable 인터페이스를 구현 및 씬 전환 시의 초기화 순서 제어 및 유저 데이터 동기화 파이프라인을 구축
+PlayerPrefs 기반 오프라인 보상 방식을 서버 유저 프로필(타임스탬프) 기준 계산 방식으로 대체하고, 골드 변동 시 유저 메모리에 자동 반영되도록 수정
+ */
 
 using System;
 using System.Threading;
@@ -167,18 +171,6 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
         _isInitialized = false;
     }
 
-    // 앱이 완전히 꺼질 때 (에디터 정지 포함은 아님 - 빌드 기준) - GameManager가 총괄 관리
-    //private void OnApplicationQuit() => Save();
-
-    // 모바일에서 백그라운드로 내려갈 때도 종료에 준해서 시각을 저장 - GameManager가 총괄 관리
-    //private void OnApplicationPause(bool isPaused)
-    //{
-    //    if (isPaused)
-    //    {
-    //        Save();
-    //    }
-    //}
-
     /// <summary>
     /// 골드를 그대로 추가한다. GoldGain 강화 배율이 적용 안 된 순수 원시값을 더할 때 사용
     /// </summary>
@@ -211,7 +203,6 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
         _balance -= amount;
         BalanceChanged?.Invoke(_balance);
 
-        //Save(); // - 사용 안함
         SyncGoldToUserMemory();
         return true;
     }
@@ -278,44 +269,14 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
     {
         double bonus = GetCurrentGoldPerMinute() * clearBonusMinutes;
         AddPassiveGold(bonus);
-        //Save(); // - 사용 안함
     }
 
-    /// <summary>
-    /// 마지막으로 저장해둔 시각과 지금 시각을 비교해서, 꺼져있던 시간만큼(최대 maxOfflineHours까지)
-    /// 분당 골드를 한 번에 지급한다. 저장된 시각이 없으면(첫 실행) 지급 없이 지금 시각만 저장해둔다
-    /// 추가사항 - 서버 동기화로 인해 PlayerPrefs 미사용
-    /// </summary>
-    private void ApplyOfflineGold()
-    {
-        //string savedText = PlayerPrefs.GetString(LAST_SEEN_UTC_KEY, string.Empty);
 
-        //if (!string.IsNullOrEmpty(savedText)
-        //    && DateTime.TryParse(savedText, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime lastSeen))
-        //{
-        //    double elapsedSeconds = (DateTime.UtcNow - lastSeen).TotalSeconds;
-        //    double cappedSeconds = Math.Max(0d, Math.Min(elapsedSeconds, maxOfflineHours * 3600d));
-        //    double offlineMinutes = cappedSeconds / 60d;
-
-        //    if (offlineMinutes > 0d)
-        //    {
-        //        double reward = GetCurrentGoldPerMinute() * offlineMinutes;
-        //        AddPassiveGold(reward);
-        //        UtilDebug.Log($"오프라인 보상 지급: {offlineMinutes:F1}분치 (최대 {maxOfflineHours}시간 인정)");
-
-        //        // RewardManager(복귀 보상 팝업)는 아직 Inspector 연결이 안 끝난 상태일 수 있어서
-        //        // instance/필드 둘 다 null 체크하고 지나감 (없어도 골드 지급 자체는 이미 끝난 뒤라 안전함)
-        //        if (RewardManager.Instance != null && RewardManager.Instance.GetPlayerReward != null)
-        //        {
-        //            RewardManager.Instance.GetPlayerReward.text = ((long)reward).ToString();
-        //        }
-        //    }
-        //}
-
-        //Save();
-    }
 
     #region 송태훈 추가 수정 부분
+    /// <summary>
+    /// 서버 유저 프로필의 최근 접속 타임스탬프와 현재 시각(UTC)을 비교하여 미접속 시간만큼의 오프라인 골드를 일괄 지급
+    /// </summary>
     private void ApplyOfflineGoldFromServer()
     {
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -359,13 +320,4 @@ public class GoldWallet : Singleton<GoldWallet>, ILoadable, ISyncable
         }
     }
     #endregion
-    /// <summary>
-    /// 현재 보유 골드 + 지금 시각(UTC, 오프라인 보상 계산용)을 PlayerPrefs에 저장
-    /// </summary>
-    private void Save()
-    {
-        //PlayerPrefs.SetString(BALANCE_KEY, _balance.ToString("R", CultureInfo.InvariantCulture));
-        //PlayerPrefs.SetString(LAST_SEEN_UTC_KEY, DateTime.UtcNow.ToString("o", CultureInfo.InvariantCulture));
-        //PlayerPrefs.Save();
-    }
 }

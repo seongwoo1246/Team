@@ -1,4 +1,7 @@
-﻿// 담당자 - 송태훈
+﻿/* 담당자 - 송태훈
+로비 씬 진입 시 씬 내 ILoadable 컴포넌트들을 찾아 SceneLoadManager에 자동 등록
+ISceneBootstrap을 통해 로비 씬 전환 시 준비 작업을 수행
+ */
 using Cysharp.Threading.Tasks;
 using System.Linq;
 using UnityEngine;
@@ -8,7 +11,6 @@ public class LobbyBootstrapRunner : MonoBehaviour, ISceneBootstrap
     public async UniTask OnSceneReadyAsync()
     {
         GameManager.Instance.ChangeState(GameState.Lobby);
-        // UI를 배치하는거 나중에 수정하던가?
         await UniTask.CompletedTask;
     }
 
