@@ -2,6 +2,9 @@
 using UnityEngine;
 using UnityEngine.UI;
 // 담당자 -정성우
+/*
+ 업적 창을 열면 거기에 나열 될 업적 슬롯들을
+ */
 
 public class AchievementSlot : MonoBehaviour , IPoolable
 {
