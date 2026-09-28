@@ -361,27 +361,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ChallengeLayoutSwitcher
   layoutTargets:
   - target: {fileID: 5667372638921750303}
-    challengePosition: {x: -1.08, y: 0.31}
+    challengePosition: {x: -0.93, y: -0.14}
   - target: {fileID: 5667372638921750302}
-    challengePosition: {x: -1.84, y: 1.22}
+    challengePosition: {x: -1.79, y: 0.93}
   - target: {fileID: 5667372638921750301}
-    challengePosition: {x: -1.82, y: -0.86}
+    challengePosition: {x: -1.82, y: -1.22}
   - target: {fileID: 5667372638921750300}
     challengePosition: {x: 3.35, y: 1.38}
   - target: {fileID: 5667372638921750299}
     challengePosition: {x: 0, y: -601}
   - target: {fileID: 5667372638921750298}
-    challengePosition: {x: -1143, y: -806}
+    challengePosition: {x: -1149, y: -677}
   - target: {fileID: 5667372638921750297}
-    challengePosition: {x: -1009, y: -808}
+    challengePosition: {x: -1015, y: -679}
   - target: {fileID: 5667372638921750296}
-    challengePosition: {x: -876, y: -809}
+    challengePosition: {x: -882, y: -680}
   - target: {fileID: 5667372638921750295}
-    challengePosition: {x: -739, y: -807}
+    challengePosition: {x: -745, y: -678}
   - target: {fileID: 5667372638921750294}
-    challengePosition: {x: -603, y: -806}
+    challengePosition: {x: -609, y: -677}
   - target: {fileID: 5667372638921750293}
-    challengePosition: {x: -465, y: -804}
+    challengePosition: {x: -471, y: -675}
   - target: {fileID: 964351510}
     challengePosition: {x: 0.23, y: 2.1}
   - target: {fileID: 964351509}
