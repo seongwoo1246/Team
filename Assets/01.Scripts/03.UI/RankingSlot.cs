@@ -2,6 +2,10 @@
 using UnityEngine;
 using UnityEngine.UI;
 //담당자 - 정성우
+/*
+탑3에 나타날 랭킹을 나타내는 클래스로 탭을 바꿀 때 내용물도 바뀌도록 세팅을 했다. 
+
+ */
 public enum RankColor
 {
     Gold,

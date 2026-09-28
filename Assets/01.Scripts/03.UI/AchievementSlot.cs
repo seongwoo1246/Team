@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 // 담당자 -정성우
 /*
- 업적 창을 열면 거기에 나열 될 업적 슬롯들을
+ 업적 창을 열면 거기에 나열 될 업적 슬롯들로 여기서 업적 UI를 다 만들고 나오는 식이다.
  */
 
 public class AchievementSlot : MonoBehaviour , IPoolable
