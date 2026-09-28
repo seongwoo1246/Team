@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 궁수 - 원거리 다단히트형 물리 딜러. 치명타율이 높고 체력은 낮은 대신, 스킬로 여러 대상/여러 발을 때림
 */
@@ -42,7 +42,7 @@ public class ArcherDealer : CharacterBase
 
         if (!_arrowPoolRegistered && arrowPrefab != null)
         {
-            ObjectPoolManagerTest.Instance.RegisterPool<Arrow>(Arrow.PoolKey, arrowPrefab.gameObject, ARROW_POOL_SIZE);
+            AddressPoolManager.Instance.RegisterPool<Arrow>(Arrow.PoolKey, arrowPrefab.gameObject, ARROW_POOL_SIZE);
             _arrowPoolRegistered = true;
         }
     }
@@ -66,7 +66,7 @@ public class ArcherDealer : CharacterBase
             return;
         }
 
-        Arrow arrow = ObjectPoolManagerTest.Instance.Spawn<Arrow>(Arrow.PoolKey);
+        Arrow arrow = AddressPoolManager.Instance.Spawn<Arrow>(Arrow.PoolKey);
         if (arrow == null)
         {
             return;

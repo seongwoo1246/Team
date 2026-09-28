@@ -1,6 +1,6 @@
 ﻿/* 담당자 - 송태훈
+씬 전환 전/후의 로딩 화면 페이드 인/아웃 연출 처리
  */
-
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 

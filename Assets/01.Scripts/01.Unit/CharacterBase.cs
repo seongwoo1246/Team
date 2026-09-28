@@ -279,7 +279,7 @@ public class CharacterBase : MonoBehaviour, IEntity
 
         if (!_damagePopupPoolRegistered && damagePopupPrefab != null)
         {
-            ObjectPoolManagerTest.Instance.RegisterPool<DamagePopup>(DamagePopup.PoolKey, damagePopupPrefab.gameObject, DAMAGE_POPUP_POOL_SIZE);
+            AddressPoolManager.Instance.RegisterPool<DamagePopup>(DamagePopup.PoolKey, damagePopupPrefab.gameObject, DAMAGE_POPUP_POOL_SIZE);
             _damagePopupPoolRegistered = true;
         }
 
@@ -652,7 +652,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         Vector3 basePosition = healthBar != null ? healthBar.transform.position : targetComponent.transform.position;
         Vector3 spawnPosition = basePosition + new Vector3(0f, damagePopupHeightAboveHealthBar, 0f);
 
-        DamagePopup popup = ObjectPoolManagerTest.Instance.Spawn<DamagePopup>(DamagePopup.PoolKey);
+        DamagePopup popup = AddressPoolManager.Instance.Spawn<DamagePopup>(DamagePopup.PoolKey);
         if (popup == null)
         {
             return;

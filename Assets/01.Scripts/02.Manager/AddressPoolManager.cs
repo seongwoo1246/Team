@@ -3,7 +3,7 @@
  */
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UtilDebug = DebugLogger<ObjectPoolManagerTest>;
+using UtilDebug = DebugLogger<AddressPoolManager>;
 
 public interface IPoolObject : IPoolable
 {
@@ -15,7 +15,7 @@ public interface IPool
     void Clear();
 }
 
-public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
+public class AddressPoolManager : Singleton<AddressPoolManager>, ILoadable
 {
     public int LoadOrder => 5; // AddressableManager(1), DataManager(2) 이후
 
@@ -166,7 +166,7 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     /// <summary>
     /// 게임 종료 시 전체 풀 메모리 해제
     /// </summary>
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         foreach (var pool in _pools.Values)
         {

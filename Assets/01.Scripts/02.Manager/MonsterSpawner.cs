@@ -72,7 +72,7 @@ public sealed class MonsterSpawner : MonoBehaviour, ILoadable
             return null;
         }
 
-        Monster monster = ObjectPoolManagerTest.Instance.Spawn<Monster>(poolKey);
+        Monster monster = AddressPoolManager.Instance.Spawn<Monster>(poolKey);
 
         if (monster == null)
         {
@@ -138,7 +138,7 @@ public sealed class MonsterSpawner : MonoBehaviour, ILoadable
         if(monster == null || monster.StatData == null) return;
 
         string poolKey = monster.StatData.Id;
-        ObjectPoolManagerTest.Instance.Despawn(poolKey, monster);
+        AddressPoolManager.Instance.Despawn(poolKey, monster);
     }
 
     /// <summary>

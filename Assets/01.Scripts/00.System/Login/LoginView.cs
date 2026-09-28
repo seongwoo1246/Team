@@ -1,6 +1,8 @@
-﻿// 담당자 - 송태훈
+﻿/* 담당자 - 송태훈
+타이틀 로그인 메인 패널의 버튼 UI 이벤트(구글 로그인, 이메일 팝업, 게스트 로그인)를 바인딩
+로그인 메인 패널의 활성화/비활성화 상태를 제어
+ */
 using UnityEngine;
-
 public class LoginView : MonoBehaviour
 {
     [Header("로그인 메인 패널")]

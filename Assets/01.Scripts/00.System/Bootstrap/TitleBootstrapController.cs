@@ -1,17 +1,13 @@
-﻿/*
-담담자 - 송태훈
- 게임 실행 시 가장 먼저 해야하는 일들을 순서대로 진행할 수 있도록 하는 컨트롤러
-1. Firebase 서버 확인 및 Manager Init
-2. 계정 로그인 및 없을 시 생성
-3. Addresaable 카탈로그 검사 및 다운로드
-4. 다운로드 확인 후 LoginScene으로 전환
-
-추가로 모든 클래스에 대한 정의와 데이터 및 초기화 관련 선언이 완성된 후 DataManager와 각 Manager에 대한 초기화 순서를 여기서 지정해줄 예정
+﻿/* 담담자 - 송태훈
+ 게임 실행 시 가장 먼저 해야하는 일들을 순서대로 진행할 수 있도록 하는 부트스트랩 컨트롤러
+1. 인프라 매니저 초기화
+2. Firebase 검사
+3. 로그인
+4. Addressable 리소스 다운로드
+이후 로비 씬 전환까지의 시퀀스를 총괄
  */
 
 using Cysharp.Threading.Tasks;
-using System;
-using System.Threading;
 using UnityEngine;
 using UtilDebug = DebugLogger<TitleBootstrapController>;
 
@@ -28,12 +24,12 @@ public class TitleBootstrapController : MonoBehaviour
 
     /// <summary>
     /// Bootstrap 순차적 진행 비동기 메서드
-    /// 1. 인프로 초기화(매니저) → 2. 유저 로그인 → 3. CDN 리소스 패치 → 4. 로비 이동
+    /// 1. 인프로 초기화(매니저) → 2. Firebase 의존성 검사 → 3. 유저 로그인 → 4. CDN 리소스 패치 → 5. 로비 이동
     /// </summary>
     /// <returns></returns>
     private async UniTaskVoid RunBootstrapSequenceAsync()
     {
-        var ct = this.destroyCancellationToken;
+        System.Threading.CancellationToken ct = this.destroyCancellationToken;
         view.SetLoadingVisible(true);
 
         // STEP 1. 시스템 매니저 초기화
@@ -69,18 +65,21 @@ public class TitleBootstrapController : MonoBehaviour
         SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.LobbyScene).Forget();
     }
 
-    #region STEP 1. 인프로 초기화
-    private async UniTask StepInitManagerAsync(CancellationToken ct)
+    #region STEP 1. 인프라(초기 시스템 매니저) 초기화
+    private async UniTask StepInitManagerAsync(System.Threading.CancellationToken ct)
     {
         view.UpdateState("시스템 초기화 중...", 0.0f);
         TitleBootstrap.InitializeSingletons();
         TitleBootstrap.RegisterTitleLocalServices(view, loginController);
         await UniTask.Yield(PlayerLoopTiming.Update, ct);
     }
+    #endregion
+
+    #region STEP 2. Firebase 의존성 초기화
     /// <summary>
     /// Firebase의 의존성 검사 및 Auth 초기화를 보장하는 비동기 메서드
     /// </summary>
-    private async UniTask<bool> StepInitFirebaseAsync(CancellationToken ct = default)
+    private async UniTask<bool> StepInitFirebaseAsync(System.Threading.CancellationToken ct = default)
     {
         view.UpdateState("서버 확인 중...", 0.2f);
         return await AuthLoginSystem.Instance.InitializeFirebaseAsync(ct);
@@ -92,7 +91,7 @@ public class TitleBootstrapController : MonoBehaviour
     /// CDN 에서 
     /// Assets 모든 원격 번들 검사 및 다운로드를 진행하는 비동기 메서드
     /// </summary>
-    private async UniTask<bool> StepCheckAndDownloadAssetsAsync(CancellationToken ct)
+    private async UniTask<bool> StepCheckAndDownloadAssetsAsync(System.Threading.CancellationToken ct)
     {
         view.UpdateState("패치 데이터 확인 중...", 0.35f);
         // 에셋 용량 합산 검사
@@ -125,7 +124,7 @@ public class TitleBootstrapController : MonoBehaviour
     /// <summary>
     /// 단계 실행 중 예외 또는 false 반환 시 에러 팝업을 띄우고 재시도 버튼을 누를 때까지 루프를 반복하는 비동기 메서드
     /// </summary>
-    private async UniTask ExecuteStepWithRetryAsync(Func<UniTask<bool>> stepMethod, string retryMessage, CancellationToken ct)
+    private async UniTask ExecuteStepWithRetryAsync(System.Func<UniTask<bool>> stepMethod, string retryMessage, System.Threading.CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
@@ -134,11 +133,11 @@ public class TitleBootstrapController : MonoBehaviour
                 bool isSuccess = await stepMethod.Invoke();
                 if (isSuccess) return;
             }
-            catch (OperationCanceledException)
+            catch (System.OperationCanceledException)
             {
                 return;
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 UtilDebug.LogError($"{ex.Message}");
             }

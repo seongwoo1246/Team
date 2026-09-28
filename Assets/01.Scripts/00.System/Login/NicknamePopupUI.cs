@@ -1,21 +1,19 @@
 ﻿/*담담자 - 송태훈
- 
+신규 유저의 닉네임 입력 및 유효성(최소 길이 등) 검사를 처리하는 팝업 UI
+중복 검사 실패 메시지를 표출하고, 확정된 닉네임을 상위 컨트롤러에 이벤트로 전달
  */
 
-using System;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 using UtilDebug = DebugLogger<NicknamePopupUI>;
 
 public class NicknamePopupUI : MonoBehaviour
 {
-    [SerializeField] private TMP_InputField nicknameInput;
-    [SerializeField] private Button confirmButton;
-    [SerializeField] private TMP_Text duplicaiotnCheck;
+    [SerializeField] private TMPro.TMP_InputField nicknameInput;
+    [SerializeField] private UnityEngine.UI.Button confirmButton;
+    [SerializeField] private TMPro.TMP_Text duplicaiotnCheck;
 
     // LoginController에서 참조
-    public event Action<string> OnNicknameConfirmed;
+    public event System.Action<string> OnNicknameConfirmed;
 
     private void OnEnable()
     {
@@ -26,7 +24,6 @@ public class NicknamePopupUI : MonoBehaviour
     {
         confirmButton.onClick.RemoveListener(OnConfirmClicked);
     }
-
 
     public void Open()
     {

@@ -15,7 +15,7 @@ public class LoginController : MonoBehaviour
     [SerializeField] private LoginView loginView;
 
     [Header("로그인 UI 팝업")]
-    [SerializeField] private EmailLogin emailLoginPopupUI;
+    [SerializeField] private EmailLoginPopup emailLoginPopupUI;
     [SerializeField] private NicknamePopupUI nicknamePopupUI;
     [SerializeField] private LoadingStatusPopupUI loadingPopupUI;
 

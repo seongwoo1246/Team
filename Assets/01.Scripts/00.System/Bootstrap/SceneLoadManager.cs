@@ -1,5 +1,6 @@
 ﻿/* 담담자 - 송태훈
-
+Addressable 기반 씬 비동기 로드 및 메모리 정리를 관리하는 싱글톤 매니저
+등록된 ILoadable 객체들을 초기화 순서에 맞춰 정렬 후 생성/파괴/초기화 사이클을 실행
  */
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
