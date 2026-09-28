@@ -1,4 +1,9 @@
-﻿using System.Collections.Generic;
+﻿/*
+ 담당자 - 홍준호
+ 캐릭터 장비 확인용 임시 스크립트
+ */
+
+using System.Collections.Generic;
 using UnityEngine;
 
 public class CharacterEquipment : MonoBehaviour
