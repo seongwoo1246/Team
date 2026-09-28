@@ -1,9 +1,10 @@
-﻿/* 담당자 - 정성우, 송태훈
- 
+﻿/* 담당자 - 송태훈
+Addressables 기반으로 라벨("Init_Pool") 프리팹을 비동기 프리로드하고 초기 풀 크기만큼 웜업
+IPoolObject 인터페이스를 통해 자동 풀 등록을 지원하며 컴포넌트 단위의 Spawn/Despawn 풀링 처리를 담당
  */
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UtilDebug = DebugLogger<ObjectPoolManagerTest>;
+using UtilDebug = DebugLogger<AddressPoolManager>;
 
 public interface IPoolObject : IPoolable
 {
@@ -15,7 +16,7 @@ public interface IPool
     void Clear();
 }
 
-public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
+public class AddressPoolManager : Singleton<AddressPoolManager>, ILoadable
 {
     public int LoadOrder => 5; // AddressableManager(1), DataManager(2) 이후
 
@@ -42,6 +43,9 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     }
 
     #region ILoadable 구현 (Addressables Label 자동 풀링)
+    /// <summary>
+    /// 'Init_Pool' 라벨을 가진 모든 프리팹 에셋을 비동기 로드한 뒤, IPoolObject 규약에 맞춰 초기 풀 인스턴스를 사전 생성
+    /// </summary>
     public async UniTask OnSceneLoadCreate(SceneId scene)
     {
         if (_isInitialized) return;
@@ -89,6 +93,9 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     #endregion
 
     #region 풀 등록 (내부 및 수동 등록 API)
+    /// <summary>
+    /// 프리팹 원본과 풀 폴더 Transform을 기반으로 GameObjectPool 인스턴스를 생성하고 딕셔너리에 등록
+    /// </summary>
     private void RegisterPool(string key, GameObject prefab, int initialSize)
     {
         if (_pools.ContainsKey(key))
@@ -166,7 +173,7 @@ public class ObjectPoolManagerTest : Singleton<ObjectPoolManagerTest>, ILoadable
     /// <summary>
     /// 게임 종료 시 전체 풀 메모리 해제
     /// </summary>
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         foreach (var pool in _pools.Values)
         {

@@ -1,8 +1,7 @@
 ﻿/*담담자 - 송태훈
- 클라 내에 내장된 Google ID 토큰을 가지고 Firebase 메서드를 통해 구글 계정으로 서버 내에 계정을 등록 및 로그인 기능을 테스트하는 스크립트.
+안드로이드 CredentialManager 네이티브 브릿지를 호출하여 구글 로그인 토큰을 요청
+네이티브 콜백으로 전달받은 ID 토큰을 기반으로 Firebase 서버 인증 프로세스를 수행
  */
-
-using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -11,10 +10,10 @@ public class GoogleLogin : MonoBehaviour
     [SerializeField]
     private string webClientId = "502389656303-70u82ggb4kjpl8spirld6tkjdhaecj3q.apps.googleusercontent.com";
 
-    public event Action<string> OnLogStatus;
+    public event System.Action<string> OnLogStatus;
 
     /// <summary>
-    /// 버튼 클릭 시 호출
+    /// 안드로이드 런타임 환경에서 AndroidJavaClass를 통해 네이티브 Credential Manager 액티비티를 실행합니다
     /// </summary>
     public void RequestGoogleLogin()
     {
@@ -43,7 +42,7 @@ public class GoogleLogin : MonoBehaviour
     }
 
     /// <summary>
-    /// Java 코드에서 UnitySendMessage(gameObject.name, "OnGoogleTokenReceived", result)로 호출됨
+    /// Java 브릿지의 UnitySendMessage로 응답받은 구글 ID 토큰을 검증하고 Firebase 로그인 단계(ProcessGoogleSignInAsync)로 넘깁니다
     /// </summary>
     public void OnGoogleTokenReceived(string result) 
     {

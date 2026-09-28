@@ -22,8 +22,11 @@ _maxClearedStage는 PlayerPrefs에 저장해서 앱을 다시 켜도 배율/오�
 파밍 중엔 아주 낮은 확률로 황금 고블린도 추가로 스폰됨 (TrySpawnGoldenGoblin) - 얘를 잡으면
 특별 강화재료를 확정 지급함(GoldenGoblin.OnDied). 챌린지 보스 클리어 시 재료 지급은 MaterialWallet이
 여기(StageCleared)를 직접 구독해서 처리하므로 이 클래스는 그쪽은 몰라도됨
-*/
-/* 공동 작업자 - 송태훈
+
+
+공동 작업자: 송태훈
+싱글톤을 해제하고 ServiceLocator(Local) 등록 및 ILoadable, ISyncable을 구현하여 씬 생명주기에 맞춘 초기화 순서를 보장
+DataManager에서 기획 SO(StageRosterData, MonsterStatData)를 로드하도록 연동하고, 서버 프로필 기반 스테이지 동기화 및 클리어 시 RTDB 비동기 갱신을 구현
  */
 
 using Cysharp.Threading.Tasks;
@@ -192,7 +195,6 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     private bool _isInitialized = false;
     #endregion
 
-    
     private void Awake()
     {
         ServiceLocator.Register<StageManager>(this, ServiceLifetime.Local);
@@ -202,6 +204,9 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
     }
 
     #region ILoadable + ISyncable 구현부 - 송태훈
+    /// <summary>
+    /// 씬 로드 단계에서 DataManager로부터 StageRosterData 및 일반 몬스터(MonsterStatData) ID 키 목록을 사전 조회하여 캐싱
+    /// </summary>
     public UniTask OnSceneLoadCreate(SceneId scene)
     {
         // DataManger에서 StageRosterData SO 로드
@@ -224,11 +229,14 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         return UniTask.CompletedTask;
     }
 
-    #region 김주연 - ServiceLocator로 스포너 연결
+    /// <summary>
+    /// 로비 씬 진입 시 ServiceLocator를 통해 MonsterSpawner를 연결하고, 서버 유저 프로필(currentStage)로부터 최고 클리어 스테이지를 동기화한 뒤 파밍 모드를 시작
+    /// </summary>
     public void Init(SceneId scene)
     {
         if (scene != SceneId.LobbyScene) return;
 
+        #region 김주연 - ServiceLocator로 스포너 연결
         if (ServiceLocator.TryGet<MonsterSpawner>(out MonsterSpawner spawnerService))
         {
             spawner = spawnerService;
@@ -238,23 +246,24 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
             UtilDebug.LogError("MonsterSpawner를 ServiceLocator에서 찾을 수 없습니다.");
         }
 
-       
+        #endregion
 
         // 서버 프로필에서 클리어 스테이지 동기화
         var profile = UserManager.Instance.CurrentUser?.Profile;
-        _maxClearedStage = (profile != null && profile.currentStage > 0) ? profile.currentStage : 1;
+        _maxClearedStage = (profile != null && profile.currentStage > -1) ? profile.currentStage : 0;
 
         UtilDebug.Log($"[{scene}] StageManager 초기화 완료 (최고 스테이지: {_maxClearedStage})");
         EnterFarming();
         _isInitialized = true;
     }
-    #endregion
 
     public void OnSceneDestory(SceneId scene)
     {
         CleanUp();
     }
-
+    /// <summary>
+    /// 로컬 런타임 메모리(CurrentUser.Profile)에 현재까지 클리어한 최대 스테이지 번호를 동기화하여 자동 플러시(Flush)에 대비
+    /// </summary>
     public void SyncToUserMemory()
     {
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -275,7 +284,9 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
 
         CleanUp();
     }
-
+    /// <summary>
+    /// 씬 전환 또는 오브젝트 파괴 시 진행 중인 비동기 흐름 토큰(_flowCts)을 취소하고 필드의 모든 몬스터 디스폰 및 메모리 상태 동기화를 수행
+    /// </summary>
     private void CleanUp()
     {
         if (_flowCts != null)

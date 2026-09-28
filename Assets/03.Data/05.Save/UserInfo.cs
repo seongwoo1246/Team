@@ -1,7 +1,7 @@
 ﻿/* 담담자 - 송태훈
-게임에 사용될 UserData 클래스
-게임 실행 시(클라이언트) 서버에서 uid에 맞는 UserData를 받아와서 클라이언트에서 사용
-매칭 후 GameLogicManager 또는 System에서 받아온 UserData를 통해 게임 진행
+클라이언트 런타임에서 유저의 전체 상태를 일원화하여 들고 있는 최상위 컨테이너 모델 클래스
+프로필(Profile), 캐릭터 보유/장착 정보(Characters), 인벤토리(Inventory) 도메인을 하위 객체로 집약 관리
+생성자 및 JsonConstructor를 통해 UID 바인딩의 무결성을 보장하며, 로컬/서버 간 직렬화·역직렬화의 기준 규격으로 사용
  */
 using Newtonsoft.Json;
 using System;

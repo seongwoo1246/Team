@@ -10,11 +10,11 @@
   3. 챌린지 스테이지 클리어(보스 처치) - StageManager.StageCleared를 직접 구독해서 확정지급
 
 싱글톤은 팀 공용 Singleton<T> 상속
-*/
-/* 공동 작성자 - 송태훈
-   - 수량: UserManager.CurrentUser.Inventory.Data.consumables["Material"] 연동
-   - 오프라인 보상: UserProfile.lastLoginTimestamp (서버 기준 시각) 연동 및 변경
-   - 플러시 동기화: ISyncable 구현을 통한 GameManager 일괄 수집 지원
+
+공동 작성자 - 송태훈
+- 수량: UserManager.CurrentUser.Inventory.Data.consumables["Material"] 연동
+- 오프라인 보상: UserProfile.lastLoginTimestamp (서버 기준 시각) 연동 및 변경
+- 플러시 동기화: ISyncable 구현을 통한 GameManager 일괄 수집 지원
  */
 
 using Cysharp.Threading.Tasks;
@@ -38,19 +38,12 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
     public const string MATERIAL_KEY = "Material";
     // 저장 키
     private const string ACCUMULATED_SECONDS_KEY = "MaterialWallet_AccumulatedSeconds";
-    //private const string MATERIAL_COUNT_KEY = "MaterialWallet_Count"; - 메서드 미사용으로 변경함으로서 변수 미사용
-    //private const string LAST_SEEN_UTC_KEY = "MaterialWallet_LastSeenUtc"; - 메서드 미사용으로 변경함으로서 변수 미사용
 
     // 보유 재료 개수
     [SerializeField] private int _materialCount;
 
     // 지금까지 쌓인 시간(초). secondsPerMaterial을 채우면 1개 지급하고 0으로 리셋됨
     private float _accumulatedSeconds;
-
-    // Start에서 구독할 때 캐싱해두고 OnDestroy에서 구독 해제할 때 이 캐시로만 접근한다.
-    // StageManager.instance를 OnDestroy에서 다시 호출하면, 씬이 꺼지는 순간 이미 원본이 파괴된 뒤라
-    // Singleton<T>의 "없으면 새로 만드는" 로직이 발동해서 씬 종료 직전에 새 오브젝트가 하나 생겨버림
-    //private StageManager _stageManager;
 
     // 보유 재료 개수
     public int MaterialCount => _materialCount;
@@ -70,8 +63,6 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         base.Awake();
         SceneLoadManager.Instance.RegisterLoadable(this);
         GameManager.Instance.RegisterSyncable(this);
-        //_materialCount = PlayerPrefs.GetInt(MATERIAL_COUNT_KEY, 0);
-        //_accumulatedSeconds = Mathf.Max(0f, PlayerPrefs.GetFloat(ACCUMULATED_SECONDS_KEY, 0f));
     }
 
     #region ILoadable + ISyncable 구현 - 송태훈
@@ -114,11 +105,9 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         // 서버 lastLoginTimeStamp 기반 오프라인 보상 정산
         ApplyOfflineTimeFromServer();
 
-        // 스테이지 클리어 보상 이벤트 등록 - StagetManager 수정할 경우 무조건 변경할 부분
-        //_stageManager = StageManager.Instance;
 
         if (ServiceLocator.TryGet<StageManager>(out StageManager _stageManager))
-        { 
+        {
             _stageManager.StageCleared += OnStageCleared;
         }
         else
@@ -126,8 +115,8 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
             UtilDebug.LogError("서비스 초기화 순서 문제");
         }
 
-            // 누적 시간 루프 가동
-            _loopCts?.Cancel();
+        // 누적 시간 루프 가동
+        _loopCts?.Cancel();
         _loopCts = new System.Threading.CancellationTokenSource();
         RunPassiveTimeLoop(_loopCts.Token).Forget();
 
@@ -280,6 +269,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         }
     }
 
+    #region 추가 작업본 - 송태훈
     /// <summary>
     /// 기존 담당자 "김주연" 코드에서 서버 데이터로 연동
     /// 서버 lastLoginTimeStamp와 현재 UTC 시간을 비교하여 오프라인 누적 시간을 정산
@@ -299,7 +289,7 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
         long elapsedSeconds = nowSeconds - lastLogin;
         int countBefore = _materialCount;
 
-        if(elapsedSeconds > 0)
+        if (elapsedSeconds > 0)
         {
             AccumulateSeconds((float)elapsedSeconds);
             UtilDebug.Log($"서버 기준 오프라인 시간 적용: {elapsedSeconds}초 경과");
@@ -330,5 +320,5 @@ public sealed class MaterialWallet : Singleton<MaterialWallet>, ILoadable, ISync
             inv.Data.consumables[MATERIAL_KEY] = _materialCount;
         }
     }
-
+    #endregion
 }

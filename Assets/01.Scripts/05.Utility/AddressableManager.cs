@@ -1,13 +1,12 @@
 ﻿/* 담담자 - 송태훈
- Cloudflare CDN 연동 카탈로그/패치 관리 및 Addresaable 에셋 수명 주기 총괄 매니저
+Cloudflare CDN 연동 카탈로그 업데이트 및 원격 번들 다운로드 총량을 검사·패치
+전역(Global)과 씬 종속(Scene) 에셋 핸들을 분리 캐싱하여 씬 전환 시 안전한 메모리 해제와 에셋 수명 주기를 총괄 매니저
  */
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
-using UnityEngine.SceneManagement;
 using UtilDebug = DebugLogger<AddressableManager>;
 
 public class AddressableManager : Singleton<AddressableManager>
@@ -30,7 +29,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// 원격 CDN(Cloudflare) 카탈로그를 확인하고 모든 원격 에셋의 다운로드 필요 총 용량을 산출
     /// </summary>
-    public async UniTask<long> CheckTotalDownloadSizeAsync(CancellationToken ct = default)
+    public async UniTask<long> CheckTotalDownloadSizeAsync(System.Threading.CancellationToken ct = default)
     {
         // addressables 초기화
         await Addressables.InitializeAsync().ToUniTask(cancellationToken: ct);
@@ -77,7 +76,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// CheckTotalDownloadSizeAsync에서 감지된 모든 원격 의존성 에셋 번들 일괄 다운로드
     /// </summary>
-    public async UniTask<bool> DownloadAllDependenciesAsync(System.Action<float> onProgress = null ,CancellationToken ct = default)
+    public async UniTask<bool> DownloadAllDependenciesAsync(System.Action<float> onProgress = null , System.Threading.CancellationToken ct = default)
     {
         if (_downloadLocations == null || _downloadLocations.Count == 0)
             return true;
@@ -104,7 +103,8 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// 등록된 씬을 비동기로 로드 - Login, Lobby
     /// </summary>
-    public async UniTask<UnityEngine.ResourceManagement.ResourceProviders.SceneInstance> LoadSceneAsync(string sceneAddress, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true)
+    public async UniTask<UnityEngine.ResourceManagement.ResourceProviders.SceneInstance> 
+        LoadSceneAsync(string sceneAddress, UnityEngine.SceneManagement.LoadSceneMode mode = UnityEngine.SceneManagement.LoadSceneMode.Single, bool activateOnLoad = true)
     {
         var handle = Addressables.LoadSceneAsync(sceneAddress, mode, activateOnLoad);
         return await handle.ToUniTask();
@@ -115,7 +115,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// 단일 에셋 로드 ( isGlobal : true 일 경우 씬 전역 에셋으로 씬 전환 시 언로드 x )
     /// </summary>
-    public async UniTask<T> LoadAssetAsync<T>(string key, CancellationToken ct = default, bool isGlobal = false) where T : UnityEngine.Object
+    public async UniTask<T> LoadAssetAsync<T>(string key, System.Threading.CancellationToken ct = default, bool isGlobal = false) where T : UnityEngine.Object
     {
         Dictionary<string,AsyncOperationHandle> targetDict = isGlobal ? _globalAssetHandles : _sceneAssetHandles;
 
@@ -138,7 +138,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// Label 단위 일괄 에셋 로드 ( 풀링 에셋 로드 isGlobal : true )
     /// </summary>
-    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, CancellationToken ct = default, bool isGlobal = false, System.Action<T> callback = null) where T : UnityEngine.Object
+    public async UniTask<IList<T>> LoadAssetsByLabelAsync<T>(string label, System.Threading.CancellationToken ct = default, bool isGlobal = false, System.Action<T> callback = null) where T : UnityEngine.Object
     {
         Dictionary<string, AsyncOperationHandle> targetDict = isGlobal ? _globalAssetHandles : _sceneAssetHandles;
 
@@ -158,7 +158,7 @@ public class AddressableManager : Singleton<AddressableManager>
         return null;
     }
 
-    public async UniTask<T> LoadPrefabComponentAsync<T>(string key, CancellationToken ct = default, bool isGlobal = false)
+    public async UniTask<T> LoadPrefabComponentAsync<T>(string key, System.Threading.CancellationToken ct = default, bool isGlobal = false)
     {
         GameObject go = await LoadAssetAsync<GameObject>(key, ct, isGlobal);
         if (go != null && go.TryGetComponent<T>(out var comp))
@@ -173,7 +173,7 @@ public class AddressableManager : Singleton<AddressableManager>
     /// <summary>
     /// 풀링하지 않는 1회성 프리팹(예: 고유 팝업 UI)을 Addressables로 바로 생성
     /// </summary>
-    public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null, CancellationToken ct = default)
+    public async UniTask<GameObject> InstantiateAsync(string key, Transform parent = null, System.Threading.CancellationToken ct = default)
     {
         var handle = Addressables.InstantiateAsync(key, parent);
         GameObject result = await handle.ToUniTask(cancellationToken: ct);

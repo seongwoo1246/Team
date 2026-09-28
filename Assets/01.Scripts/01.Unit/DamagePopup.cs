@@ -1,4 +1,4 @@
-// 작성자: 김주연
+﻿// 작성자: 김주연
 /*
 위로 떠오르면서 서서히 사라진 뒤 풀로 되돌아감. 일반 피해/치명타 피해는 색과 크기로 구분함
 */
@@ -97,6 +97,6 @@ public sealed class DamagePopup : MonoBehaviour, IPoolObject
             await UniTask.Yield(PlayerLoopTiming.Update, token);
         }
 
-        ObjectPoolManagerTest.Instance.Despawn(PoolKey, this);
+        AddressPoolManager.Instance.Despawn(PoolKey, this);
     }
 }

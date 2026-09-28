@@ -1,7 +1,8 @@
-﻿/* 담담자 - 송태훈
- 
+﻿/* 담당자: 송태훈
+Firebase RTDB와 통신하는 모든 도메인별 요청 클래스의 최상위 추상 기반 클래스 및 세부 구현체 집합
+대상 도메인 노드(RootDomain) 경로 캡슐화, 전신 로깅 래퍼(ExecuteLogOperationCoreAsync), 타임아웃 및 예외 처리를 공통화
+UserProfileRequest(프로필/스탯), CharacterRequest(영웅/장착 슬롯), InventoryRequest(장비/소모품)의 전체 및 개별 필드 갱신 API를 제공
  */
-
 using Cysharp.Threading.Tasks;
 using Firebase.Database;
 using Newtonsoft.Json;
@@ -42,6 +43,9 @@ abstract public class BaseRequestData
         }, detailInfoGetter, callerMethod);
     }
 
+    /// <summary>
+    /// 모든 RTDB 비동기 요청을 래핑하여 에디터/개발 빌드에서 시작/성공/실패 로그를 추적 태그와 함께 자동 출력하는 공통 실행 메서드
+    /// </summary>
     protected async UniTask<bool> ExecuteLogOperationCoreAsync(Func<UniTask<bool>> action, Func<string> detailInfoGetter = null, [System.Runtime.CompilerServices.CallerMemberName] string callerMethod = "")
     {
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
@@ -163,7 +167,8 @@ public class UserProfileRequest : BaseRequestData
 
     #region 유저 프로필 개별 동기화 API
     /// <summary>
-    /// 서버에 UserProfile 중 단일 갱신 API
+    /// 프로필 내의 특정 필드(골드, 다이아, 스테이지 등) 1개만 타겟팅하여 서버에 부분 갱신
+    /// int, float, Enum 타입을 Firebase SDK가 안전하게 수용할 수 있는 기본 데이터형(long, double)으로 자동 변환
     /// </summary>
     /// <param name="fieldName">변경할 API(필드)</param>
     /// <param name="value">변경할 값</param>

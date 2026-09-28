@@ -1,6 +1,6 @@
-﻿// 담당자 - 송태훈
-using UnityEngine;
-
+﻿/* 담당자 - 송태훈
+게임 시작 시 필수 인게임 싱글톤 매니저들을 사전 인스턴화 및 초기화 진행
+ */
 public static class TitleBootstrap
 {
     public static void InitializeSingletons()
@@ -13,7 +13,7 @@ public static class TitleBootstrap
 
         DataManager dataMng = DataManager.Instance;
 
-        ObjectPoolManagerTest ObjectMng = ObjectPoolManagerTest.Instance;
+        AddressPoolManager ObjectMng = AddressPoolManager.Instance;
 
         GoldWallet goldWallet = GoldWallet.Instance;
 

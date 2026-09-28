@@ -11,9 +11,10 @@
 
 UI 의 강화 버튼이 UpgradeSystem.instance.TryUpgrade(UpgradeTrack.Power) 식으로 호출
 싱글톤은 팀 공용 Singleton<T>를 상속
-*/
-/* 공동 작성자 : 송태훈 ( 수정 및 데이터 연결 담당 )
- 
+
+공동 작성자: 송태훈 (수정 및 데이터 연결 담당)
+ILoadable 구현 및 전역 서비스(ServiceLocator) 등록을 통해 씬 전환 간 초기화 순서와 데이터 참조성을 보장
+서버 유저 프로필(upgradeTrackLevels) 기반 트랙 레벨 동기화 및 강화 성공 시 트랙 레벨과 잔여 골드의 서버 비동기 즉각 저장을 구현
 */
 
 
@@ -48,6 +49,9 @@ public class UpgradeSystem : MonoBehaviour, ILoadable
     }
 
     #region ILoadable 구현부 - 송태훈
+    /// <summary>
+    /// 씬 로드 단계에서 DataManager로부터 GameConfig 정적 데이터를 비동기 안전하게 로드 및 캐싱
+    /// </summary>
     public async UniTask OnSceneLoadCreate(SceneId scene)
     {
         config = DataManager.Instance.GetSingle<GameConfig>();
@@ -58,13 +62,17 @@ public class UpgradeSystem : MonoBehaviour, ILoadable
 
         await UniTask.Yield();
     }
-
+    /// <summary>
+    /// 씬 진입 완료 시점에 호출되어 서버 프로필 데이터로부터 각 트랙의 강화 레벨을 로컬 배열에 최종 동기화
+    /// </summary>
     public void Init(SceneId scene)
     {
         SyncFromServerData();
         UtilDebug.Log($"[{scene}] UpgradeSystem 초기화 완료");
     }
-
+    /// <summary>
+    /// 씬 전환 및 오브젝트 파괴 시 이벤트 구독을 해제하여 메모리 누수를 방지
+    /// </summary>
     public void OnSceneDestory(SceneId scene)
     {
         // 씬 전환 시 이벤트 구독 해제

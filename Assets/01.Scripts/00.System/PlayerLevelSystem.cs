@@ -14,10 +14,11 @@
   (UpgradeSystem.TryUpgrade가 이 시스템의 Level을 직접 참조함)
 
 싱글톤은 팀 공용 Singleton<T> 상속
-*/
-/* 공동 작성자 - 송태훈
- 
- 
+
+
+공동 작성자: 송태훈
+ILoadable, ISyncable을 구현하여 씬 전환 시의 매니저 생명주기 및 런타임 유저 메모리 동기화 파이프라인을 구축
+서버(RTDB) 프로필 데이터를 기반으로 계정 레벨/경험치 초기 바인딩, 레벨업 시 단일 필드 즉각 갱신, 미접속 시간 정산(ApplyOfflineExpFromServer) 처리를 구현 
  */
 
 using System;
@@ -83,6 +84,12 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable,
         // 에러에 대한 처리를 수정해야함
         return UniTask.CompletedTask;
     }
+
+    /// <summary>
+    /// 로비 씬 진입 시 서버(UserManager) 유저 프로필로부터 계정 레벨 및 현재 경험치를 동기화하고 패시브 루프를 가동
+    /// 서버 타임스탬프 기반 오프라인 경험치 정산 및 레벨업 이벤트를 초기 발생
+    /// </summary>
+    /// <param name="scene"></param>
     public void Init(SceneId scene)
     {
         if (scene != SceneId.LobbyScene) return;
@@ -107,7 +114,6 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable,
 
         LevelUp?.Invoke(_level);
 
-        // 
         ApplyOfflineExpFromServer();
 
         _loopCts?.Cancel();
@@ -121,7 +127,9 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable,
     {
         CleanUp();
     }
-
+    /// <summary>
+    /// 로컬 런타임 메모리(CurrentUser.Profile)에 현재 레벨과 누적 경험치를 실시간 반영하여 주기적 서버 플러시(Flush)에 대비
+    /// </summary>
     public void SyncToUserMemory()
     {
         var profile = UserManager.Instance.CurrentUser?.Profile;
@@ -219,9 +227,9 @@ public sealed class PlayerLevelSystem : Singleton<PlayerLevelSystem>, ILoadable,
             }
         }
     }
-    
+
     /// <summary>
-    /// 서버 lastLoginTimestamp 기반 오프라인 경험치 정산
+    /// /// 서버 유저 프로필의 최근 접속 타임스탬프(lastLoginTimestamp)와 현재 UTC 시각을 비교하여 부재 시간 동안의 경험치를 일괄 정산
     /// </summary>
     private void ApplyOfflineExpFromServer()
     {

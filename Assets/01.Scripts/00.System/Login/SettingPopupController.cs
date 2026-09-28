@@ -1,47 +1,49 @@
-﻿using Cysharp.Threading.Tasks;
-using TMPro;
+﻿/* 담당자 - 송태훈
+환경설정 팝업에서 UID 확인/복사, 전체 데이터 강제 저장, 로그아웃, 회원 탈퇴 및 게임 종료 등의 계정 시스템 제어를 담당
+
+ * 공동 담당자 - 정성우
+볼륨 조절 및 음소거 설정 관리 추가
+ */
+
+using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
 using UtilDebug = DebugLogger<SettingsPopupController>;
 
 public class SettingsPopupController : MonoBehaviour
 {
+    #region SerializeField Variable
     [Header("패널 루트")]
-    [SerializeField] private GameObject popupRoot; // Settings 또는 Popup 오브젝트
+    [SerializeField] private GameObject popupRoot;
 
     [Header("UID 표시 및 복사")]
-    [SerializeField] private TextMeshProUGUI uidText;
-    [SerializeField] private Button copyUidButton;
+    [SerializeField] private TMPro.TextMeshProUGUI uidText;
+    [SerializeField] private UnityEngine.UI.Button copyUidButton;
 
     [Header("1번 그룹 버튼 (로그아웃 / 전체 저장)")]
-    [SerializeField] private Button logoutButton;
-    [SerializeField] private Button saveAllButton;
+    [SerializeField] private UnityEngine.UI.Button logoutButton;
+    [SerializeField] private UnityEngine.UI.Button saveAllButton;
 
     [Header("2번 그룹 버튼 (계정 삭제 / 게임 종료)")]
-    [SerializeField] private Button accountDeleteButton;
-    [SerializeField] private Button quitGameButton;
+    [SerializeField] private UnityEngine.UI.Button accountDeleteButton;
+    [SerializeField] private UnityEngine.UI.Button quitGameButton;
 
     [Header("기본 닫기 버튼")]
-    [SerializeField] private Button closeButton;
+    [SerializeField] private UnityEngine.UI.Button closeButton;
 
     [Header("계정 삭제 재확인 팝업 (선택 사항)")]
     [SerializeField] private GameObject deleteConfirmPanel;
-    [SerializeField] private Button deleteConfirmYesButton;
-    [SerializeField] private Button deleteConfirmNoButton;
+    [SerializeField] private UnityEngine.UI.Button deleteConfirmYesButton;
+    [SerializeField] private UnityEngine.UI.Button deleteConfirmNoButton;
+    #endregion
 
     #region 담당자- 정성우 소리 관련 작성
-
     [Header("Ui 버튼들")]
     [SerializeField] private GameObject bgmOnBtn;
     [SerializeField] private GameObject bgmOffBtn;
     [SerializeField] private GameObject sfxOnBtn;
     [SerializeField] private GameObject sfxOffBtn;
-    [SerializeField] private Slider bgmvolume;
-    [SerializeField] private Slider sfxVolume;
-
-
-    
-
+    [SerializeField] private UnityEngine.UI.Slider bgmvolume;
+    [SerializeField] private UnityEngine.UI.Slider sfxVolume;
     #endregion
 
     private bool _isProcessing = false;
@@ -64,8 +66,6 @@ public class SettingsPopupController : MonoBehaviour
             float sfx = PlayerPrefs.GetFloat("SFXSound", 0.5f);
             sfxVolume.value = sfx;
         }
-
-
 
         // 닫기 버튼 바인딩
         if (closeButton != null)     
@@ -133,7 +133,6 @@ public class SettingsPopupController : MonoBehaviour
             bgmOffBtn.gameObject.SetActive(isMuted);
 
             PlayerPrefs.SetInt("BGMMute", isMuted ? 1 : 0);
-            
         }
     }
     public void MuteOnOffSFX()
@@ -148,11 +147,8 @@ public class SettingsPopupController : MonoBehaviour
             sfxOffBtn.gameObject.SetActive(isMuted);
 
             PlayerPrefs.SetInt("SFXMute", isMuted ? 1 : 0);
-          
         }
-           
     }
-
     #endregion
 
     /// <summary>
@@ -177,7 +173,6 @@ public class SettingsPopupController : MonoBehaviour
         }
         Time.timeScale = 0;
     }
-
     public void ClosePopup()
     {
         if (popupRoot != null)
@@ -192,7 +187,6 @@ public class SettingsPopupController : MonoBehaviour
         PlayerPrefs.Save();
         Time.timeScale = 1;
     }
-
     private void RefreshUidDisplay()
     {
         string uid = AuthLoginSystem.Instance.UserId;
@@ -206,7 +200,6 @@ public class SettingsPopupController : MonoBehaviour
             uidText.text = string.IsNullOrEmpty(uid) ? "Player ID: None" : $"Player ID #{uid}";
         }
     }
-
     private void CopyUidToClipboard()
     {
         string uid = AuthLoginSystem.Instance.UserId;
