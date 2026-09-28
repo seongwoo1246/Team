@@ -6,10 +6,6 @@ ObjcetPoolManager는 enumType(Cartoon/Pixel/Item/Particle) 하나당 프리팹 �
 스테이지마다 서로 다른 몬스터 프리팹을 여러 개 쓰는 우리 상황엔 안맞음
 그래서 프리팹별로 자체 스택 풀을 갖는 경량풀을 여기서 직접 관리
 */
-/* 공동 작성자 - 송태훈
- 
- */
-
 
 using Cysharp.Threading.Tasks;
 using System.Collections.Generic;
@@ -58,7 +54,7 @@ public sealed class MonsterSpawner : MonoBehaviour, ILoadable
 
 
     /// <summary>
-    /// 전역 풀(ObjectPoolManagerTest)에서 몬스터를 꺼내어 배치
+    /// 전역 풀(AddressPoolManager)에서 몬스터를 꺼내어 배치
     /// </summary>
     /// <param name="prefab">소환할 몬스터 프리팹</param>
     /// <param name="level">몬스터 레벨 (보통 스테이지 번호)</param>

@@ -1,7 +1,9 @@
-﻿/**/
+﻿/*
 
-/* 공동 작업자 - 송태훈
- 
+
+공동 작업자 - 송태훈
+ServiceLocator(Local) 등록 및 ILoadable, ISyncable을 구현하여 씬 로드 순서와 인벤토리 데이터 수명 주기를 연동
+서버 유저 데이터(Inventory DTO) 기반 인벤토리 역직렬화 복원 및 장비 추가·제거 시 메모리/로컬 파일 즉각 동기화 처리를 구현
  */
 
 using Cysharp.Threading.Tasks;
@@ -14,8 +16,6 @@ public class EquipmentInventory : MonoBehaviour, ILoadable, ISyncable
     [SerializeField] private List<EquippedItem> items = new List<EquippedItem>();
 
     public List<EquippedItem> Items => items;
-
-    // PartyFormationManger(현재 17) 보다 먼저 초기화 되어야 함
     public int LoadOrder => 10;
     private bool _isInitialized = false;
     private void Awake()
@@ -69,6 +69,9 @@ public class EquipmentInventory : MonoBehaviour, ILoadable, ISyncable
     }
     #endregion
 
+    /// <summary>
+    /// 서버 DTO 딕셔너리를 순회하고 DataManager에서 원본 EquipmentData SO를 참조 매핑하여 인게임 장비 객체로 역직렬화 복원 - 송태훈
+    /// </summary>
     private void LoadInventoryFromServer()
     {
         items.Clear();

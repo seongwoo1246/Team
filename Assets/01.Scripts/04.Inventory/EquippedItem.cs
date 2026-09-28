@@ -13,9 +13,9 @@ Data.Id(문자열) + RollPercent + EnhanceLevel + EnhanceBonusTotal 정도만 �
 강화 이력은 몇 번째 강화 때 몇 %가 떴는지 개별로 쓰는 곳이 없어서, 리스트로 안 쌓고
 enhanceLevel(몇 강인지) + enhanceBonusTotal(누적 % 합) 두값으로만 관리함
 (세이브이슈)
-*/
-/* 공동 작성사 - 송태훈
- 
+
+공동 작성사 - 송태훈
+서버 EquipmentSaveDTO 복원용 생성자 추가 + DTO 변환
  */
 
 
@@ -160,7 +160,7 @@ public sealed class EquippedItem
     }
 
     /// <summary>
-    /// 서버 EquipmentSaveDTO 복원용 생성자
+    /// 서버 EquipmentSaveDTO 복원용 생성자 - 송태훈
     /// </summary>
     public EquippedItem(string instanceId, EquipmentData data, EquipmentSaveDTO dto)
     {
