@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 //담당자 - 정성우
 /*
- 
+ 메일 UI창을 담당하고 있어서 여기는 우편함의 형태를 갖추기 위해서 만든 스크립트고 안에 우편 왔을 때 내용물은 메일아이템UI가 담당할 예정
  */
 
 
