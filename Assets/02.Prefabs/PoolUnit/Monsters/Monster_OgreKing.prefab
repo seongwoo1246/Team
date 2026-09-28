@@ -1265,19 +1265,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Monster
   statData: {fileID: 11400000, guid: 267d93a5691595c4c89a926ed4b8cbfb, type: 2}
   level: 1
-  bossHpMultiplier: 4
   attackInterval: 2.2
   attackRange: 0.8
   targetLayer:
     serializedVersion: 2
     m_Bits: 256
   aggroRange: 50
-  equipmentDropChance: 0.001
+  equipmentDropChance: 0.3
   possibleDrops: []
   enrageHpRatio: 0.35
   enrageMultiplier: 1.5
   enrageTintColor: {r: 1, g: 0.15, b: 0.15, a: 1}
   enrageTintStrength: 0.6
+  rankingUi: {fileID: 0}
 --- !u!1 &4573440162120165968
 GameObject:
   m_ObjectHideFlags: 0
