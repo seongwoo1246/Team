@@ -1,0 +1,207 @@
+﻿/*
+
+
+공동 작업자 - 송태훈
+ServiceLocator(Local) 등록 및 ILoadable, ISyncable을 구현하여 씬 로드 순서와 인벤토리 데이터 수명 주기를 연동
+서버 유저 데이터(Inventory DTO) 기반 인벤토리 역직렬화 복원 및 장비 추가·제거 시 메모리/로컬 파일 즉각 동기화 처리를 구현
+ */
+
+using Cysharp.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+using UtilDebug = DebugLogger<EquipmentInventory>;
+public class EquipmentInventory : MonoBehaviour, ILoadable, ISyncable
+{
+    [SerializeField] private List<EquippedItem> items = new List<EquippedItem>();
+
+    public List<EquippedItem> Items => items;
+    public int LoadOrder => 10;
+    private bool _isInitialized = false;
+    private void Awake()
+    {
+        ServiceLocator.Register<EquipmentInventory>(this, ServiceLifetime.Local);
+        SceneLoadManager.Instance.RegisterLoadable(this);
+        GameManager.Instance.RegisterSyncable(this);
+    }
+
+    private void OnDestroy()
+    {
+        SceneLoadManager.Instance.UnregisterLoadable(this);
+        GameManager.Instance.UnregisterSyncable(this);
+    }
+
+    #region ILoadable + ISyncable 구현부 - 송태훈
+    public UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        return UniTask.CompletedTask;
+    }
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbyScene) return;
+        if (_isInitialized) return;
+
+        LoadInventoryFromServer();
+        _isInitialized = true;
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        SyncToUserMemory();
+        items.Clear();
+        _isInitialized = false;
+    }
+    public void SyncToUserMemory()
+    {
+        var invData = UserManager.Instance.CurrentUser?.Inventory?.Data;
+        if (invData == null) return;
+
+        invData.equipments.Clear();
+        for (int i = 0; i < items.Count; i++)
+        {
+            var item = items[i];
+            if (item != null && !string.IsNullOrEmpty(item.InstanceId))
+            {
+                invData.equipments[item.InstanceId] = item.ToDTO();
+            }
+        }
+    }
+    #endregion
+
+    /// <summary>
+    /// 서버 DTO 딕셔너리를 순회하고 DataManager에서 원본 EquipmentData SO를 참조 매핑하여 인게임 장비 객체로 역직렬화 복원 - 송태훈
+    /// </summary>
+    private void LoadInventoryFromServer()
+    {
+        items.Clear();
+
+        UserInfo user = UserManager.Instance.CurrentUser;
+        if (user?.Inventory?.Data?.equipments == null)
+        {
+            UtilDebug.LogError("서버 유저 인벤토리 비어 있음"); return;
+        }
+
+        Dictionary<string, EquippedItem> restoreMap = new Dictionary<string, EquippedItem>();
+
+        // DTO -> EquippedItem 인스턴스 복원
+        foreach (var pair in user.Inventory.Data.equipments)
+        {
+            string instnaceId = pair.Key;
+            EquipmentSaveDTO dto = pair.Value;
+
+            EquipmentData data = DataManager.Instance.GetData<EquipmentData>(dto.dataId);
+            if (data == null)
+            {
+                UtilDebug.LogWarning($"장비 데이터(Id: {dto.dataId})를 DataManager에서 찾을 수 없음");
+                continue;
+            }
+
+            EquippedItem item = new EquippedItem(instnaceId, data, dto);
+            items.Add(item);
+            restoreMap[instnaceId] = item;
+        }
+        UtilDebug.Log($"서버 인벤토리 복원 완료: 총 {items.Count}개");
+    }
+
+    public bool TryGetItem(string instanceId, out EquippedItem item)
+    {
+        item = items.Find(x => x.InstanceId == instanceId);
+        return item != null;
+    }
+
+    #region 인벤토리 조작 - 홍준호? 김주연? / 로컬 저장 - 송태훈
+
+    // 장비 추가
+    public void AddItem(EquippedItem item)
+    {
+        if (item == null || string.IsNullOrEmpty(item.InstanceId))
+            return;
+
+        if (!items.Contains(item))
+        {
+            items.Add(item);
+        }
+
+        // [핵심] UserInfo 메모리 및 로컬 세이브 데이터 즉시 동기화
+        var invData = UserManager.Instance.CurrentUser?.Inventory?.Data;
+        if (invData != null)
+        {
+            if (invData.equipments == null)
+                invData.equipments = new Dictionary<string, EquipmentSaveDTO>();
+
+            invData.equipments[item.InstanceId] = item.ToDTO();
+
+            // 로컬 모드일 때 파일 즉시 쓰기
+            if (UserManager.Instance.IsLocalMode)
+            {
+                UserManager.Instance.SaveLocalUserData();
+            }
+        }
+    }
+
+    // 장비를 인벤토리에서 제거
+    public bool RemoveItem(EquippedItem item)
+    {
+        if (item == null) return false;
+
+        bool removed = items.Remove(item);
+        if (removed)
+        {
+            var invData = UserManager.Instance.CurrentUser?.Inventory?.Data;
+            if (invData != null && invData.equipments != null)
+            {
+                invData.equipments.Remove(item.InstanceId);
+
+                if (UserManager.Instance.IsLocalMode)
+                {
+                    UserManager.Instance.SaveLocalUserData();
+                }
+            }
+        }
+        return removed;
+    }
+
+    // 장비를 종류 별로 불러옴
+    public List<EquippedItem> GetItemsBySlot(EquipmentSlot slot)
+    {
+        List<EquippedItem> result = new List<EquippedItem>();
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            EquippedItem item = items[i];
+
+            if (item != null && item.Data != null && item.Data.Slot == slot)
+            {
+                result.Add(item);
+            }
+        }
+
+        return result;
+    }
+
+    // 무기도 직업별로 분류하기
+    public List<EquippedItem> GetItemsBySlotAndAttackType(EquipmentSlot slot, AttackType attackType)
+    {
+        List<EquippedItem> result = new List<EquippedItem>();
+
+        for (int i = 0; i < items.Count; i++)
+        {
+            EquippedItem item = items[i];
+
+            if (item == null || item.Data == null)
+                continue;
+
+            if (item.Data.Slot != slot)
+                continue;
+
+            if (item.Data.AllowedAttackType != attackType)
+                continue;
+
+            result.Add(item);
+        }
+
+        return result;
+    }
+    #endregion
+}

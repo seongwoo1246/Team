@@ -1,10 +1,18 @@
-﻿
-using Firebase.Database;
-using Firebase.Extensions;
+﻿using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
-using Debug = DebugLogger<AchievementManager>;
+using UnityEngine.UI;
+
+
+//담당자 - 정성우
+/*
+업적 시스템을 만들었다. 원래는 서버와 연동해서 클리어 하면 정보가 서버를 통해서 보상 시스템과 연결해서 와야 하지만 이번에는 시간과 규모상 로컬로 돌아가게 되었다.
+각 업적을 만들어서 그거에 대해서 달성 단계를 만들고 실시간으로 업적이 쌓이도록 만들어 달성하면 보상이 들어오고 체크가 생기면서 완료형태가 된다.
+
+ */
+
 
 /// <summary>
 /// 업적 관련 정보를 담고 있는 클래스
@@ -23,18 +31,42 @@ public class Achievement
     public double currentProgress;
     // 업적 달성 여부
     public bool isUnLocked;
+    // 업적 클리어시 보상 종류
+    public RewardType rewardType;
+    //보상 수량
+    public double rewardAmount;
+    // 보상 수령 여부
+    public bool isClaimed;
 
-    // 파이어 베이스에 josn으로 저장하기 위한 생성자 및 변환 메서드
-    public Achievement() { }
-
-    public Achievement(int id, string title, double targetProgress, double currentProgress, bool isUnLocked)
+    public Achievement(int id, string title, double targetProgress, double currentProgress, bool isUnLocked, RewardType rewardType, double rewardAmount, bool isClaimed)
     {
         this.id = id;
         this.title = title;
         this.targetProgress = targetProgress;
         this.currentProgress = 0;
         this.isUnLocked = false;
+        this.rewardType = rewardType;
+        this.rewardAmount = rewardAmount;
+        this.isClaimed = false;
     }
+}
+
+/// <summary>
+/// json에 저장 하기 위해 필요한 거만 뽑아낸 클래스
+/// </summary>
+[System.Serializable]
+public class AchievementSaveData
+{
+    public int id;
+    public double currentProgress;
+    public bool isClaimed;
+    public bool isUnLocked;
+}
+
+[System.Serializable]
+public class AchievementSaveDataList
+{
+    public List<AchievementSaveData> list = new List<AchievementSaveData>();
 }
 
 #region 업적 관련 이벤트 함수 모음
@@ -49,32 +81,18 @@ public static class GameEvents
     public static event Action<double> OnGoldObtained;
     // 스테이지 클리어시 발생하는 이벤트
     public static event Action OnStageCleared;
-    // 04시 혹은 일정 시간 지나고 로그인 할 때 마다 한번 씩 할 이벤트
-    public static event Action OnLoginDays;
     // 로그인 하고 로그 아웃한 시간을 구해서 얼마나 플레이하는검사할 때 할 이벤트
     public static event Action<double> OnPlayTime;
-    // 장비 레벨업 할 때 할 이벤트
-    public static event Action OnSumGearLevel;
-    // 픽셀들 레벨업 할 때 할 이벤트
-    public static event Action OnSumCharLevel;
-    // 플레이어 레벨이 올라갈 때 할 이벤트
-    public static event Action OnPlayerLevel;
-    // 도감을 열 때 할 이벤트
-    public static event Action OnUnlockEncyclopedia;
-    // 업적을 달성 할 때 할 이벤트
-    public static event Action OnUnlockAchievement;
+
+
+
 
 
     public static void TriggerOnEnemyKilled() => OnEnemyKilled?.Invoke();
     public static void TriggerOnGoldObtained(double amount) => OnGoldObtained?.Invoke(amount);
     public static void TriggerOnStageCleared() => OnStageCleared?.Invoke();
-    public static void TriggerOnLoginDays() => OnLoginDays?.Invoke();
     public static void TriggerOnPlayTime(double times) => OnPlayTime?.Invoke(times);
-    public static void TriggerOnSumGearLevel() => OnSumGearLevel?.Invoke();
-    public static void TriggerOnSumCharLevel() => OnSumCharLevel?.Invoke();
-    public static void TriggerOnPlayerLevel() => OnPlayerLevel?.Invoke();
-    public static void TriggerOnUnlockEncyclopedia() => OnUnlockEncyclopedia?.Invoke();
-    public static void TriggerOnUnlockAchievement() => OnUnlockAchievement?.Invoke();
+
 
 }
 #endregion
@@ -82,157 +100,259 @@ public static class GameEvents
 /// <summary>
 /// 업적 데이터를 로컬과 서버와 동기화 하여 관리하는 스크립트
 /// </summary>
-public class AchievementManager : Singleton<AchievementManager>
+public class AchievementManager : MonoBehaviour, ILoadable
 {
+    [SerializeField] private AchievementSlot slot;
+    [SerializeField] private Transform contentParent;
+
+    [SerializeField] private GameObject BackGround;
+
+    [SerializeField] private Button openBtn;
+    [SerializeField] private Button closeBtn;
+
+    [SerializeField] private GameObject dim;
+
     // 업적을 담아두는 리스트와 딕셔너리
-    [SerializeField] private List<Achievement> achievements;
-    private Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
+    public List<Achievement> achievements = new List<Achievement>();
+    public Dictionary<int, Achievement> achievementsDictionary = new Dictionary<int, Achievement>();
+    public List<AchievementSlot> activeSlots = new List<AchievementSlot>();
 
-    private DatabaseReference databaseReference; //파이어베이스 DB참조
-    private string userId = ""; // 실제 서비스 시 Auth에서 가져오는 UID
+    //업적 슬롯보다는 빨리 되어야함
+    //오브젝트 풀링 보다는 늦어야함
+    public int LoadOrder => 30;
 
-
-    protected override void Awake()
+    private  void Awake()
     {
-        base.Awake();
+        SceneLoadManager.Instance.RegisterLoadable(this);
+        ServiceLocator.Register<AchievementManager>(this);
+    }
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
         InitializeDictionary();
+        LoadAchievements();
+        if (ObjcetPoolManager.Instance != null)
+        {
+            ObjcetPoolManager.Instance.RegisterPool<AchievementSlot>(enumType.UI, slot, 4);
+        }
 
-        //파이어 베이스 루트 참조 초기화 (리얼타임 데이터베이스 기준)
-        databaseReference = FirebaseDatabase.DefaultInstance.RootReference;
+        if (openBtn != null)
+        {
 
-        LoadAchievementsFromFirebase();
+            openBtn.onClick.RemoveAllListeners();
+            openBtn.onClick.AddListener(OpenUI);
+            openBtn.gameObject.SetActive(true);
+        }
+        if (closeBtn != null)
+        {
+            closeBtn.onClick.RemoveAllListeners();
+            closeBtn.onClick.AddListener(closeUI);
+        }
+
+        gameObject.SetActive(false);
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        EventHanlerUnregist();
+        ServiceLocator.Unregister<AchievementManager>();
+    }
+
+    // UI 슬롯들이 구독할 전용 이벤트 (변경된 업적의 id를 전달 )
+    public static event System.Action<int> OnAchievementUpdated;
+
+
+    public void OpenUI()
+    {
+        dim.SetActive(true);
+        dim.transform.SetAsLastSibling();
+        gameObject.transform.SetAsLastSibling();
+        gameObject.SetActive(true);
+        if (BackGround != null) BackGround.gameObject.SetActive(true);
+        if (closeBtn != null) closeBtn.gameObject.SetActive(true);
+
+        EventHanlerRegist();
+
+        ClearActiveSlots();
+
+        foreach (var ach in achievements)
+        {
+            AchievementSlot newslot = ObjcetPoolManager.Instance.Spawn<AchievementSlot>(enumType.UI);
+
+            if (newslot != null)
+            {
+
+                newslot.transform.SetParent(contentParent, false);
+                newslot.BindData(ach);
+
+                activeSlots.Add(newslot);
+            }
+        }
     }
 
 
-    private void OnEnable()
+    public void closeUI()
     {
+        ClearActiveSlots();
+        EventHanlerUnregist();
+
+        dim.SetActive(false);
+        slot.gameObject.SetActive(false);
+        BackGround.gameObject.SetActive(false);
+    }
+
+    /// <summary>
+    /// 전부 디스폰 하고 리스트 비우기
+    /// </summary>
+    private void ClearActiveSlots()
+    {
+        foreach (var slot in activeSlots)
+        {
+            ObjcetPoolManager.Instance.Despawn<AchievementSlot>(enumType.UI, slot);
+        }
+        activeSlots.Clear();
+    }
+
+    private void EventHanlerRegist()
+    {
+        // 방어 코드
+        GameEvents.OnEnemyKilled -= HandleEnemyKilled;
+        GameEvents.OnGoldObtained -= HandleGoldObtained;
+        GameEvents.OnPlayTime -= HandlePlayTime;
+        GameEvents.OnStageCleared -= HandleStageCleared;
+
         //게임 내 주요 이벤트 구독 예정
         GameEvents.OnEnemyKilled += HandleEnemyKilled;
         GameEvents.OnGoldObtained += HandleGoldObtained;
-        GameEvents.OnLoginDays += HandleOnLoginDays;
-        GameEvents.OnPlayerLevel += HandlePlayerLevel;
         GameEvents.OnPlayTime += HandlePlayTime;
         GameEvents.OnStageCleared += HandleStageCleared;
-        GameEvents.OnSumCharLevel += HandleSumCharLevel;
-        GameEvents.OnSumGearLevel += HandleOnSumGearLevel;
-        GameEvents.OnUnlockAchievement += HandleUnlockAchievement;
-        GameEvents.OnUnlockEncyclopedia += HandleUnlockEncyclopedia;
-
-
     }
 
-    private void OnDisable()
+    private void EventHanlerUnregist()
     {
-        // 구독했으면 구독해제도 같이 해주기
+        // 구독 해제
         GameEvents.OnEnemyKilled -= HandleEnemyKilled;
         GameEvents.OnGoldObtained -= HandleGoldObtained;
-        GameEvents.OnLoginDays -= HandleOnLoginDays;
-        GameEvents.OnPlayerLevel -= HandlePlayerLevel;
         GameEvents.OnPlayTime -= HandlePlayTime;
         GameEvents.OnStageCleared -= HandleStageCleared;
-        GameEvents.OnSumCharLevel -= HandleSumCharLevel;
-        GameEvents.OnSumGearLevel -= HandleOnSumGearLevel;
-        GameEvents.OnUnlockAchievement -= HandleUnlockAchievement;
-        GameEvents.OnUnlockEncyclopedia -= HandleUnlockEncyclopedia;
     }
 
-    public void AddProgress(int id, int amount)
+    public void AddProgress(int id, double amount)
     {
         if (!achievementsDictionary.TryGetValue(id, out Achievement ach)) return;
         if (ach.isUnLocked) return;
 
         ach.currentProgress += amount;
 
-        if(ach.currentProgress>=ach.targetProgress)
+        if (ach.currentProgress >= ach.targetProgress)
         {
             ach.currentProgress = ach.targetProgress;
             UnlockAchievement(ach);
         }
 
-
-       
+        SaveAchievements();
+        //진행도가 진짜로 변경 되어 UI에게 알림
+        OnAchievementUpdated?.Invoke(id);
     }
 
-   
+
     private void UnlockAchievement(Achievement ach)
     {
+        if (ach.isClaimed == true || ach.isUnLocked == true)
+        { return; }
+
         ach.isUnLocked = true;
-        //업적 달성 했다고 전달 (만약 API등을 쓰고 있다면 여기서 달성여부를 서버로 보내는 작업을 하고
-        //서버에서는 업적에 맞는 보상을 찾아서 지급해주는 코드 넣어주기
+        ach.isClaimed = true;
+
+        AchievementClearReward(ach);
+
     }
+
+
 
     private void InitializeDictionary()
     {
         achievementsDictionary.Clear();
-        foreach(var ach  in achievements)
+        foreach (var ach in achievements)
         {
             achievementsDictionary[ach.id] = ach;
         }
     }
 
-    #region 파이어베이스 관련 함수들
-    /// <summary>
-    /// 특정 업적에 대한 상태를 파이어 베이스에 저장(Realtime Database)
-    /// </summary>
-    /// <param name="ach"></param>
-    private async void SaveAchivementToFirebase(Achievement ach)
+
+    private void AchievementClearReward(Achievement ach)
     {
-        string json = JsonUtility.ToJson(ach);
+        switch (ach.rewardType)
+        {
+            case RewardType.Gold:
 
-        // users/{userId}/achievements/{achievementId} 경로에 저장
-        await databaseReference.Child("users")
-            .Child(userId)
-            .Child("achievements")
-            .Child(ach.id.ToString())
-            .SetRawJsonValueAsync(json)
-            .ContinueWithOnMainThread(task =>
+                GoldWallet.Instance.Add(ach.rewardAmount);
+                break;
+
+            case RewardType.Diamond:
+
+                break;
+
+            case RewardType.Item:
+
+                break;
+        }
+    }
+
+
+    #region 저장과 불러오기를 위한 함수와 내용물
+    private string SavePath => Path.Combine(Application.persistentDataPath, "AchievementSaveData.json");
+
+    //데이터를 저장하기 위한 함수
+    public void SaveAchievements()
+    {
+        AchievementSaveDataList saveDataList = new AchievementSaveDataList();
+
+        foreach (var pair in achievementsDictionary)
+        {
+            Achievement ach = pair.Value;
+            saveDataList.list.Add(new AchievementSaveData
             {
-
-                if (task.IsFaulted)
-                {
-                    Debug.LogError($"파이어 베이스 저장 실패 : {task.Exception}");
-                }
+                id = ach.id,
+                currentProgress = ach.currentProgress,
+                isUnLocked = ach.isUnLocked,
+                isClaimed = ach.isClaimed,
             });
+        }
 
+        string json = JsonUtility.ToJson(saveDataList, true);
+        File.WriteAllText(SavePath, json);
+        Debug.Log($"저장 위치  : {SavePath}");
     }
 
     /// <summary>
-    /// 로그인시 파이어베이스에서 기존 업적 정보 불러오기
+    /// 업적 데이터를 가져오는 함수
     /// </summary>
-    private void LoadAchievementsFromFirebase()
+    public void LoadAchievements()
     {
-        databaseReference.Child("users")
-            .Child(userId)
-            .Child("achievements").GetValueAsync().ContinueWithOnMainThread(task =>
+        if (!File.Exists(SavePath))
+        {
+            return;
+        }
+
+        string json = File.ReadAllText(SavePath);
+        AchievementSaveDataList saveDataList = JsonUtility.FromJson<AchievementSaveDataList>(json);
+
+        foreach (var saveData in saveDataList.list)
+        {
+            if (achievementsDictionary.TryGetValue(saveData.id, out Achievement ach))
             {
-                if (task.IsFaulted)
-                {
-                    Debug.LogError($"파이어 베이스 데이터 로드 실패");
-                    return;
-                }
+                ach.currentProgress = saveData.currentProgress;
+                ach.isUnLocked = saveData.isUnLocked;
+                ach.isClaimed = saveData.isClaimed;
 
-                DataSnapshot snapshot = task.Result;
-                if (snapshot.Exists)
-                {
-                    foreach (DataSnapshot child in snapshot.Children)
-                    {
-                        string json = child.GetRawJsonValue();
-                        Achievement loadedAch = JsonUtility.FromJson<Achievement>(json);
-
-                        //불러온 정보를 로컬데이터로 딕셔너리 정보 갱신
-                        if (achievementsDictionary.ContainsKey(loadedAch.id))
-                        {
-                            achievementsDictionary[loadedAch.id].currentProgress = loadedAch.currentProgress;
-                            achievementsDictionary[loadedAch.id].isUnLocked = loadedAch.isUnLocked;
-                        }
-                        Debug.Log($"파이어 베이스 업적 데이터 불러오기 성공");
-                    }
-                }
-            });
-
+                OnAchievementUpdated?.Invoke(ach.id);
+            }
+        }
     }
-
     #endregion
+
 
 
     #region 이벤트 핸들러들 모음
@@ -241,7 +361,8 @@ public class AchievementManager : Singleton<AchievementManager>
     /// </summary>
     private void HandleEnemyKilled()
     {
-        //AddProgress()
+
+        AddProgress(10001, 1);
     }
 
     /// <summary>
@@ -250,7 +371,7 @@ public class AchievementManager : Singleton<AchievementManager>
     /// <param name="amount"> 얻은 돈의 액수</param>
     private void HandleGoldObtained(double amount)
     {
-        //AddProgress()
+        AddProgress(10002, amount);
     }
 
     /// <summary>
@@ -258,18 +379,8 @@ public class AchievementManager : Singleton<AchievementManager>
     /// </summary>
     private void HandleStageCleared()
     {
-        //AddProgress()
+        AddProgress(10003, 1);
     }
-
-
-    /// <summary>
-    /// 로그인 할 때 카운트 하는 함수
-    /// </summary>
-    private void HandleOnLoginDays()
-    {
-        //AddProgress()
-    }
-
 
     /// <summary>
     /// 플레이한 시간을 카운트하는 함수
@@ -277,53 +388,8 @@ public class AchievementManager : Singleton<AchievementManager>
     /// <param name="times"></param>
     private void HandlePlayTime(double times)
     {
-        //AddProgress()
+        AddProgress(10004, times);
     }
-
-
-    /// <summary>
-    /// 장비 레벨업 할때 카운트 할 함수
-    /// </summary>
-    private void HandleOnSumGearLevel()
-    {
-        //AddProgress()
-    }
-
-    /// <summary>
-    /// 캐릭터 레벨업 할 때 카운트 할 함수
-    /// </summary>
-    private void HandleSumCharLevel()
-    {
-        //AddProgress()
-    }
-
-    /// <summary>
-    /// 플레이어 레벨업시 카운트 함수
-    /// </summary>
-    private void HandlePlayerLevel()
-    {
-        //AddProgress()
-    }
-
-    /// <summary>
-    /// 도감이 열릴 때 마다 카운트 할 함수
-    /// </summary>
-    private void HandleUnlockEncyclopedia()
-    {
-        //AddProgress()
-    }
-
-    /// <summary>
-    /// 업적을 달성 할 때 할 카운트 할 함수
-    /// </summary>
-    private void HandleUnlockAchievement()
-    {
-        //AddProgress()
-    }
-
-
-
-
     #endregion
 
 }

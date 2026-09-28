@@ -1,9 +1,12 @@
 ﻿
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+//담당자 - 정성우
+/*
+유저 인벤토리를 담당할 예정이였던 스크립트 
+크게 사용은 안되고 있지만 인벤토리 초안으로써 사용되었다.
 
-
+ */
 
 
 /// <summary>
@@ -16,7 +19,7 @@ public class UserInventory : Singleton<UserInventory>
     [SerializeField] public TextMeshProUGUI coin;
     
     // 나중에 text와 실수 값을 연동해줘야 함
-   double gold = GoldWallet.instance.Balance;
+   double gold = GoldWallet.Instance.Balance;
 
     // 인벤토리에서 보여질 화면
     public Sprite icon;

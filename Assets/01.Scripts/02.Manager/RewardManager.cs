@@ -1,6 +1,11 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+//담당자 - 정성우
+/*
+ 로그아웃 상태에서 있다가 게임에 들어왔을 때 방치형 보상을 보여주기 위해 만든 스크립트로 
+실질적으로 주는 함수는 따로 있고 여기서는 흩어져 있는 보상 정보들을 한 군데 모아서 보여주기 위한 스크립트이다.
+ */
 
 
 /// <summary>
@@ -13,23 +18,35 @@ public class RewardManager : Singleton<RewardManager>
     public TextMeshProUGUI GetPlayerExp;
     public TextMeshProUGUI GetPlayerReward;
     public TextMeshProUGUI GetUpgardMaterial;
-    private Button CloseRewardInfo;
+    [SerializeField] private Button CloseRewardInfo;
 
 
+    // null 체크만 추가
+    // RewardInfo/CloseRewardInfo가 아직 Inspector에 연결 안 된 상태라 Start()가 계속 죽어서 널오류뜸..
+    // 죽지만 않게 null 체크만 둘렀음
     private void Start()
     {
-        RewardInfo.SetActive(true);
+        if (RewardInfo != null)
+        {
+            RewardInfo.SetActive(true);
+        }
 
-        CloseRewardInfo.onClick.AddListener(CloseInfo);
+        if (CloseRewardInfo != null)
+        {
+            CloseRewardInfo.onClick.AddListener(CloseInfo);
+        }
     }
 
 
     public void CloseInfo()
     {
-        RewardInfo.SetActive(false);
+        if (RewardInfo != null)
+        {
+            RewardInfo.SetActive(false);
+        }
     }
 
-
+    
 
 
     /*

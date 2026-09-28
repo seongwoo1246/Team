@@ -1,4 +1,5 @@
-﻿/*
+﻿// 작성자: 김주연
+/*
 MonsterStatData(기본값) + 레벨(스테이지)로 현재 체력을 계산함
   현재 체력 = 기본체력 × (체력증가율 ^ 레벨)
 보스는 별도 배율(bossHpMultiplier)을 추가로 곱함
@@ -15,7 +16,7 @@ using UnityEngine;
 /// <summary>
 /// 스테이지에 등장하는 몬스터. 레벨에 따라 체력과 보상이 지수로 커짐
 /// </summary>
-public class Monster : MonoBehaviour, IEntity
+public class Monster : MonoBehaviour, IEntity, IPoolObject
 {
     [Header("데이터")]
     // 이 몬스터의 기본 스탯 SO
@@ -23,10 +24,6 @@ public class Monster : MonoBehaviour, IEntity
 
     // 몬스터 레벨(보통 스테이지 번호)
     [SerializeField] private int level = 1;
-
-    [Header("보스 배율 (일반 몬스터는 1)")]
-    // 보스일 때 체력에 추가로 곱할 배율
-    [SerializeField] private float bossHpMultiplier = 1f;
 
     [Header("전투")]
     // 공격 간격(초)
@@ -43,11 +40,27 @@ public class Monster : MonoBehaviour, IEntity
     [SerializeField] private float aggroRange = 50f;
 
     [Header("장비 드랍")]
-    [Tooltip("죽었을 때 장비가 드랍될 확률 (0~1). 0.02 = 2%")]
+    [Tooltip("죽었을 때 장비가 드랍될 확률 (0~1). 0.001 = 0.1%")]
     [SerializeField] private float equipmentDropChance = 0.001f;
 
     [Tooltip("드랍 가능한 장비 후보들. 죽을 때 이 중 하나를 무작위로 골라 1~10% 랜덤 옵션으로 드랍함")]
     [SerializeField] private EquipmentData[] possibleDrops;
+
+    [Header("보스 광폭화 (Kind가 Boss일 때만 동작)")]
+    [Tooltip("체력이 이 비율 이하로 떨어지면 광폭화 (0.3 = 30%)")]
+    [SerializeField] private float enrageHpRatio = 0.3f;
+
+    [Tooltip("광폭화 시 공격력/공격속도에 곱할 배율")]
+    [SerializeField] private float enrageMultiplier = 1.5f;
+
+    [Tooltip("광폭화 시 물들일 색 (밝은 빨강 추천 - 원래 색이 어두워도 눈에 띄게)")]
+    [SerializeField] private Color enrageTintColor = new Color(1f, 0.15f, 0.15f, 1f);
+
+    [Tooltip("광폭화 시 원래 색에서 enrageTintColor 쪽으로 얼마나 강하게 끌어당길지 (0=원래색 그대로, 1=완전히 틴트색)")]
+    [Range(0f, 1f)]
+    [SerializeField] private float enrageTintStrength = 0.6f;
+
+    public RankingUi rankingUi;
 
     // 레벨 기준으로 계산된 실시간값
     private float _currentHP;
@@ -55,10 +68,22 @@ public class Monster : MonoBehaviour, IEntity
     private float _attackPower;
     private float _moveSpeed;
 
+    // 한 번 광폭화되면 죽거나 풀에 반환될 때까지 계속 true로 유지됨
+    private bool _isEnraged;
+
     // 이동/타겟팅
     private Rigidbody2D _rigidbody;
     private IEntity _target;
     private Transform _targetTf;
+
+    // 타겟의 콜라이더도 따로 기억해둔다 - 파티 편성에서 빠진 캐릭터는 죽은게 아니라
+    // 콜라이더만 꺼진 채 멀리(벤치 위치로) 치워지는데, IsDead만 보면 이걸 못 잡아내서
+    // 몬스터가 계속 그 캐릭터를 쫓아가버림(엉뚱한 방향으로 계속 이동하는 버그). 콜라이더가 꺼졌는지도 같이 확인해서 방지
+    private Collider2D _targetCollider;
+
+    // 광폭화 시 색 틴트를 입히기 위한 참조. 원래 색(예: 황금 고블린의 금색)을 기억해뒀다가 그 위에 곱함
+    private SpriteRenderer _spriteRenderer;
+    private Color _baseSpriteColor = Color.white;
 
     // 풀링 때문에 "파괴"가 아니라 "비활성"마다 공격 루프를 멈춰야 해서 CTS를 직접 관리
     private CancellationTokenSource _attackCts;
@@ -91,20 +116,83 @@ public class Monster : MonoBehaviour, IEntity
     // 현재 레벨 기준 공격력
     public float AttackPower => _attackPower;
 
+    string IPoolObject.PoolKey => statData.Id;
+
+    #region 정성우가 만진 부분
+
+    protected Animator animator;
+    public virtual void Attack()
+    {
+        if (animator == null) return;
+        animator.SetTrigger("Attack");
+        if(SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("적공격소리");
+        }
+    }
+    public virtual void Dead()
+    {
+        if (animator == null) return;
+        animator.SetBool("IsDead",true);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("적죽는소리");
+        }
+    }
+    public virtual void Spon()
+    {
+        if (animator == null) return;
+        animator.SetBool("IsDead", false);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("또잉");
+        }
+    }
+    public virtual void Hit()
+    {
+        if (animator == null) return;
+        animator.SetTrigger("Hit");
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("공격소리");
+        }
+    }
+   
+
+    #endregion
+
+
     private void Awake()
     {
+        // Animator가 루트가 아니라 자식(bone_main 등)에 붙어있는 프리팹이 있어서 자식까지 찾는다
+        animator = GetComponentInChildren<Animator>();
+        rankingUi = GetComponent<RankingUi>();
         _rigidbody = GetComponent<Rigidbody2D>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+        if (_spriteRenderer != null)
+        {
+            _baseSpriteColor = _spriteRenderer.color;
+        }
+
         Recalculate();
         _currentHP = _maxHP;
     }
 
-    private void OnEnable()
+    public void OnSpawn()
     {
         // 풀링으로 다시 켜질때 체력을 가득 채움
         _currentHP = _maxHP;
         _target = null;
         _targetTf = null;
+        _targetCollider = null;
         _isHarmless = false;
+
+        // 광폭화 상태도 원래대로 초기화 (풀에서 재사용될 때 이전 생애의 광폭화가 안 남게)
+        _isEnraged = false;
+        if (_spriteRenderer != null)
+        {
+            _spriteRenderer.color = _baseSpriteColor;
+        }
 
         // 자동 공격 루프 시작 (이번 활성화 동안만 유효한 토큰)
         _attackCts = new CancellationTokenSource();
@@ -113,6 +201,16 @@ public class Monster : MonoBehaviour, IEntity
         OnSpawned();
     }
 
+    public void OnDespawn()
+    {
+        // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
+        if (_attackCts != null)
+        {
+            _attackCts.Cancel();
+            _attackCts.Dispose();
+            _attackCts = null;
+        }
+    }
     private void FixedUpdate()
     {
         if (IsDead)
@@ -120,8 +218,8 @@ public class Monster : MonoBehaviour, IEntity
             return;
         }
 
-        // 타겟이 없거나 죽었으면 가장 가까운 캐릭터를 다시 잡는다
-        if (_target == null || _target.IsDead || _targetTf == null)
+        // 타겟이 없거나 죽었거나, 편성에서 빠져서 콜라이더가 꺼졌으면 가장 가까운 캐릭터를 다시 잡는다
+        if (_target == null || _target.IsDead || _targetTf == null || _targetCollider == null || !_targetCollider.enabled)
         {
             AcquireTarget();
         }
@@ -150,21 +248,44 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// aggroRange 안에서 가장 가까운 살아있는 캐릭터를 타겟으로 잡는다.
+    /// aggroRange 안에서 PickTargetCollider() 기준으로 타겟을 잡는다 (기본은 가장 가까운 캐릭터)
     /// </summary>
     private void AcquireTarget()
     {
         _target = null;
         _targetTf = null;
+        _targetCollider = null;
 
         _targetFilter.useTriggers = true;
         _targetFilter.SetLayerMask(targetLayer);
         int count = Physics2D.OverlapCircle(transform.position, aggroRange, _targetFilter, _targetBuffer);
 
+        Collider2D picked = PickTargetCollider(_targetBuffer, count, transform.position);
+        if (picked != null && picked.TryGetComponent(out IEntity entity))
+        {
+            _target = entity;
+            _targetTf = picked.transform;
+            _targetCollider = picked;
+        }
+    }
+
+    /// <summary>
+    /// 후보 콜라이더들 중 실제로 노릴 대상 하나를 고른다. 기본은 가장 가까운 대상
+    /// AcquireTarget(이동용)이랑 PerformAttack(공격용) 둘 다 이 함수를 거쳐가므로,
+    /// 여기 하나만 override하면 이동/공격 타겟이 항상 일치하게 됨(예: 후열 우선 타겟팅)
+    /// </summary>
+    /// <param name="buffer">OverlapCircle로 찾은 콜라이더 후보들</param>
+    /// <param name="count">buffer에서 앞쪽 유효한 개수</param>
+    /// <param name="originPosition">거리 계산 기준이 될 이 몬스터의 현재 위치</param>
+    /// 고른 대상의 콜라이더. 없으면 null
+    protected virtual Collider2D PickTargetCollider(Collider2D[] buffer, int count, Vector2 originPosition)
+    {
+        Collider2D nearest = null;
         float nearestSqr = float.MaxValue;
+
         for (int i = 0; i < count; i++)
         {
-            Collider2D hit = _targetBuffer[i];
+            Collider2D hit = buffer[i];
             if (hit == null)
             {
                 continue;
@@ -175,25 +296,15 @@ public class Monster : MonoBehaviour, IEntity
                 continue;
             }
 
-            float sqr = ((Vector2)hit.transform.position - (Vector2)transform.position).sqrMagnitude;
+            float sqr = ((Vector2)hit.transform.position - originPosition).sqrMagnitude;
             if (sqr < nearestSqr)
             {
                 nearestSqr = sqr;
-                _target = entity;
-                _targetTf = hit.transform;
+                nearest = hit;
             }
         }
-    }
 
-    private void OnDisable()
-    {
-        // 비활성(풀 반환 / 파괴) 시 공격 루프 정지
-        if (_attackCts != null)
-        {
-            _attackCts.Cancel();
-            _attackCts.Dispose();
-            _attackCts = null;
-        }
+        return nearest;
     }
 
     /// <summary>
@@ -235,28 +346,32 @@ public class Monster : MonoBehaviour, IEntity
         int safeLevel = Mathf.Max(0, level);
         bool isBoss = statData.Kind == MonsterKind.Boss;
 
-        float hp = statData.BaseHp * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
+        float hp = StatCalculator.GetTaperedGrowthStat(statData.BaseHp, statData.HpGrowthPerLevel, safeLevel,
+            StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
         if (isBoss)
         {
-            hp *= bossHpMultiplier;
+            hp *= statData.BossHpMultiplier;
         }
         _maxHP = hp;
 
-        // 공격력도 체력과 같은 증가율로 레벨 스케일 (시트에 따로 컬럼 필요하면 나중에 분리)
-        _attackPower = statData.BaseAttack * Mathf.Pow(statData.HpGrowthPerLevel, safeLevel);
+        _attackPower = StatCalculator.GetTaperedGrowthStat(statData.BaseAttack, statData.HpGrowthPerLevel, safeLevel,
+            StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
 
         _moveSpeed = statData.MoveSpeed;
     }
 
     /// <summary>
     /// 자동 공격 루프. attackInterval 마다 사거리 안 캐릭터 1명을 공격
+    /// 광폭화 중이면 간격이 enrageMultiplier만큼 줄어들어(공격속도 증가) 더 자주 공격함
     /// </summary>
     /// <param name="token">비활성/파괴 시 루프를 멈추는 취소 토큰</param>
     private async UniTaskVoid RunAttackLoop(CancellationToken token)
     {
         while (!IsDead)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(attackInterval), cancellationToken: token);
+            // _isEnraged는 도중에 바뀔 수 있으므로 반복마다 다시 읽는다
+            float effectiveInterval = _isEnraged ? attackInterval / enrageMultiplier : attackInterval;
+            await UniTask.Delay(TimeSpan.FromSeconds(effectiveInterval), cancellationToken: token);
 
             if (IsDead)
             {
@@ -268,8 +383,9 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     /// <summary>
-    /// 실제 공격. 기본은 사거리 안 가장 가까운 캐릭터에게 AttackPower 만큼 피해
-    /// 다른 방식(범위 공격 등)이 필요하면 하위 클래스에서 override 한다
+    /// 실제 공격. 기본은 PickTargetCollider() 기준(가장 가까운 캐릭터)에게 AttackPower 만큼 피해
+    /// 범위 공격 등 완전히 다른 방식이 필요하면 이 함수를 통째로 override 하고,
+    /// 대상 "누구를 고를지"만 바꾸고 싶으면 PickTargetCollider()만 override 한다
     /// [2D] Physics2D.OverlapCircle 사용.
     /// </summary>
     protected virtual void PerformAttack()
@@ -278,35 +394,12 @@ public class Monster : MonoBehaviour, IEntity
         _targetFilter.SetLayerMask(targetLayer);
         int count = Physics2D.OverlapCircle(transform.position, attackRange, _targetFilter, _targetBuffer);
 
-        IEntity nearest = null;
-        float nearestSqr = float.MaxValue;
-
-        for (int i = 0; i < count; i++)
-        {
-            Collider2D hit = _targetBuffer[i];
-            if (hit == null)
-            {
-                continue;
-            }
-
-            if (!hit.TryGetComponent(out IEntity target) || target.IsDead)
-            {
-                continue;
-            }
-
-            float sqr = (hit.transform.position - transform.position).sqrMagnitude;
-            if (sqr < nearestSqr)
-            {
-                nearestSqr = sqr;
-                nearest = target;
-            }
-        }
-
-        if (nearest != null)
+        Collider2D picked = PickTargetCollider(_targetBuffer, count, transform.position);
+        if (picked != null && picked.TryGetComponent(out IEntity target))
         {
             if (!_isHarmless)
             {
-                nearest.TakeDamage(_attackPower);
+                target.TakeDamage(_attackPower);
             }
 
             OnAttack();
@@ -314,7 +407,7 @@ public class Monster : MonoBehaviour, IEntity
     }
 
     // 공격 직후 훅 (공격 모션, 사운드 등)
-    protected virtual void OnAttack() { }
+    protected virtual void OnAttack() { Attack(); }
 
     // IEntity
 
@@ -331,11 +424,62 @@ public class Monster : MonoBehaviour, IEntity
 
         float damage = Mathf.Max(0f, amount);
         _currentHP = Mathf.Max(0f, _currentHP - damage);
-        OnDamaged(damage);
 
-        if (_currentHP <= 0f)
+        bool willDie = _currentHP <= 0f;
+        if (!willDie)
+        {
+            OnDamaged(damage);
+        }
+
+       if(rankingUi != null)
+        {
+            rankingUi.AddRecordAndSave(RankCategoty.Damage, damage);
+        }
+        
+
+            CheckEnrage();
+        
+       
+
+        if (willDie)
         {
             Die();
+            GameEvents.TriggerOnEnemyKilled();
+        }
+    }
+
+    /// <summary>
+    /// 보스(Kind == MonsterKind.Boss) 한정: 체력이 enrageHpRatio 이하로 떨어지면 공격력/공격속도를
+    /// enrageMultiplier배로 올리고 스프라이트를 살짝 붉게 물들인다. 한 번 발동하면 죽거나 풀에
+    /// 반환될 때까지(OnEnable에서 초기화됨) 계속 유지되고, 다시 발동하지 않는다
+    /// </summary>
+    private void CheckEnrage()
+    {
+      
+
+        if (_isEnraged || Kind != MonsterKind.Boss || _maxHP <= 0f)
+        {
+            return;
+        }
+
+        if (_currentHP / _maxHP > enrageHpRatio)
+        {
+            return;
+        }
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("심장소리");
+        }
+
+        _isEnraged = true;
+        _attackPower *= enrageMultiplier;
+
+        if (_spriteRenderer != null)
+        {
+            // 곱하기가 아니라 Lerp로 섞음 - 원래 색이 이미 어둡거나 붉은 계열이어도(예: 오크 보스)
+            // 곱하면 차이가 거의 안 보이는데, Lerp면 항상 확실하게 눈에 띄게 바뀜
+            _spriteRenderer.color = Color.Lerp(_baseSpriteColor, enrageTintColor, enrageTintStrength);
         }
     }
 
@@ -361,7 +505,15 @@ public class Monster : MonoBehaviour, IEntity
     public virtual void Die()
     {
         _currentHP = 0f;
-        OnDied();
+        OnDied(); // 죽는 애니메이션 트리거
+        DieAfterDelayAsync().Forget();
+    }
+
+   
+    private async UniTaskVoid DieAfterDelayAsync()
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(1f), cancellationToken: this.GetCancellationTokenOnDestroy());
+
         TryDropEquipment();
         Died?.Invoke(this);
         gameObject.SetActive(false);
@@ -377,12 +529,11 @@ public class Monster : MonoBehaviour, IEntity
     {
         Died = null;
         EquipmentDropped = null;
-        gameObject.SetActive(false);
     }
 
     /// <summary>
     /// possibleDrops 중 하나를 무작위로 골라 equipmentDropChance 확률로 장비를 드랍
-    /// 드랍되면 1~10% 사이 랜덤 보너스로 EquippedItem을 만들어 EquipmentDropped 이벤트로 넘긴다
+    /// 드랍되면 등급(하급/중급/상급)과 그 등급 범위 안의 랜덤 보너스로 EquippedItem을 만들어 EquipmentDropped 이벤트로 넘긴다
     /// </summary>
     private void TryDropEquipment()
     {
@@ -402,18 +553,21 @@ public class Monster : MonoBehaviour, IEntity
             return;
         }
 
-        float rollPercent = UnityEngine.Random.Range(1f, 10f);
-        EquippedItem dropped = new EquippedItem(picked, rollPercent);
+        EquippedItem dropped = EquippedItem.CreateFromDrop(picked);
+
+        // 드랍 확인용 로그 - 어느 부위 장비가 몇 등급/몇 %로 떴는지 바로 확인 가능
+        DebugLogger<Monster>.Log($"{name} 장비 드랍: {picked.NameKr} ({picked.Slot}, {EquipmentGradeHelper.GetDisplayName(dropped.Grade)}, {dropped.RollPercent:F1}%)");
+
         EquipmentDropped?.Invoke(dropped);
     }
 
     // 등장 연출
-    protected virtual void OnSpawned() { }
+    protected virtual void OnSpawned() { Spon(); }
 
     /// <summary>피격 직후 훅 (피격 이펙트, 데미지 숫자 등)</summary>
     /// <param name="amount">실제로 받은 피해량</param>
-    protected virtual void OnDamaged(float amount) { }
+    protected virtual void OnDamaged(float amount) { Hit(); }
 
     // 사망 연출
-    protected virtual void OnDied() { }
+    protected virtual void OnDied() { Dead(); }
 }

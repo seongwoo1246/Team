@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 캐릭터 1종의 레벨 0 기준값 + 성장 파라미터를 담는 SO
 레벨별로 변하는 실제 수치는 저장하지 않고 StatCalculator가 그때그때 계산
 
@@ -12,7 +13,7 @@ using UnityEngine;
 /// 캐릭터 기본 스탯 데이터. 프로젝트 창에서 우클릭 → Create → Game/Character Stat Data 로 생성
 /// </summary>
 [CreateAssetMenu(fileName = "CharacterStat", menuName = "Game/Character Stat Data", order = 0)]
-public class BaseStatData : ScriptableObject
+public class BaseStatData : ScriptableObject, IIdentifiable
 {
     [Header("식별 정보")]
     [Tooltip("고유 키. 시트: id (예: char_warrior). 절대 바뀌지 않는 값")]
@@ -27,6 +28,9 @@ public class BaseStatData : ScriptableObject
 
     // 공격 대상. 시트: target_type (Single / Multi)
     [SerializeField] private TargetType targetType = TargetType.Single;
+
+    [Tooltip("전열/후열 위치. 몬스터 AI가 타겟 우선순위 정할 때 씀(예: 후열 우선 타겟팅). 시트: row")]
+    [SerializeField] private CharacterRow row = CharacterRow.Front;
 
     [Header("기본 능력치 (레벨 0 기준)")]
     // 무기 공격력. 힐러는 힐량으로 사용
@@ -64,6 +68,9 @@ public class BaseStatData : ScriptableObject
 
     /// <summary>공격 대상 범위 (시트: target_type)</summary>
     public TargetType TargetType => targetType;
+
+    /// <summary>전열/후열 위치 (시트: row)</summary>
+    public CharacterRow Row => row;
 
     public float BasePower => basePower;
 

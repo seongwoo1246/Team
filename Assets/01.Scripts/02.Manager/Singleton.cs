@@ -1,11 +1,12 @@
-﻿using UnityEngine;
+﻿// 담당자 - 송태훈
 
+using UnityEngine;
 public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
 {
     [SerializeField] protected bool isDDOL = false;
     private static T _instance;
 
-    public static T instance
+    public static T Instance
     {
         get
         {
@@ -62,4 +63,6 @@ public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
             _instance = null;
         }
     }
+
+    public virtual void Init() { }
 }

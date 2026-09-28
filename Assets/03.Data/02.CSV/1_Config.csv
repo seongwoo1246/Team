@@ -1,0 +1,16 @@
+key,value,설명
+cost_growth,1.15,강화비용 증가율 (레벨당)
+hp_growth,1.17,캐릭터 체력 증가율 (레벨당)
+monster_hp_growth,1.2,몬스터 체력 증가율 (스테이지당)
+,,
+boss_hp_mult,10,보스 체력 배율
+boss_gold_mult,5,보스 골드 배율
+wave_weight_1,1,웨이브1 난이도
+wave_weight_2,1.15,웨이브2 난이도
+wave_weight_3,1.35,웨이브3(보스) 난이도
+power_upgrade_base,30,파워 강화 기본 비용
+power_upgrade_growth,1.15,파워 강화 레벨당 비용 증가율
+hp_upgrade_base,25,체력 강화 기본 비용
+hp_upgrade_growth,1.15,체력 강화 레벨당 비용 증가율
+crit_upgrade_base,50,치명타 강화 기본 비용
+crit_upgrade_growth,1.25,치명타 강화 레벨당 비용 증가율

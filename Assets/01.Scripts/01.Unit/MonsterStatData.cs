@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+// 작성자: 김주연
+using UnityEngine;
 
 /// <summary>
 /// 몬스터 기본 스탯 데이터. 프로젝트 창에서 우클릭 → Create → Game/Monster Stat Data 로 생성
 /// </summary>
 [CreateAssetMenu(fileName = "MonsterStat", menuName = "Game/Monster Stat Data", order = 1)]
-public class MonsterStatData : ScriptableObject
+public class MonsterStatData : ScriptableObject, IIdentifiable
 {
     [Header("식별 정보")]
     [Tooltip("고유 키. 시트: id (예: mon_slime)")]
@@ -28,6 +29,10 @@ public class MonsterStatData : ScriptableObject
     // 레벨당 체력 증가율
     [SerializeField] private float hpGrowthPerLevel = StatCalculator.DEFAULT_MONSTER_HP_GROWTH;
 
+    [Header("보스 배율 (일반 몬스터는 1)")]
+    [Tooltip("Kind가 Boss일 때 체력에 추가로 곱할 배율. 시트: boss_hp_mult")]
+    [SerializeField] private float bossHpMultiplier = 1f;
+
     public string Id => id;
 
     public string NameKr => nameKr;
@@ -42,4 +47,6 @@ public class MonsterStatData : ScriptableObject
     public float MoveSpeed => moveSpeed;
 
     public float HpGrowthPerLevel => hpGrowthPerLevel;
+
+    public float BossHpMultiplier => bossHpMultiplier;
 }

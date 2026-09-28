@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 마법 딜러 (예: 메이지). 다수 공격.
 2D 원형 범위(OverlapCircle)로 사거리 안 적을 모두 찾아, 최대 대상 수만큼 동시에 피해를 준다.
 */
@@ -47,7 +48,6 @@ public class MagicDealer : CharacterBase
             return;
         }
 
-        float damage = Power * areaDamageMultiplier;
         int hitCount = 0;
 
         for (int i = 0; i < count; i++)
@@ -68,7 +68,7 @@ public class MagicDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            DealDamage(target, areaDamageMultiplier);
             hitCount++;
         }
     }
@@ -76,22 +76,24 @@ public class MagicDealer : CharacterBase
     // 공격 직전 훅. 폭발 이펙트가 지정돼 있으면 재생
     protected override void OnBeforeAttack()
     {
+        base.OnBeforeAttack(); // 공격 애니메이션 트리거 (다른 캐릭터랑 동일하게)
+
         if (explosionEffect != null)
         {
             explosionEffect.Play();
         }
     }
 
-    /// <summary>스킬1: 파이어볼. 가장 가까운 적 1체에게 평타보다 훨씬 센 단일 타격</summary>
+    /// <summary>스킬1: 파이어볼. 체력이 가장 낮은 적 1체에게 평타보다 훨씬 센 단일 타격 (막타 우선)</summary>
     protected override void UseSkill1()
     {
-        IEntity target = GetNearestEntity(EnemyLayer);
+        IEntity target = GetLowestHpEntity(EnemyLayer);
         if (target == null || target.IsDead)
         {
             return;
         }
 
-        target.TakeDamage(Power * fireballMultiplier);
+        DealDamage(target, fireballMultiplier);
     }
 
     /// <summary>스킬2: 메테오. maxTargets 제한 없이 사거리 안 적 전체에게 피해</summary>
@@ -102,8 +104,6 @@ public class MagicDealer : CharacterBase
         {
             return;
         }
-
-        float damage = Power * meteorMultiplier;
 
         for (int i = 0; i < count; i++)
         {
@@ -118,7 +118,7 @@ public class MagicDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            DealDamage(target, meteorMultiplier);
         }
     }
 
@@ -129,5 +129,8 @@ public class MagicDealer : CharacterBase
     /// <summary>스킬2(메테오)도 동일한 조건</summary>
     protected override bool CanUseSkill2() => HasEnemyInRange();
 
-    private bool HasEnemyInRange() => GetNearestEntity(EnemyLayer) != null;
+    private bool HasEnemyInRange() => GetLowestHpEntity(EnemyLayer) != null;
+
+    public override string Skill1Name => "파이어볼";
+    public override string Skill2Name => "메테오";
 }

@@ -1,9 +1,11 @@
+// 작성자: 김주연
 /*
 캐릭터 스킬 버튼. 누르면 해당 캐릭터의 스킬을 시도하고 남은 쿨다운을 원형 게이지(Image Filled/Radial360)로 보여줌
 */
 
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 /// <summary>
 /// 캐릭터 1명 x 스킬 1개(스킬1 또는 스킬2)에 대응하는 버튼. Button의 OnClick에 OnClickUseSkill()을 연결해서 쓴다
@@ -27,6 +29,9 @@ public sealed class SkillButtonUI : MonoBehaviour
 
     [Tooltip("버튼 배경 이미지. 쿨다운은 다 찼는데 조건이 안 맞아 못 쓰는 상태(예: 부활 대상 없음)면 살짝 어둡게 표시하는 용도")]
     [SerializeField] private Image buttonImage;
+
+    [Tooltip("스킬 이름을 보여줄 텍스트. 편성이 바뀌어서 이 버튼이 다른 캐릭터를 가리키게 되면, 그 캐릭터의 실제 스킬 이름으로 갱신됨")]
+    [SerializeField] private TextMeshProUGUI nameText;
 
     // buttonImage의 원래 색 (Awake 시점 값을 기준으로 삼아서, 못 쓰는 상태일 때만 알파를 낮췄다가 되돌림)
     private Color _buttonFullColor;
@@ -63,6 +68,28 @@ public sealed class SkillButtonUI : MonoBehaviour
                 color.a = _buttonFullColor.a * 0.4f;
             }
             buttonImage.color = color;
+        }
+    }
+
+    /// <summary>
+    /// 이 버튼이 조작할 캐릭터를 바꾼다. 파티 편성이 바뀔 때 PartyFormationManager가 호출해서
+    /// "몇 번 슬롯 스킬 버튼"이 그 슬롯에 지금 배정된 캐릭터를 가리키도록 갱신함
+    /// </summary>
+    /// <param name="newTarget">새로 조작할 캐릭터 (편성에서 빠지면 null)</param>
+    public void SetTarget(CharacterBase newTarget)
+    {
+        target = newTarget;
+
+        if (nameText != null)
+        {
+            if (newTarget == null)
+            {
+                nameText.text = string.Empty;
+            }
+            else
+            {
+                nameText.text = skillSlot == SkillSlot.Skill1 ? newTarget.Skill1Name : newTarget.Skill2Name;
+            }
         }
     }
 

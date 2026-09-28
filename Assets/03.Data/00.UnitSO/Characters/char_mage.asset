@@ -16,6 +16,7 @@ MonoBehaviour:
   nameKr: "\uBA54\uC774\uC9C0"
   attackType: 1
   targetType: 1
+  row: 1
   basePower: 12
   powerPerLevel: 3
   baseHp: 120

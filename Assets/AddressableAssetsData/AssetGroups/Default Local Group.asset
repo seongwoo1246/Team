@@ -14,7 +14,29 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: Default Local Group
   m_GUID: 2d94eeee82208164198ebf2ca66aae62
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 1575ba33df0062249a82ee0a07f4a179
+    m_Address: BootstrapScene
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 46f0d2c9f4ef8a44dad0427b1ca3ac9e
+    m_Address: Assets/02.Prefabs/02.UIPrefabs/Title/SceneLoadManager.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Bootstrap_Local
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 64912ddbaaeff2a4495d473fa900ec98
+    m_Address: Assets/03.Data/04.Font/Orbit-Regular SDF.asset
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d9ef8d3970c34804696a946c1f38f24d
+    m_Address: Assets/02.Prefabs/02.UIPrefabs/Title/BootstrapContext.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Bootstrap_Local
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
   m_SchemaSet:

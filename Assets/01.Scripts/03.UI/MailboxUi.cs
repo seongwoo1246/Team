@@ -1,6 +1,10 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+//담당자 - 정성우
+/*
+ 메일 UI창을 담당하고 있어서 여기는 우편함의 형태를 갖추기 위해서 만든 스크립트고 안에 우편 왔을 때 내용물은 메일아이템UI가 담당할 예정
+ */
 
 
 /// <summary>
@@ -10,52 +14,36 @@ public class MailboxUi : MonoBehaviour
 {
     [Header("Ui 패널 안에 들어갈 내용들")]
     [SerializeField] private Transform contentParent; // 스크롤뷰의 content의 트랜스폼
+    [SerializeField] private RectTransform contentRectTransform; // content의 RectTransform를 참조
     [SerializeField] private MailItemUi mailItemPrefeb; // 생성할 mailitem의 프리팹
     [SerializeField] private GameObject emptyStateNotion; // 우편이 없을 때 띄울 안내 텍스트/이미지
 
     [Header("버튼과 알림")]
-    [SerializeField] private Button claimAllButton; // 모두 받기 버튼
     [SerializeField] private Button closeButton; // 닫기 버튼
-    [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 몇 개 왔는지 알려줄 빨간 알림
+    [SerializeField] private Button OpenButton; // 열기 버튼
+    [SerializeField] private GameObject LobbyRedDot; // 우편함 닫혀있을 때 우편이 있다고 알려줄 빨간 알림
 
-
+    [SerializeField] private GameObject dim;
     //[제일 핵심] 내가 스폰한 우편UI만을 스폰 디스폰 하기 위해 만든 바구니 역할
     private List<MailItemUi> activeMailItems = new List<MailItemUi>();
+
+    // 메일 아이템 보다는 먼저 되어야 함
 
     private void Awake()
     {
         if(closeButton != null)
         {
             closeButton.onClick.AddListener(CloseWindow);
+  
         }
-
-        if(claimAllButton != null)
+        if(OpenButton != null)
         {
-            claimAllButton.onClick.AddListener(OnClickClaimAll);
+            OpenButton.onClick.AddListener(OpenWindow);
         }
 
-    }
-
-    private void Start()
-    {
         //게임 매니저에서 불러와서 딱 한번만 하게 만들 예정
-        ObjcetPoolManager.instance.RegisterPool<MailItemUi>(enumType.Item, mailItemPrefeb, 10);
-    }
-
-    private void OnEnable()
-    {
-        //[중요] 서버 데이터 변경 이벤트 구독
-        MailBoxManager.OnMailboxUpdated += RefreshUi;
-
-        //팝업 열릴 시  즉시 Ui 갱신
-        RefreshUi();
-    }
-
-    private void OnDisable()
-    {
-        //[중요] 메모리 누수방지를 위해 여기서 해제 해줘야함
-        MailBoxManager.OnMailboxUpdated -= RefreshUi;
-        ClearMailList();
+        ObjcetPoolManager.Instance.RegisterPool<MailItemUi>(enumType.Item_Mail, mailItemPrefeb, 1);
+        gameObject.SetActive(false);
     }
 
 
@@ -67,19 +55,18 @@ public class MailboxUi : MonoBehaviour
         //1. 기존에 있던 슬롯 Ui 모두 제거
         ClearMailList();
 
-        var mailDict = MailBoxManager.instance.mailDictionary;
+        var mailDict = MailBoxManager.Instance.mailDictionary;
 
         // 우편함이 비웠는지 확인한다.
         bool isEnpty = mailDict.Count == 0;
 
         if(emptyStateNotion != null) emptyStateNotion.SetActive(isEnpty);
-        if(claimAllButton != null) claimAllButton.interactable = !isEnpty;
         if(LobbyRedDot != null) LobbyRedDot.SetActive(!isEnpty);
 
         foreach (var kvp in mailDict)
         {
             //스폰) 풀에서 안전하게 활성화
-            MailItemUi item = ObjcetPoolManager.instance.Spawn<MailItemUi>(enumType.Item);
+            MailItemUi item = ObjcetPoolManager.Instance.Spawn<MailItemUi>(enumType.Item_Mail);
 
             if(item != null)
             {
@@ -94,26 +81,59 @@ public class MailboxUi : MonoBehaviour
 
     private void ClearMailList()
     {
-        var ObjPoolM = ObjcetPoolManager.instance;
+        var ObjPoolM = ObjcetPoolManager.Instance;
 
-        for (int i = 0; i<activeMailItems.Count; i++)
+        if(activeMailItems==null||activeMailItems.Count ==0) return; 
+
+        //리스트 요소 삭제 반납시 인덱스 꼬이는 걸 방지하기 위해 역순으로 진행 
+        for (int i = activeMailItems.Count-1; i>=0; i--)
         {
-            if(activeMailItems[i] != null)
+            MailItemUi item =activeMailItems[i];
+            if(item != null)
             {
-                ObjPoolM.Despawn<MailItemUi>(enumType.Item, activeMailItems[i]);
+                ObjPoolM.Despawn<MailItemUi>(enumType.Item_Mail, item);
             }
         }
         activeMailItems.Clear();
+
+        //content안에 남아있는 오브젝트들이 남아있을 경우를 위한 방어 코드
+        if(contentParent !=null)
+        {
+            for(int i = contentParent.childCount-1; i>=0; i--)
+            {
+               Transform child = contentParent.GetChild(i);
+                if(child.gameObject.activeSelf)
+                {
+                    child.gameObject.SetActive(false);
+                }
+            }
+        }
     }
 
-
-    private void OnClickClaimAll()
+    public void OpenWindow()
     {
-        MailBoxManager.instance.ClaimAllMails();
+
+        dim.gameObject.SetActive(true);
+        dim.transform.SetAsLastSibling();
+        gameObject.SetActive(true);
+        gameObject.transform.SetAsLastSibling();
+        
+        // 혹시 모르니 먼저 한 번 빼고 넣기
+        MailBoxManager.OnMailboxUpdated -= RefreshUi;
+        //[중요] 서버 데이터 변경 이벤트 구독
+        MailBoxManager.OnMailboxUpdated += RefreshUi;
+
+        //팝업 열릴 시  즉시 Ui 갱신
+        RefreshUi();
     }
 
-    private void CloseWindow()
+    public void CloseWindow()
     {
+        dim.gameObject.SetActive(false);
         gameObject.SetActive(false);
+
+        //[중요] 메모리 누수방지를 위해 여기서 해제 해줘야함
+        MailBoxManager.OnMailboxUpdated -= RefreshUi;
+        ClearMailList();
     }
 }

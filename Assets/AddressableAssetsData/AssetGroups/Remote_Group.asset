@@ -1,0 +1,149 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Remote_Group
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Remote_Group
+  m_GUID: e3cf36a5337fd264b8ab347f12116a25
+  m_SerializeEntries:
+  - m_GUID: 00a9c3a7cfc71584c9351708fdeeb94d
+    m_Address: Monster_AssassinWolf
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 0f7480c22491f5e49bc1631a60787602
+    m_Address: Monster_Mushman
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 1da41584da2865640a7511bbe7fc791a
+    m_Address: Char_Healer
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 230b65af62c0923459e782f1ba210047
+    m_Address: DamagePopup
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 2820743b10346014593b68d099563a75
+    m_Address: Monster_Spider
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 294233b241df04048b81c8e2cf10d100
+    m_Address: Monster_Crab
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 37b76c8aa377cab468b482835588cd67
+    m_Address: Char_Mage
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 739228e31cb133a438a18f235f8871e5
+    m_Address: Monster_Larva
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 77f898431448c7b46b26b27615b8d49c
+    m_Address: Monster_Slime
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b613dba573bdcf47ab719b550b13b67
+    m_Address: Monster_Golem
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7bc9525fe88da0b4a8e96cf31e2fc4e7
+    m_Address: Monster_GoldenGoblin
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7e58c876db438ef40b99b7f3ec597d25
+    m_Address: Char_Paladin
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 813a0478e0729404d9ea34d7e1ab9b8e
+    m_Address: Monster_Hog
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 9f3b275bed635a445903dddeb16fdc5d
+    m_Address: Char_Warrior
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a323016bce33b99418fb8b26fcadf296
+    m_Address: Monster_OgreKing
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: a8c813504289d64408bf038ff3c738e8
+    m_Address: Monster_Bat
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b50f2553631ca994ba582c753964b5bc
+    m_Address: Monster_BossOrc
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: b82dc0f0d582fba45a013599b9443e56
+    m_Address: Monster_GnollChief
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d44cea1ed83393547ab6195aad5a2e8c
+    m_Address: Char_Archer
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Character
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e2cf0f43bf1857b4e9569eb6b6d2f328
+    m_Address: Arrow
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: fdcaa714ab2e7c4438d471a910e6ba65
+    m_Address: Monster_FishmanLoad
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Init_Pool
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: feae1a5f980d67746a0f033681cf2e80, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 47079cd42149488478241292db5eb53f, type: 2}
+    - {fileID: 11400000, guid: dc28ab26305fbfe4cac7a5d6191db14b, type: 2}

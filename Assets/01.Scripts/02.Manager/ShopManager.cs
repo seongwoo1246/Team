@@ -4,7 +4,13 @@ using System.Threading.Tasks;
 using System;
 using UnityEngine;
 using Dedug = DebugLogger<ShopManager>;
-using UnityEngine.UI;
+
+//담당자 - 정성우
+/*
+ 서버와 연결해 가며 사용 예정 중이던 스크립트이나 기능이 겹치는 스크립트가 있어서 그쪽으로 양보하도록 했다.
+기본적으로는 가챠와 고정형 상품을 이용해서 2가지를 활용해서 사용할 예정이였다. 여기서 IAP를 이용한 상품도 나올 예정이였으나 여러가지로 무산되었다.
+ */
+
 
 
 //아이템 등급에 관련된 enum 필요없어질 시 천장 달성시 원하는 아이템을 주는 식으로 변경
@@ -71,7 +77,8 @@ public class ShopProduct
 public class ShopManager: Singleton<ShopManager>
 {
 
-   
+    [SerializeField] private GachaSlot TextPrefab; // 텍스트 프리팹
+
     private DatabaseReference dbRef;
     private string currentUserId = ""; // 나중에는 Auth UID사용
 
@@ -85,7 +92,7 @@ public class ShopManager: Singleton<ShopManager>
     {
         base.Awake();
         dbRef = FirebaseDatabase.DefaultInstance.RootReference;
-        
+        ObjcetPoolManager.Instance.RegisterPool<GachaSlot>(enumType.Item_Gear, TextPrefab, 10);
     }
 
    
@@ -249,7 +256,7 @@ public class ShopManager: Singleton<ShopManager>
     /// <returns></returns>
     private bool CheckUserCurrency(CurrencyType type , double price)
     {
-        GoldWallet wallent = GoldWallet.instance;
+        GoldWallet wallent = GoldWallet.Instance;
         if(CurrencyType.Gold == type&& wallent.Balance>=price)
         {
             return true;
@@ -297,9 +304,9 @@ public class ShopManager: Singleton<ShopManager>
         // 클라이언트 연동) 서버가 차감 성공시만 실행해서 UI및 로컬에 저장된 수치 차감 업데이트
         if(isSuccess)
         {
-            if(type == CurrencyType.Gold && GoldWallet.instance != null )
+            if(type == CurrencyType.Gold && GoldWallet.Instance != null )
             {
-                GoldWallet.instance.TrySpend(price);
+                GoldWallet.Instance.TrySpend(price);
             }
         }
         return isSuccess;
@@ -350,7 +357,7 @@ public class ShopManager: Singleton<ShopManager>
     private void GrantItem(int itemCode, int amount ,Sprite icon)
     {
         //유저 인벤토리로 아이템을 보냄
-        UserInventory.instance.GetItem(itemCode, icon, amount);
+        UserInventory.Instance.GetItem(itemCode, icon, amount);
     }
 
     #endregion

@@ -1,19 +1,40 @@
-﻿/*
+// 작성자: 김주연
+/*
 프로젝트 공통 enum 모음.
 구글 시트 Enums 탭의 값과 철자가 반드시 똑같아야 한다.
 */
 
 /// <summary>
 /// 캐릭터의 공격 방식
+/// 원래는 물리/마법/힐 셋뿐이었지만, 팔라딘/궁수 추가하면서 각자 전용 값을 새로 받음
+/// (장비 인벤토리가 "캐릭터 한 명 = AttackType 하나"로 구분하는 구조라, 팔라딘/궁수도 Physical을
+/// 같이 쓰면 전사랑 장비 칸을 공유해버림 - 그래서 새 값을 받는 쪽을 택함. 대신 무기는
+/// AttackType이 일치해야만 착용 가능이라, 팔라딘/궁수 전용 무기를 새로 만들어야 함.
+/// 갑옷/바지/장갑/반지/신발은 AttackType 제한이 없어서 기존 것 그대로 같이 씀)
 /// </summary>
 public enum AttackType
 {
-    // 물리공격
+    // 물리공격 (전사)
     Physical,
     // 마법공격
     Magic,
     // 힐러
     Heal,
+    // 팔라딘 전용
+    Paladin,
+    // 궁수 전용
+    Archer,
+}
+
+/// <summary>
+/// 캐릭터의 전열/후열 위치. 몬스터 AI가 타겟 우선순위를 정할 때 씀 (예: 후열 우선 타겟팅)
+/// </summary>
+public enum CharacterRow
+{
+    // 전열 (예: 전사 - 앞에서 버티는 역할)
+    Front,
+    // 후열 (예: 마법사, 힐러 - 뒤에서 지원하는 역할)
+    Back,
 }
 
 /// <summary>
@@ -97,4 +118,70 @@ public enum EquipmentSlot
 
     // 신발 - 공격 속도
     Shoes,
+}
+
+/// <summary>
+/// EquipmentSlot 관련 공용 헬퍼. SelectedEquipmentInfo.cs/SellSelectedEquipmentInfo.cs에
+/// 완전히 똑같은 GetStatName switch문이 복붙돼있어서 여기 하나로 합침
+/// </summary>
+public static class EquipmentSlotHelper
+{
+    public static string GetStatName(EquipmentSlot slot)
+    {
+        switch (slot)
+        {
+            case EquipmentSlot.Weapon:
+                return "공격력";
+            case EquipmentSlot.Armor:
+                return "체력";
+            case EquipmentSlot.Pants:
+                return "골드획득";
+            case EquipmentSlot.Gloves:
+                return "치명타율";
+            case EquipmentSlot.Ring:
+                return "치명타피해";
+            case EquipmentSlot.Shoes:
+                return "공격속도";
+            default:
+                return "옵션";
+        }
+    }
+}
+
+// 작성자: 김주연
+/// <summary>
+/// 장비 등급. SO(EquipmentData)에 고정된 값이 아니라 드랍될 때(EquippedItem.CreateFromDrop) 랜덤으로 정해짐
+/// (하급/중급/상급이 각자 다른 % 보너스 범위를 씀 - EquippedItem.cs의 등급별 ROLL 범위 상수 참고)
+/// </summary>
+public enum EquipmentGrade
+{
+    // 하급 - 기존 드랍 범위(1~10%) 그대로
+    Low,
+
+    // 중급
+    Mid,
+
+    // 상급
+    High,
+}
+
+/// <summary>
+/// EquipmentGrade 관련 공용 헬퍼 (표시 이름)
+/// </summary>
+public static class EquipmentGradeHelper
+{
+    public static string GetDisplayName(EquipmentGrade grade)
+    {
+        switch (grade)
+        {
+            case EquipmentGrade.Low:
+                return "하급";
+            case EquipmentGrade.Mid:
+                return "중급";
+            case EquipmentGrade.High:
+                return "상급";
+            default:
+                return "-";
+        }
+    }
 }

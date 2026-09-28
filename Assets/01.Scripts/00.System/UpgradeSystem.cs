@@ -1,23 +1,35 @@
-﻿/*
+﻿// 작성자: 김주연
+/*
 파티 강화 시스템.
 트랙 레벨은 파티 공용이라, 강화하면 모든 캐릭터의 해당 스탯이 동시에 오릅니다
 
 트랙별 비용:  base × (growth ^ 현재 트랙레벨)   ← GameConfig 에서 base/growth 를 읽음
 강화 상한 없음 (Crit 트랙은 확률이 100%에서 멈추므로 사실상 유한).
 
+각 트랙의 레벨은 PlayerLevelSystem의 플레이어 레벨을 못 넘음 (트랙레벨 < 플레이어레벨이어야 강화 가능)
+- 한 트랙만 몰빵해서 빨리 최대치를 찍는 걸 막기 위한 상한. PlayerLevelSystem이 없으면 상한 없이 그냥 강화됨
+
 UI 의 강화 버튼이 UpgradeSystem.instance.TryUpgrade(UpgradeTrack.Power) 식으로 호출
 싱글톤은 팀 공용 Singleton<T>를 상속
+
+공동 작성자: 송태훈 (수정 및 데이터 연결 담당)
+ILoadable 구현 및 전역 서비스(ServiceLocator) 등록을 통해 씬 전환 간 초기화 순서와 데이터 참조성을 보장
+서버 유저 프로필(upgradeTrackLevels) 기반 트랙 레벨 동기화 및 강화 성공 시 트랙 레벨과 잔여 골드의 서버 비동기 즉각 저장을 구현
 */
 
+
+
+using Cysharp.Threading.Tasks;
 using System;
 using UnityEngine;
+using UtilDebug = DebugLogger<UpgradeSystem>;
 
 // 파티 강화 시스템. 씬에 하나 두고 UpgradeSystem.instance 로 접근
-public class UpgradeSystem : Singleton<UpgradeSystem>
+public class UpgradeSystem : MonoBehaviour, ILoadable
 {
     [Header("설정")]
-    [Tooltip("트랙별 강화 비용 파라미터. CSV 임포터가 만든 GameConfig 에셋을 넣는다")]
-    [SerializeField] private GameConfig config;
+    [Tooltip("트랙별 강화 비용 파라미터. CSV 임포터가 만든 GameConfig 에셋을 넣는다. (수정)직렬화 대신 모니터링만 지원")]
+    [field: SerializeField] public GameConfig config { get; private set; }
 
     // 인덱스 = (int)UpgradeTrack (Power=0 ... AttackSpeed=5)
     private readonly int[] _levels = new int[System.Enum.GetValues(typeof(UpgradeTrack)).Length];
@@ -25,11 +37,76 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
     //트랙이 강화되면 발생 (인자 = 강화된 트랙). 캐릭터·UI가 구독해 갱신한다
     public event Action<UpgradeTrack> TrackUpgraded;
 
-    // 현재 트랙 레벨 (0부터 시작)
-    public int GetLevel(UpgradeTrack track)
+    // CharacterBase가 UpgradeSystem을 참조하기 때문에 CharacterBase를 소환하는 PartyFormationManager보다 먼저 초기화가 이루어져야 함
+    public int LoadOrder => 16;
+
+    private void Awake()
     {
-        return _levels[(int)track];
+        // 전역 서비스로 등록 - 추후 확장성을 생각해 다른 던전 씬으로 입장해도 캐릭터는 그대로 UpgradeSystem에 있는 값들을 참조해야 하기 때문 - 송태훈
+        ServiceLocator.Register<UpgradeSystem>(this, ServiceLifetime.Global);
+        // 씬 전환 시 초기화 순서를 보장하기 위한 ILoadble 등록 - 송태훈
+        SceneLoadManager.Instance.RegisterLoadable(this);
     }
+
+    #region ILoadable 구현부 - 송태훈
+    /// <summary>
+    /// 씬 로드 단계에서 DataManager로부터 GameConfig 정적 데이터를 비동기 안전하게 로드 및 캐싱
+    /// </summary>
+    public async UniTask OnSceneLoadCreate(SceneId scene)
+    {
+        config = DataManager.Instance.GetSingle<GameConfig>();
+        if(config == null)
+        {
+            UtilDebug.LogError($"[{scene}] GameConfig를 DataManager에서 찾을 수 없습니다");
+        }
+
+        await UniTask.Yield();
+    }
+    /// <summary>
+    /// 씬 진입 완료 시점에 호출되어 서버 프로필 데이터로부터 각 트랙의 강화 레벨을 로컬 배열에 최종 동기화
+    /// </summary>
+    public void Init(SceneId scene)
+    {
+        SyncFromServerData();
+        UtilDebug.Log($"[{scene}] UpgradeSystem 초기화 완료");
+    }
+    /// <summary>
+    /// 씬 전환 및 오브젝트 파괴 시 이벤트 구독을 해제하여 메모리 누수를 방지
+    /// </summary>
+    public void OnSceneDestory(SceneId scene)
+    {
+        // 씬 전환 시 이벤트 구독 해제
+        TrackUpgraded = null;
+    }
+    #endregion
+    /// <summary>
+    /// UserManager의 UserProfile 데이터로부터 로컬 레벨 동기화 - 송태훈
+    /// </summary>
+    public void SyncFromServerData()
+    {
+        var profile = UserManager.Instance.CurrentUser?.Profile;
+        if(profile == null)
+        {
+            UtilDebug.LogWarning($"동기화할 UserProfile 데이터가 없습니다");
+            return;
+        }
+
+        foreach(UpgradeTrack track in Enum.GetValues(typeof(UpgradeTrack)))
+        {
+            string trackKey = track.ToString();
+            if(profile.upgradeTrackLevels.TryGetValue(trackKey, out var level) )
+            {
+                _levels[(int)track] = level;
+            }
+            else
+            {
+                _levels[(int)track] = 0;
+            }
+        }
+    }
+
+    // 현재 트랙 레벨 (0부터 시작)
+    public int GetLevel(UpgradeTrack track) => _levels[(int)track];
 
     // 이 트랙을 다음 레벨로 올리는 데 필요한 골드
     public double GetCost(UpgradeTrack track)
@@ -45,34 +122,71 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
             _levels[(int)track]);
     }
 
-    // 골드가 충분하면 트랙을 1레벨 올리고 true. 부족하거나 설정이 없으면 false.
+    /// <summary>
+    /// 이 트랙이 지금 플레이어 레벨 상한에 걸려서 더 강화 못 하는 상태인지 확인
+    /// (트랙레벨이 플레이어레벨 이상이면 상한에 걸림 - 레벨을 더 올려야 다음 단계 강화 가능)
+    /// PlayerLevelSystem이 없으면 상한 없음(항상 false)으로 취급
+    /// </summary>
+    public bool IsAtLevelCap(UpgradeTrack track)
+    {
+        if (PlayerLevelSystem.Instance == null)
+        {
+            return false;
+        }
+
+        return _levels[(int)track] >= PlayerLevelSystem.Instance.Level;
+    }
+
+    // 골드가 충분하면 트랙을 1레벨 올리고 true 부족하거나 설정이 없거나 레벨 상한에 걸리면 false
     public bool TryUpgrade(UpgradeTrack track)
     {
         if (config == null)
         {
-            DebugLogger<UpgradeSystem>.LogWarning("GameConfig 가 지정되지 않음 - 강화 불가");
+            UtilDebug.LogWarning("GameConfig 가 지정되지 않음 - 강화 불가");
+            return false;
+        }
+
+        if (IsAtLevelCap(track))
+        {
+            UtilDebug.LogWarning($"{track} 트랙은 이미 플레이어 레벨({PlayerLevelSystem.Instance.Level})만큼 강화됨 - 레벨을 더 올려야 함");
             return false;
         }
 
         double cost = GetCost(track);
-        if (GoldWallet.instance == null || !GoldWallet.instance.TrySpend(cost))
+        if (GoldWallet.Instance == null || !GoldWallet.Instance.TrySpend(cost))
         {
             return false;
         }
 
+        // 클라이언트 메모리 선반영 및 이벤트 전달
         _levels[(int)track]++;
         TrackUpgraded?.Invoke(track);
+
+        // 서버 비동기저장 요청 - 송태훈
+        int newLevel = _levels[(int)track];
+        UserManager.Instance.UpgradeTrackLevelAsync(track, newLevel, this.destroyCancellationToken).Forget();
+        UserManager.Instance.UpdateGoldAsync(GoldWallet.Instance.Balance, this.destroyCancellationToken).Forget();
+
         return true;
     }
 
     // 현재 GoldGain 트랙 레벨 기준 골드 획득 배율. (1.0 = 기본, 1.2 = +20%)
     public double GetGoldMultiplier()
     {
+        return GetGoldMultiplierAtLevel(_levels[(int)UpgradeTrack.GoldGain]);
+    }
+
+    /// <summary>
+    /// 지정한 레벨 기준 골드 획득 배율을 미리 계산. 강화 UI에서 "강화하면 이렇게 됨" 미리보기용
+    /// </summary>
+    /// <param name="level">기준으로 삼을 GoldGain 트랙 레벨 (꼭 현재 레벨일 필요는 없음)</param>
+    public double GetGoldMultiplierAtLevel(int level)
+    {
         if (config == null)
         {
             return 1d;
         }
-        return 1d + (config.GoldGainPerLevel * _levels[(int)UpgradeTrack.GoldGain]);
+        return 1d + (config.GoldGainPerLevel * level);
     }
 
     /// <summary>
@@ -81,10 +195,19 @@ public class UpgradeSystem : Singleton<UpgradeSystem>
     /// </summary>
     public float GetAttackSpeedFactor()
     {
+        return GetAttackSpeedFactorAtLevel(_levels[(int)UpgradeTrack.AttackSpeed]);
+    }
+
+    /// <summary>
+    /// 지정한 레벨 기준 공격 속도 계수를 미리 계산. 강화 UI에서 "강화하면 이렇게 됨" 미리보기용
+    /// </summary>
+    /// <param name="level">기준으로 삼을 AttackSpeed 트랙 레벨 (꼭 현재 레벨일 필요는 없음)</param>
+    public float GetAttackSpeedFactorAtLevel(int level)
+    {
         if (config == null)
         {
             return 1f;
         }
-        return 1f + (config.AttackSpeedPerLevel * _levels[(int)UpgradeTrack.AttackSpeed]);
+        return 1f + (config.AttackSpeedPerLevel * level);
     }
 }

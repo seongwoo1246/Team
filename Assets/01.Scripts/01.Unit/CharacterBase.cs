@@ -1,4 +1,5 @@
-﻿/*
+﻿// 작성자: 김주연
+/*
 캐릭터(물리 딜러 / 마법 딜러 / 힐러)의 공통 부모
 
 설계 원칙 (팀 규칙):
@@ -15,6 +16,8 @@
   - 장비는 Equip()/Unequip()이 유일한 진입점. 부위(EquipmentSlot)마다 담당 스탯이 고정되있고
     장착/해제할 때마다 RecalculateStats()가 자동으로 다시 불림 (인벤토리 UI는 저장/보관만 맡고,
     실제 장착 반영은 항상 이 함수를 거쳐감)
+  - 장비 강화는 TryEnhanceEquipped()가 유일한 진입점. MaterialWallet 재료 1개 소모 + 1~3% 랜덤
+    보너스 굴림 + 스탯 재계산까지 한 번에 처리함 (+10까지)
 */
 
 using System;
@@ -22,6 +25,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
+using UtilDebug = DebugLogger<CharacterBase>;
 
 /// <summary>
 /// 캐릭터 공통 기반 클래스. 프리팹에 붙여 사용하며, 하위 클래스가 공격 방식을 정의
@@ -55,11 +59,26 @@ public class CharacterBase : MonoBehaviour, IEntity
     [SerializeField] private LayerMask allyLayer;
 
     [Header("스킬 설정")]
-    [Tooltip("스킬1 재사용 대기시간(초). 평소 공격보다 조금 더 센 즉발 스킬용 (0 이하면 스킬1 없음)")]
+    [Tooltip("스킬1 재사용 대기시간(초, 기본값 기준). 평소 공격보다 조금 더 센 즉발 스킬용 (0 이하면 스킬1 없음) " +
+        "공격속도(강화 트랙+신발 장비)만큼 실제로 짧아짐")]
     [SerializeField] private float skill1Cooldown = 8f;
 
-    [Tooltip("스킬2 재사용 대기시간(초). 쿨다운이 긴 대신 강력한 필살기용 (0 이하면 스킬2 없음)")]
+    [Tooltip("스킬2 재사용 대기시간(초, 기본값 기준). 쿨다운이 긴 대신 강력한 필살기용 (0 이하면 스킬2 없음) " +
+        "공격속도(강화 트랙+신발 장비)만큼 실제로 짧아짐")]
     [SerializeField] private float skill2Cooldown = 20f;
+
+    [Header("데미지 표시")]
+    [Tooltip("공격이 적중했을 때 대상 머리 위에 뜨는 데미지 숫자 프리팹")]
+    [SerializeField] private DamagePopup damagePopupPrefab;
+
+    [Tooltip("체력바보다 위로 얼마나 더 띄울지")]
+    [SerializeField] private float damagePopupHeightAboveHealthBar = 0.3f;
+
+    // 데미지 팝업 풀 예열 개수 (광역 스킬이 한 번에 여러 명을 때려도 모자라지 않게)
+    private const int DAMAGE_POPUP_POOL_SIZE = 10;
+
+    // 데미지 팝업 풀을 이미 등록했는지 (캐릭터 전체가 공유하는 static이라 한 번만 등록하면 됨)
+    private static bool _damagePopupPoolRegistered = false;
 
     // 씬에 존재하는 모든 캐릭터 목록. 죽으면 SetActive(false)로 꺼져서 물리 탐지(OverlapCircle)에 안 잡히기 때문에,
     // "죽은 아군 찾기"(힐러 부활 스킬 등)처럼 비활성 상태도 찾아야 하는 경우 이 목록을 대신 쓴다
@@ -80,8 +99,19 @@ public class CharacterBase : MonoBehaviour, IEntity
     private float _currentMaxHP;
     private float _currentPower;
 
+    private float _currentRawPower;
+
     // AttackSpeed 트랙이 반영된 실제 공격 간격 (attackInterval 을 속도 계수로 나눈 값)
     private float _currentAttackInterval;
+
+    // AttackSpeed 강화 트랙 + 신발 장비 보너스를 합친 배율. 평타 간격뿐 아니라 스킬 쿨다운에도 그대로 씀
+    // (RecalculateStats에서 한 번만 계산해두고 재사용 - 스킬 쿨다운 조회는 매 프레임 UI에서 불리므로)
+    private float _currentAttackSpeedMultiplier = 1f;
+
+    // 치명타 확률/피해(장갑·반지 장비 보너스까지 합친 최종값). 스탯 정보 UI가 조회하는 용도로
+    // RecalculateStats에서 저장해둠
+    private float _currentCritChance;
+    private float _currentCritBonus;
 
     // 부위별 장착 장비. 인덱스 = (int)EquipmentSlot. 비어있는 부위는 null
     private readonly EquippedItem[] _equippedItems = new EquippedItem[System.Enum.GetValues(typeof(EquipmentSlot)).Length];
@@ -104,11 +134,23 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 치명타 기대값이 반영된 현재 공격력(힐러는 힐량)
     public float Power => _currentPower;
 
+    // 현재 치명타 확률 (0~1, 장갑 장비 보너스 포함). 0.15 = 15%
+    public float CritChance => _currentCritChance;
+
+    // 현재 치명타 피해 배수 (반지 장비 보너스 포함). 1.0 = 치명타 시 평타의 2배
+    public float CritBonus => _currentCritBonus;
+
+    // 현재 공격속도 배율 (강화 트랙 + 신발 장비 보너스 포함). 1.0 = 기본
+    public float AttackSpeedMultiplier => _currentAttackSpeedMultiplier;
+
     // 이 캐릭터의 기본 스탯 SO
     public BaseStatData StatData => statData;
 
     // 공격 방식 (물리 / 마법 / 힐)
     public AttackType AttackType => statData != null ? statData.AttackType : AttackType.Physical;
+
+    // 전열/후열 위치. 몬스터 AI가 타겟 우선순위 정할 때 읽어감 (예: 후열 우선 타겟팅)
+    public CharacterRow Row => statData != null ? statData.Row : CharacterRow.Front;
 
     // 공격 사거리
     protected float AttackRange => attackRange;
@@ -129,11 +171,17 @@ public class CharacterBase : MonoBehaviour, IEntity
         set => _autoSkillEnabled = value;
     }
 
+    // 공격속도(강화 트랙 + 신발 장비)가 반영된 실제 스킬1 쿨다운(초). 평타 간격과 같은 배율을 공유함
+    private float EffectiveSkill1Cooldown => skill1Cooldown / _currentAttackSpeedMultiplier;
+
+    // 공격속도가 반영된 실제 스킬2 쿨다운(초)
+    private float EffectiveSkill2Cooldown => skill2Cooldown / _currentAttackSpeedMultiplier;
+
     // 스킬1 쿨다운 진행률. 0 = 바로 사용 가능, 1 = 방금 사용해서 꽉 참 (버튼의 원형 게이지가 이 값을 읽음)
-    public float Skill1CooldownRatio => skill1Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill1LastUsedTime) / skill1Cooldown) : 0f;
+    public float Skill1CooldownRatio => skill1Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill1LastUsedTime) / EffectiveSkill1Cooldown) : 0f;
 
     // 스킬2 쿨다운 진행률. 0 = 바로 사용 가능, 1 = 방금 사용해서 꽉 참
-    public float Skill2CooldownRatio => skill2Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill2LastUsedTime) / skill2Cooldown) : 0f;
+    public float Skill2CooldownRatio => skill2Cooldown > 0f ? Mathf.Clamp01(1f - (Time.time - _skill2LastUsedTime) / EffectiveSkill2Cooldown) : 0f;
 
     // 스킬1을 지금 바로 쓸 수 있는지 (쿨다운만 기준)
     public bool IsSkill1Ready => Skill1CooldownRatio <= 0f;
@@ -147,9 +195,93 @@ public class CharacterBase : MonoBehaviour, IEntity
     // 스킬2를 실제로 쓸 수 있는지 (쿨다운 + CanUseSkill2 조건 둘 다 만족해야 함)
     public bool IsSkill2Usable => IsSkill2Ready && CanUseSkill2();
 
-    private void Awake()
+    #region 애니메이터 와 함수설정 (사운드 추가)
+
+    protected Animator animator;
+    protected Animator BOWanimator;
+
+
+
+    public virtual void Spon()
     {
+        
+       
+       if(animator != null) animator.SetBool("isDeath", false);
+       if(BOWanimator!=null) BOWanimator.SetBool("isDeath", false);
+    }
+    public virtual async void Move()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("걷는소리");
+        }
+     
+        if (animator != null) animator.SetBool("1_Move", true);
+        if (BOWanimator != null) BOWanimator.SetBool("1_Move", true);
+        await UniTask.Delay(1000);
+        if (animator != null) animator.SetBool("1_Move", false);
+        if (BOWanimator != null) BOWanimator.SetBool("1_Move", false);
+    }
+    public virtual void Attack()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("공격소리");
+        }
+       
+        if (animator != null) animator.SetTrigger("2_Attack");
+        if (BOWanimator != null) BOWanimator.SetTrigger("2_Attack");
+
+    }
+    public virtual void Dead()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("캐릭터사망");
+        }
+     
+        if (animator != null) animator.SetBool("isDeath", true);
+        if (animator != null) animator.SetTrigger("4_Death");
+        if (BOWanimator != null) BOWanimator.SetBool("isDeath", true);
+        if (BOWanimator != null) BOWanimator.SetTrigger("4_Death");
+    }
+    public virtual void Hit()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("또잉");
+        }
+        
+        if (animator != null) animator.SetTrigger("3_Damage");
+        if (BOWanimator != null) BOWanimator.SetTrigger("3_Damage");
+    }
+    public virtual void Skill()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.playSFX("스킬소리");
+        }
+        
+        if (animator != null) animator.SetTrigger("6_Other");
+        if (BOWanimator != null) BOWanimator.SetTrigger("6_Other");
+    }
+
+
+    #endregion
+
+    protected virtual void Awake()
+    {
+        animator = GetComponentInChildren<Animator>();
+        BOWanimator = GetComponentInChildren<Animator>();
+
+
         _allCharacters.Add(this);
+
+        if (!_damagePopupPoolRegistered && damagePopupPrefab != null)
+        {
+            AddressPoolManager.Instance.RegisterPool<DamagePopup>(DamagePopup.PoolKey, damagePopupPrefab.gameObject, DAMAGE_POPUP_POOL_SIZE);
+            _damagePopupPoolRegistered = true;
+        }
 
         RecalculateStats();
         _currentHP = _currentMaxHP;
@@ -158,7 +290,15 @@ public class CharacterBase : MonoBehaviour, IEntity
     private void Start()
     {
         // 파티 강화 시스템 구독 (트랙이 오르면 스탯 재계산)
-        _upgradeSystem = UpgradeSystem.instance;
+        if(ServiceLocator.TryGet<UpgradeSystem>(out UpgradeSystem service))
+        {
+            _upgradeSystem = service;
+        }
+        else
+        {
+            UtilDebug.LogError($"{statData.name} : UpgradeSystem 등록 실패");
+        }
+
         if (_upgradeSystem != null)
         {
             _upgradeSystem.TrackUpgraded += OnTrackUpgraded;
@@ -191,6 +331,13 @@ public class CharacterBase : MonoBehaviour, IEntity
         _currentHP = _currentMaxHP * hpRatio;
     }
 
+
+    public void RefreshStatsFromUpgradeSystem()
+    {
+        RecalculateStats();
+        _currentHP = _currentMaxHP;
+    }
+
     /// <summary>
     /// 현재 파티 트랙 레벨 + 장착 장비에 맞는 최대 체력과 실효 공격력(힐량)을 계산해 저장
     /// 공격력=Power 트랙, 체력=Hp 트랙, 치명타=Crit 트랙 을 각각 사용하고, 장비 보너스(%)를 그 위에 더 얹음
@@ -204,6 +351,7 @@ public class CharacterBase : MonoBehaviour, IEntity
         {
             _currentMaxHP = 1f;
             _currentPower = 0f;
+            _currentRawPower = 0f;
             _currentAttackInterval = attackInterval;
             return;
         }
@@ -215,16 +363,18 @@ public class CharacterBase : MonoBehaviour, IEntity
 
         // 치명타 확률/피해는 장갑(Gloves)/반지(Ring) 장비 보너스를 트랙 계산값에 더한 뒤 최종 데미지를 뽑음
         float rawPower = StatCalculator.GetStatValue(statData, powerLevel);
-        float critChance = StatCalculator.GetCritChance(statData, critChanceLevel) + GetEquippedBonusRatio(EquipmentSlot.Gloves);
-        float critBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
-        float effectivePower = StatCalculator.GetCritDamage(rawPower, Mathf.Clamp01(critChance), critBonus);
+        _currentCritChance = Mathf.Clamp01(StatCalculator.GetCritChance(statData, critChanceLevel) + GetEquippedBonusRatio(EquipmentSlot.Gloves));
+        _currentCritBonus = StatCalculator.GetCritBonus(statData, critDamageLevel) + GetEquippedBonusRatio(EquipmentSlot.Ring);
+        float effectivePower = StatCalculator.GetCritDamage(rawPower, _currentCritChance, _currentCritBonus);
 
-        _currentMaxHP = StatCalculator.GetMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
+        _currentMaxHP = StatCalculator.GetTaperedMaxHP(statData, hpLevel) * (1f + GetEquippedBonusRatio(EquipmentSlot.Armor));
         _currentPower = effectivePower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
+        _currentRawPower = rawPower * (1f + GetEquippedBonusRatio(EquipmentSlot.Weapon));
 
         float speedFactor = _upgradeSystem != null ? _upgradeSystem.GetAttackSpeedFactor() : 1f;
         float equipmentSpeedFactor = 1f + GetEquippedBonusRatio(EquipmentSlot.Shoes);
-        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / Mathf.Max(0.01f, speedFactor * equipmentSpeedFactor));
+        _currentAttackSpeedMultiplier = Mathf.Max(0.01f, speedFactor * equipmentSpeedFactor);
+        _currentAttackInterval = Mathf.Max(0.05f, attackInterval / _currentAttackSpeedMultiplier);
     }
 
     /// <summary>
@@ -255,19 +405,40 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     /// <param name="slot">장착할 부위</param>
     /// <param name="item">장착할 장비 인스턴스</param>
+    /// <param name="persist">서버에도 저장할지 (저장된 장착 상태를 복원할 때는 false로 호출)</param>
     /// 장착에 성공했으면 true
-    public bool Equip(EquipmentSlot slot, EquippedItem item)
+    public bool Equip(EquipmentSlot slot, EquippedItem item, bool persist = true)
     {
         if (item == null || !CanEquip(slot, item.Data))
         {
             return false;
         }
 
+        // 다른 캐릭터가 이미 장착 중인 장비라면 장착 불가
+        if (item.EquippedBy != null && item.EquippedBy != this)
+        {
+            return false;
+        }
+
+        // 기존에 이 부위에 장착 중이던 장비
+        EquippedItem previousItem = _equippedItems[(int)slot];
+
+        // 기존 장비의 장착자 정보 해제
+        if (previousItem != null)
+        {
+            previousItem.SetEquippedBy(null);
+        }
+
         // 체력 비율은 유지한 채로 스탯만 다시 계산 (파티 강화 때와 동일한 방식)
         float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
         _equippedItems[(int)slot] = item;
+        item.SetEquippedBy(this);
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
+
+        // 서버에도 장착 상태 저장
+        if(persist)
+            UserManager.Instance.EquipItemAsync(statData.Id, slot, item.InstanceId, this.destroyCancellationToken).Forget();
 
         return true;
     }
@@ -276,7 +447,8 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// 지정한 부위의 장비를 해제한다. 이미 비어있으면 아무 일도 안함
     /// </summary>
     /// <param name="slot">해제할 부위</param>
-    public void Unequip(EquipmentSlot slot)
+    /// <param name="persist">서버에도 저장할지 (기본 true) - 김주연</param>
+    public void Unequip(EquipmentSlot slot, bool persist = true)
     {
         if (_equippedItems[(int)slot] == null)
         {
@@ -284,9 +456,16 @@ public class CharacterBase : MonoBehaviour, IEntity
         }
 
         float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
+        _equippedItems[(int)slot].SetEquippedBy(null);
         _equippedItems[(int)slot] = null;
         RecalculateStats();
         _currentHP = _currentMaxHP * hpRatio;
+
+        // 김주연 - 서버에도 장착 해제 저장
+        if (persist)
+        {
+            UserManager.Instance.UnequipItemAsync(statData.Id, slot, this.destroyCancellationToken).Forget();
+        }
     }
 
     /// <summary>
@@ -300,6 +479,7 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     /// <summary>
     /// 지정한 부위에 장착된 장비의 보너스 비율을 돌려준다 (7% 장비면 0.07). 비어있으면 0
+    /// 드랍될 때 뜬 원래 % + 강화로 쌓인 %까지 전부 합친 값(TotalRollPercent)을 씀
     /// RecalculateStats 내부에서 쓰이고, Pants(골드획득)처럼 캐릭터 개인 스탯이 아니라
     /// 파티 전체에 적용되는 보너스는 StageManager 같은 외부에서 이 함수로 직접 조회해서 씀
     /// </summary>
@@ -307,7 +487,45 @@ public class CharacterBase : MonoBehaviour, IEntity
     public float GetEquippedBonusRatio(EquipmentSlot slot)
     {
         EquippedItem item = _equippedItems[(int)slot];
-        return item != null ? item.RollPercent / 100f : 0f;
+        return item != null ? item.TotalRollPercent / 100f : 0f;
+    }
+
+    /// <summary>
+    /// 지정한 부위에 장착 중인 장비를 1강 강화한다. 재료 1개를 소모해서 강화하고,
+    /// 성공하면 체력 비율은 유지한 채로 스탯을 즉시 다시 계산한다 (Equip/Unequip과 동일한 처리)
+    /// 이미 +10이거나, 장착된 장비가 없거나, 재료가 부족하면 아무 것도 안 하고 false
+    /// </summary>
+    /// <param name="slot">강화할 장비가 장착된 부위</param>
+    /// 강화 성공 여부
+    public bool TryEnhanceEquipped(EquipmentSlot slot)
+    {
+        EquippedItem item = _equippedItems[(int)slot];
+        if (item == null || !item.CanEnhance)
+        {
+            return false;
+        }
+
+        if (MaterialWallet.Instance == null || !MaterialWallet.Instance.TrySpend(1, syncToServer: false))
+        {
+            return false;
+        }
+
+        if (!item.TryEnhance(out _))
+        {
+            return false;
+        }
+
+        float hpRatio = _currentMaxHP > 0f ? _currentHP / _currentMaxHP : 1f;
+        RecalculateStats();
+        _currentHP = _currentMaxHP * hpRatio;
+
+        // 서버에 강화 수치 + 재료 소모를 한 트랜잭션으로 같이 저장 (둘 중 하나만 반영되는 상태 방지)
+        UserManager.Instance.EnhanceEquipmentTransactionAsync(
+            item.InstanceId, item.EnhanceLevel, item.EnhanceBonusTotal,
+            MaterialWallet.MATERIAL_KEY, MaterialWallet.Instance.MaterialCount,
+            this.destroyCancellationToken).Forget();
+
+        return true;
     }
 
     /// <summary>
@@ -316,6 +534,7 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     private void StartCombatLoops()
     {
+        Spon();
         CancellationToken token = this.GetCancellationTokenOnDestroy();
         RunAutoAttackLoop(token).Forget();
         RunAutoSkillLoopAsync(token).Forget();
@@ -374,35 +593,86 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     protected virtual void DoAttackCycle()
     {
+        if (GetLowestHpEntity(enemyLayer) == null)
+        {
+            return;
+        }
+
         OnBeforeAttack();
         PerformAttack();
         OnAfterAttack();
     }
 
     /// <summary>
-    /// 실제 공격 동작. 기본 구현은 사거리 안 가장 가까운 적 1체에게 Power 만큼 피해
+    /// 실제 공격 동작. 기본 구현은 사거리 안 체력이 가장 낮은 적 1체에게 Power 만큼 피해 (막타 우선)
     /// 마법 딜러(다수) / 힐러(회복)는 이 함수를 override
     /// </summary>
     protected virtual void PerformAttack()
     {
-        IEntity target = GetNearestEntity(enemyLayer);
-        if (target != null && !target.IsDead)
+        IEntity target = GetLowestHpEntity(enemyLayer);
+        DealDamage(target);
+    }
+
+    /// <summary>
+    /// 대상에게 실제 피해를 입힌다. 매 타격마다 치명타 확률(_currentCritChance)을 직접 굴려서
+    /// 치명타면 치명타 배율만큼 더 세게, 아니면 기본 피해만 들어간다 (평균은 항상 Power와 같음)
+    /// 피해 직후 대상 머리 위에 데미지 숫자를 띄운다 (damagePopupPrefab이 있을 때만)
+    /// 딜러 클래스의 평타/스킬은 target.TakeDamage()를 직접 부르지 말고 전부 이 함수를 거쳐간다
+    /// </summary>
+    /// <param name="target">피해를 입힐 대상</param>
+    /// <param name="multiplier">평타 대비 배율 (스킬 데미지 배율 등, 기본 1배)</param>
+    protected void DealDamage(IEntity target, float multiplier = 1f)
+    {
+        if (target == null || target.IsDead)
         {
-            target.TakeDamage(_currentPower);
+            return;
         }
+
+        bool isCritical = UnityEngine.Random.value < _currentCritChance;
+        float baseDamage = _currentRawPower * multiplier;
+        float damage = isCritical ? baseDamage * (1f + _currentCritBonus) : baseDamage;
+
+        target.TakeDamage(damage);
+        ShowDamagePopup(target, damage, isCritical);
+    }
+
+    /// <summary>
+    /// damagePopupPrefab이 지정돼 있으면 대상 체력바보다 위쪽에 데미지 숫자 팝업을 띄운다 (비주얼 전용)
+    /// 몬스터마다 체력바 높이가 달라서, 대상의 체력바(MonsterHealthBar)를 직접 찾아 그 위치 기준으로 띄운다
+    /// 체력바를 못 찾으면 대상 위치를 그대로 기준으로 쓴다
+    /// </summary>
+    private void ShowDamagePopup(IEntity target, float damage, bool isCritical)
+    {
+        if (damagePopupPrefab == null || target is not Component targetComponent)
+        {
+            return;
+        }
+
+        MonsterHealthBar healthBar = targetComponent.GetComponentInChildren<MonsterHealthBar>();
+        Vector3 basePosition = healthBar != null ? healthBar.transform.position : targetComponent.transform.position;
+        Vector3 spawnPosition = basePosition + new Vector3(0f, damagePopupHeightAboveHealthBar, 0f);
+
+        DamagePopup popup = AddressPoolManager.Instance.Spawn<DamagePopup>(DamagePopup.PoolKey);
+        if (popup == null)
+        {
+            return;
+        }
+
+        popup.transform.SetPositionAndRotation(spawnPosition, Quaternion.identity);
+        popup.Show(damage, isCritical);
     }
 
     // 공격 직전 훅. 기본은 아무것도 안함 (이펙트/사운드 추가용)
-    protected virtual void OnBeforeAttack() { }
+    protected virtual void OnBeforeAttack() { Attack(); }
 
     // 공격 직후 훅. 기본은 아무것도 안함 (쿨다운 연출 등)
     protected virtual void OnAfterAttack() { }
 
     // 스킬1 (짧은 쿨다운). 기본은 아무것도 안함 - 하위 클래스가 override
-    protected virtual void UseSkill1() { }
+    protected virtual void UseSkill1() { Skill(); }
 
     // 스킬2 (긴 쿨다운, 강력한 버전). 기본은 아무것도 안함 - 하위 클래스가 override
-    protected virtual void UseSkill2() { }
+    protected virtual void UseSkill2() { Skill(); }
 
     // 스킬1을 지금 쓸 수 있는 상황인지 (쿨다운 말고 추가 조건). 기본은 항상 true - 필요하면 하위 클래스가 override
     // 예: 부활 스킬은 "죽은 아군이 있을 때만" 쓸 수 있게 하위 클래스에서 이 함수를 override
@@ -410,6 +680,13 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     // 스킬2 버전. CanUseSkill1과 동일한 용도
     protected virtual bool CanUseSkill2() => true;
+
+    // 스킬 버튼에 표시할 이름. 기본값은 자리표시자 - 하위 클래스가 override해서 실제 스킬 이름을 채움
+    // (파티 편성이 바뀌면 SkillButtonUI가 이 값을 읽어서 버튼 텍스트를 그 캐릭터의 스킬 이름으로 갱신함)
+    public virtual string Skill1Name => "스킬1";
+
+    // 스킬2 버전. Skill1Name과 동일한 용도
+    public virtual string Skill2Name => "스킬2";
 
     /// <summary>
     /// 스킬1을 시도한다. 쿨다운이 다 찼고 CanUseSkill1() 조건도 만족하면 사용하고 true, 아니면 false
@@ -453,23 +730,24 @@ public class CharacterBase : MonoBehaviour, IEntity
 
     /// <summary>피해를 받은 직후 훅. (피격 이펙트, 넉백 등)</summary>
     /// <param name="amount">실제로 받은 피해량</param>
-    protected virtual void OnDamaged(float amount) { }
+    protected virtual void OnDamaged(float amount) { Hit(); }
 
     // 사망 처리 직후 훅. (사망 애니메이션, 드랍 등)
-    protected virtual void OnDied() { }
+    protected virtual void OnDied() { Dead(); }
 
     /// <summary>
-    /// 사거리 안에서 주어진 레이어의 대상들을 찾아 가장 가까운 IEntity를 돌려줌
-    /// 할당 없는 2D 원형 탐지(OverlapCircle)를 사용
+    /// 사거리 안에서 주어진 레이어의 대상들을 찾아 체력이 가장 낮은 IEntity를 돌려줌 (막타 우선)
+    /// 딜러 단일 타겟 공격/스킬이 전부 이 함수를 거쳐가서, 가까운 순서가 아니라 빨리 처치할 수 있는
+    /// 대상부터 집중 공격하게 됨. 할당 없는 2D 원형 탐지(OverlapCircle)를 사용
     /// </summary>
     /// <param name="layer">탐지할 레이어 마스크</param>
-    /// 가장 가까운 대상. 없으면 null
-    protected IEntity GetNearestEntity(LayerMask layer)
+    /// 체력이 가장 낮은 대상. 없으면 null
+    protected IEntity GetLowestHpEntity(LayerMask layer)
     {
         int count = OverlapCircle(layer, _targetBuffer);
 
-        IEntity nearest = null;
-        float nearestSqr = float.MaxValue;
+        IEntity lowestHp = null;
+        float lowestHpValue = float.MaxValue;
 
         for (int i = 0; i < count; i++)
         {
@@ -484,15 +762,14 @@ public class CharacterBase : MonoBehaviour, IEntity
                 continue;
             }
 
-            float sqr = (hit.transform.position - transform.position).sqrMagnitude;
-            if (sqr < nearestSqr)
+            if (entity.CurrentHP < lowestHpValue)
             {
-                nearestSqr = sqr;
-                nearest = entity;
+                lowestHpValue = entity.CurrentHP;
+                lowestHp = entity;
             }
         }
 
-        return nearest;
+        return lowestHp;
     }
 
     /// <summary>
@@ -583,10 +860,15 @@ public class CharacterBase : MonoBehaviour, IEntity
     /// </summary>
     public void Revive()
     {
+        if (!IsDead && gameObject.activeSelf)
+        {
+            return;
+        }
+
         RecalculateStats();
         _currentHP = _currentMaxHP;
         ResetSkillCooldowns();
-
+       
         if (!gameObject.activeSelf)
         {
             gameObject.SetActive(true);

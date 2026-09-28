@@ -1,0 +1,730 @@
+﻿/* 담당자: 송태훈
+로컬 게스트(PlayerPrefs) 및 Firebase RTDB 서버 모드를 단일 진입점으로 통합 제어하는 유저 데이터 파사드 매니저
+도메인(프로필, 캐릭터, 인벤토리)별 병렬 비동기 로드/저장, 닉네임 중복 검사, 신규 가입 및 계정 영구 삭제 파이프라인을 총괄
+단일 재화/수치 갱신부터 장비 스왑/강화 등 데이터 일관성이 요구되는 복합 도메인 트랜잭션(UpdateChildrenAsync)을 제공
+ */
+using Cysharp.Threading.Tasks;
+using Firebase.Database;
+using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using UnityEngine;
+using static StringConsts.UserConstants;
+using UtilDebug = DebugLogger<UserManager>;
+
+public class UserManager : NonMonoSingleton<UserManager>
+{
+    private DatabaseReference rootRef;
+    public UserInfo CurrentUser { get; private set; }
+    private const string LOCAL_SAVE_DATA_KEY = "LOCAL_USER_SAVE_DATA";
+    public readonly string LocalGuestUID = "local_guest_player";
+    public bool IsLocalMode { get; set; } = false;
+    public bool HasLocalSaveData() => PlayerPrefs.HasKey(LOCAL_SAVE_DATA_KEY);
+
+    public override void Init()
+    {
+        base.Init();
+        try
+        {
+            var app = Firebase.FirebaseApp.DefaultInstance;
+            var db = FirebaseDatabase.GetInstance(app);
+
+            // 로컬 디스크 캐시로 인한 구버전 데이터 로드 방지
+            db.SetPersistenceEnabled(true);
+
+            rootRef = FirebaseDatabase.DefaultInstance.RootReference;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogWarning($"Firebase RootRef 초기화 스킵 (오프라인/로컬 대응): {ex.Message}");
+        }
+    }
+
+    private DatabaseReference GetUserRef(string uid) => rootRef?.Child(Users).Child(uid);
+    private DatabaseReference GetCharacterRef(string uid) => rootRef?.Child(Characters).Child(uid);
+    private DatabaseReference GetInventoryRef(string uid) => rootRef?.Child(Inventories).Child(uid);
+    private DatabaseReference GetNicknameRef(string nickname) => rootRef?.Child(Nicknames).Child(nickname);
+
+    #region [Read & Load] 전체 로드
+    /// <summary>
+    /// 유저 데이터를 로드
+    /// - 로컬 모드: PlayerPrefs에 저장된 JSON을 역직렬화하며, 데이터 파손 감지 시 안전하게 초기화
+    /// - 서버 모드: 프로필, 캐릭터, 인벤토리 3개 도메인을 UniTask.WhenAll로 병렬 로드하며, 프로필 부재 시 신규 유저로 판정
+    /// </summary>
+    public async UniTask<(bool exists, UserInfo data)> LoadUserInfoAsync(string uid, CancellationToken ct = default)
+    {
+        // 로컬 분기
+        if (IsLocalMode)
+        {
+            if (!HasLocalSaveData())
+            {
+                UtilDebug.Log("[로컬] 저장 데이터 없음 -> 닉네임 생성 화면으로");
+                CurrentUser = null;
+                return (false, null);
+            }
+
+            try
+            {
+                string json = PlayerPrefs.GetString(LOCAL_SAVE_DATA_KEY, string.Empty);
+                if (string.IsNullOrEmpty(json))
+                {
+                    CurrentUser = null;
+                    return (false, null);
+                }
+
+                var settings = new JsonSerializerSettings
+                {
+                    NullValueHandling = NullValueHandling.Ignore,
+                    MissingMemberHandling = MissingMemberHandling.Ignore
+                };
+
+                CurrentUser = JsonConvert.DeserializeObject<UserInfo>(json, settings);
+
+                // [Null 검증] 역직렬화 후 필수 데이터 누락 시 안전 복원
+                if (CurrentUser == null || CurrentUser.Profile == null || CurrentUser.Characters == null || CurrentUser.Inventory == null)
+                {
+                    UtilDebug.LogError("[로컬] 세이브 파일 손상 감지 -> 초기화 처리");
+                    PlayerPrefs.DeleteKey(LOCAL_SAVE_DATA_KEY);
+                    PlayerPrefs.Save();
+                    CurrentUser = null;
+                    return (false, null);
+                }
+
+                // 하위 딕셔너리 null 방어
+                if (CurrentUser.Characters.characterDictionary == null)
+                    CurrentUser.Characters.characterDictionary = new();
+
+                if (CurrentUser.Inventory.Data == null)
+                    CurrentUser.Inventory.ExcuteGetAsync(ct).Forget(); // 기본 세팅 보장
+
+                string nick = CurrentUser.Profile.nickname ?? "게스트";
+                UtilDebug.Log($"[로컬] 데이터 로드 완료 (닉네임: {nick})");
+                return (true, CurrentUser);
+            }
+            catch (Exception ex)
+            {
+                UtilDebug.LogError($"[로컬] 데이터 로드 실패: {ex.Message}");
+                CurrentUser = null;
+                return (false, null);
+            }
+        }
+
+        // 서버 분기
+        FirebaseDatabase.DefaultInstance.GoOnline();
+
+        try
+        {
+            UserInfo tempUser = new UserInfo(uid, string.Empty);
+
+            var (profileOk, charOk, invOk) = await UniTask.WhenAll(
+                tempUser.Profile.ExcuteGetAsync(ct),
+                tempUser.Characters.ExcuteGetAsync(ct),
+                tempUser.Inventory.ExcuteGetAsync(ct)
+            );
+
+            // 유저 프로필이 없으면 신규 유저로 판정
+            if (!profileOk)
+            {
+                CurrentUser = null;
+                return (false, null);
+            }
+
+            CurrentUser = tempUser;
+            UtilDebug.Log($"전체 유저 데이터 로드 성공 (UID: {uid}");
+            return (true, CurrentUser);
+        }
+        catch (OperationCanceledException)
+        {
+            return (false, null);
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"데이터 로드 실패 {ex.Message}");
+            return (false, null);
+        }
+    }
+    #endregion
+
+    #region [Create] 회원 가입
+    /// <summary>
+    /// 신규 계정 생성 및 기본 데이터(초기 영웅 5종 및 재화)를 초기화
+    /// 서버 모드 시 닉네임 중복 방지 인덱스와 각 도메인 데이터를 SetRawJsonValueAsync를 통해 병렬로 커밋
+    /// </summary>
+    public async UniTask<bool> CreateUserInfoAsync(string uid, string nickname, CancellationToken ct = default)
+    {
+        // 로컬 분기
+        if (IsLocalMode)
+        {
+            UserInfo newUserData = new UserInfo(uid, nickname);
+            SetupDefaultUserData(newUserData);
+
+            CurrentUser = newUserData;
+            SaveLocalUserData();
+            UtilDebug.Log($"로컬 신규 계정 생성 및 로컬 저장 완료: {nickname}");
+            return true;
+        }
+
+        // 서버 분기
+        try
+        {
+            UserInfo newUserData = new UserInfo(uid, nickname);
+            SetupDefaultUserData(newUserData);
+
+            // 1. 순수 JSON 문자열 직렬화
+            string profileJson = JsonConvert.SerializeObject(newUserData.Profile);
+            string charJson = JsonConvert.SerializeObject(newUserData.Characters.characterDictionary);
+            string inventoryJson = JsonConvert.SerializeObject(newUserData.Inventory.Data);
+
+            // 2. SetVauleAsync를 병렬로 실행
+            // => JsonConvert.DeserializeObject()를 사용했으나 Firebase SDK 내부 파서에서 Newtonsoft.Json의 내부 JObject나 JArray 타입을 이해하지 못해 병렬 호출로 변경
+            await UniTask.WhenAll(
+                GetNicknameRef(nickname).SetValueAsync(uid).AsUniTask().AttachExternalCancellation(ct),
+                GetUserRef(uid).SetRawJsonValueAsync(profileJson).AsUniTask().AttachExternalCancellation(ct),
+                GetCharacterRef(uid).SetRawJsonValueAsync(charJson).AsUniTask().AttachExternalCancellation(ct),
+                GetInventoryRef(uid).SetRawJsonValueAsync(inventoryJson).AsUniTask().AttachExternalCancellation(ct)
+            );
+
+            CurrentUser = newUserData;
+            UtilDebug.Log($"신규 유저 생성 및 닉네임 등록 완료: {nickname} (UID: {uid})");
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"신규 유저 생성 실패 {ex.Message}");
+            return false;
+        }
+    }
+
+    private void SetupDefaultUserData(UserInfo data)
+    {
+        // 기본 캐릭터 (전사, 메이지, 힐러) 및 재료 세팅
+        var warriorData = new CharacterSaveData { characterId = "char_warrior", isUnlocked = true, partySlot = 0 };
+        var mageData = new CharacterSaveData { characterId = "char_mage", isUnlocked = true, partySlot = 1 };
+        var healerData = new CharacterSaveData { characterId = "char_healer", isUnlocked = true, partySlot = 2 };
+        var archerData = new CharacterSaveData { characterId = "char_archer", isUnlocked = true, partySlot = -1 };
+        var paladinData = new CharacterSaveData { characterId = "char_paladin", isUnlocked = true, partySlot = -1 };
+
+        data.Characters.characterDictionary[warriorData.characterId] = warriorData;
+        data.Characters.characterDictionary[mageData.characterId] = mageData;
+        data.Characters.characterDictionary[healerData.characterId] = healerData;
+        data.Characters.characterDictionary[archerData.characterId] = archerData;
+        data.Characters.characterDictionary[paladinData.characterId] = paladinData;
+        data.Inventory.Data.consumables["Material"] = 10;
+    }
+    #endregion
+
+    #region [Save & Sync]
+    /// <summary>
+    /// 현재 클라이언트의 UserInfo 전체 도메인 상태를 저장소에 일괄 반영
+    /// 로컬 모드는 디스크 쓰기(PlayerPrefs), 서버 모드는 3개 도메인의 최신 JSON을 각각 대상 노드에 덮어씀
+    /// </summary>
+    public async UniTask<bool> SaveAllInfoAsync(CancellationToken ct = default)
+    {
+        if (CurrentUser == null)
+        {
+            UtilDebug.LogError("SaveAllInfoAsync : 저장할 유저 데이터가 없습니다.");
+            return false;
+        }
+        // 로컬 분기
+        if(IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        // 서버 분기
+        string uid = CurrentUser.UID;
+
+        // 트러블 슈팅 - 초기에는 UserManager(this) 자체를 직렬화하여 저장하다가 Dictionary upgradeTrackLevels가 저장되지 못하여
+        // CreateUserInfoAsync와 동일하게 각 도메인별로 저장하는 방식으로 변경
+        try
+        {
+            // 1. 도메인별로 각각 올바른 대상을 직렬화 (JsonConvert 보장)
+            string profileJson = JsonConvert.SerializeObject(CurrentUser.Profile);
+            string charJson = JsonConvert.SerializeObject(CurrentUser.Characters.characterDictionary);
+            string inventoryJson = JsonConvert.SerializeObject(CurrentUser.Inventory.Data);
+
+
+            // 2. 각각 정확한 RTDB 경로로 덮어쓰기 병렬 실행
+            await UniTask.WhenAll(
+                GetUserRef(uid).SetRawJsonValueAsync(profileJson).AsUniTask().AttachExternalCancellation(ct),
+                GetCharacterRef(uid).SetRawJsonValueAsync(charJson).AsUniTask().AttachExternalCancellation(ct),
+                GetInventoryRef(uid).SetRawJsonValueAsync(inventoryJson).AsUniTask().AttachExternalCancellation(ct)
+            );
+
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"전체 저장 실패: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 게스트 플레이 환경에서 CurrentUser 객체 전체를 JSON으로 직렬화하여 PlayerPrefs 디스크에 저장
+    /// 순환 참조 방지 및 가독성 포맷팅 옵션을 적용
+    /// </summary>
+    public void SaveLocalUserData()
+    {
+        if (CurrentUser == null) return;
+
+        try
+        {
+            // 순환 참조 방지 및 깔끔한 포맷팅 저장
+            var settings = new JsonSerializerSettings
+            {
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore,
+                Formatting = Formatting.Indented
+            };
+
+            string json = JsonConvert.SerializeObject(CurrentUser, settings);
+            PlayerPrefs.SetString(LOCAL_SAVE_DATA_KEY, json);
+            PlayerPrefs.Save();
+            UtilDebug.Log("[로컬] PlayerPrefs 디스크 저장 완료");
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"[로컬] 저장 중 직렬화 오류 발생: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 방치 보상 계산을 위한 마지막 접속 시간 단일 필드 동기화
+    /// </summary>
+    public async UniTask UpdateLastLoginTimeAsync(CancellationToken ct = default)
+    {
+        if (CurrentUser == null)
+        {
+            UtilDebug.LogError("UpdateLastLoginTimeAsync : 저장할 유저 데이터가 없습니다.");
+            return;
+        }
+
+        long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        CurrentUser.Profile.lastLoginTimestamp = now;
+        if(IsLocalMode)
+        {
+            SaveLocalUserData();
+            return;
+        }
+
+        await CurrentUser.Profile.UpdateSingleFieldAsync(LastLoginTimestamp, now, ct);
+    }
+    #endregion
+
+    #region [Facade API : 단일 도메인]
+    /* 
+    골드, 다이아, 스테이지, 장비 추가/삭제, 강화 등은
+    IsLocalMode일 때 메모리(CurrentUser)만 갱신하고 서버 API 호출을 생략합니다.
+    어차피 GameManager.FlushGameDataAsync()나 5분 주기 루프에서 SaveAllInfoAsync()가 불려 로컬에 디스크 저장이 됩니다.
+    */
+
+    public async UniTask<bool> UpdateCurrentStageAsync(int clearStage, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        CurrentUser.Profile.currentStage = clearStage;
+        if (IsLocalMode) return true; // 서버 통신 차단
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("currentStage", clearStage, ct);
+    }
+    // 골드 단일 갱신
+    public async UniTask<bool> UpdateGoldAsync(double newGold, CancellationToken ct =default)
+    {
+        if (CurrentUser == null) return false;
+        CurrentUser.Profile.gold = newGold;
+        if (IsLocalMode) return true; // 서버 통신 차단
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("gold", newGold, ct);
+    }
+    // 다이아 단일 갱신
+    public async UniTask<bool> UpdateDiaAsync(double newDia, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        CurrentUser.Profile.dia = newDia;
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 서버 통신 차단
+        return await CurrentUser.Profile.UpdateSingleFieldAsync("dia", newDia, ct);
+    }
+
+    /// <summary>
+    /// 캐릭터 장비 장착(스왑) - 로컬 즉시 저장 
+    /// </summary>
+    public async UniTask<bool> EquipItemAsync(string charId, EquipmentSlot slot, string instanceId, CancellationToken ct = default)
+    {
+        if (CurrentUser == null || CurrentUser.Characters == null) return false;
+
+        // 1. 해당 캐릭터 데이터가 딕셔너리에 없으면 안전하게 생성
+        if (!CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+        {
+            charData = new CharacterSaveData
+            {
+                characterId = charId,
+                isUnlocked = true,
+                partySlot = -1,
+                equippedItems = new Dictionary<string, string>()
+            };
+            CurrentUser.Characters.characterDictionary[charId] = charData;
+        }
+
+        if (charData.equippedItems == null)
+        {
+            charData.equippedItems = new Dictionary<string, string>();
+        }
+
+        // 2. 슬롯에 instanceId 등록
+        string slotKey = slot.ToString();
+        charData.equippedItems[slotKey] = instanceId;
+
+        // 3. 로컬 모드일 때 즉시 디스크 반영
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        // 서버 모드 통신
+        return await CurrentUser.Characters.SetEquippedSlotAsync(charId, slot, instanceId, ct);
+    }
+
+    /// <summary>
+    /// 캐릭터 장비 해제
+    /// </summary>
+    public async UniTask<bool> UnequipItemAsync(string charId, EquipmentSlot slot, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        if (IsLocalMode)
+        {
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+            {
+                charData.equippedItems.Remove(slot.ToString());
+                SaveLocalUserData();
+            }
+            return true; // 서버 통신 차단
+        }
+        return await CurrentUser.Characters.UnequipSlotAsync(charId, slot, ct);
+    }
+
+    /// <summary>
+    /// 장비 강화
+    /// </summary>
+    public async UniTask<bool> EnhanceEquipmentAsync(string instanceId, int newLevel, float newBonus, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        if (IsLocalMode)
+        {
+            if (CurrentUser.Inventory.Data.equipments.TryGetValue(instanceId, out var equip))
+            {
+                equip.enhanceLevel = newLevel;
+                equip.totalEnhanceBonus = newBonus;
+                SaveLocalUserData();
+            }
+            return true; // 서버 통신 차단
+        }
+        return await CurrentUser.Inventory.UpdateEquipmentEnhanceAsync(instanceId, newLevel, newBonus, ct);
+    }
+
+    // 김주연 - 장비 인벤토리 서버 연동 (드랍 저장 / 판매 제거)
+    /// <summary>
+    /// 장비 획득(드랍/가챠) 시 인벤토리에 저장
+    /// </summary>
+    public async UniTask<bool> AddEquipmentAsync(string instanceId, EquipmentSaveDTO newEquip, CancellationToken ct = default)
+    {
+        if (CurrentUser == null || CurrentUser.Inventory == null || string.IsNullOrEmpty(instanceId) || newEquip == null)
+            return false;
+
+        if (CurrentUser.Inventory.Data == null)
+            CurrentUser.Inventory.ExcuteGetAsync(ct).Forget();
+
+        if (CurrentUser.Inventory.Data.equipments == null)
+            CurrentUser.Inventory.Data.equipments = new Dictionary<string, EquipmentSaveDTO>();
+
+        // 메모리 딕셔너리에 저장
+        CurrentUser.Inventory.Data.equipments[instanceId] = newEquip;
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        return await CurrentUser.Inventory.AddEquipmentAsync(instanceId, newEquip, ct);
+    }
+
+    /// <summary>
+    /// 장비 판매/버리기 시 인벤토리에서 제거
+    /// </summary>
+    public async UniTask<bool> RemoveEquipmentAsync(string instanceId, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false; 
+        CurrentUser.Inventory.Data.equipments.Remove(instanceId);
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 서버 통신 차단
+        return await CurrentUser.Inventory.RemoveEquipmentAsync(instanceId, ct);
+    }
+
+    /// <summary>
+    /// 재료 소모
+    /// </summary>
+    public async UniTask<bool> UpdateConsumableCountAsync(string itemId, int count, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        if (count <= 0) CurrentUser.Inventory.Data.consumables.Remove(itemId);
+        else CurrentUser.Inventory.Data.consumables[itemId] = count;
+
+        if (IsLocalMode) { SaveLocalUserData(); return true; } // 서버 통신 차단
+        return await CurrentUser.Inventory.UpdateConsumableCountAsync(itemId, count, ct);
+    }
+
+    /// <summary>
+    /// 파티 공동 능력치 강화
+    /// </summary>
+    public async UniTask<bool> UpgradeTrackLevelAsync(UpgradeTrack track, int newLevel, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+        CurrentUser.Profile.upgradeTrackLevels[track.ToString()] = newLevel;
+        if (IsLocalMode) return true; // 서버 통신 차단
+        return await CurrentUser.Profile.UpdateUpgradeTrackAsync(track, newLevel, ct);
+    }
+    #endregion
+
+    #region [Facade API : 복합 도메인 트랜잭션]
+    // ex) 장비 판매 트랜잭션 : 착용 해제 + 인벤토리 제거 + 골드 증가
+    // 이러한 트랜잭션 가능
+
+    /// <summary>
+    /// 전체 파티원의 배치 슬롯 인덱스(0~2 또는 미편성 -1)를 일괄 갱신하는 트랜잭션
+    /// 서버 모드 시 rootRef.UpdateChildrenAsync를 사용해 여러 캐릭터 노드의 슬롯 데이터를 원자적으로 업데이트
+    /// </summary>
+    public async UniTask<bool> UpdateAllPartySlotAsync(Dictionary<string, int> slotMap, CancellationToken ct = default)
+    {
+        if(CurrentUser == null) return false;
+
+        // 로컬 분기
+        foreach (var kvp in slotMap)
+        {
+            string charId = kvp.Key;
+            int slotIndex = kvp.Value;
+
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+            {
+                charData.partySlot = slotIndex; // 0, 1, 2 또는 -1
+            }
+            else
+            {
+                // 누락된 캐릭터가 있다면 새로 생성하여 등록
+                CurrentUser.Characters.characterDictionary[charId] = new CharacterSaveData
+                {
+                    characterId = charId,
+                    isUnlocked = true,
+                    partySlot = slotIndex,
+                    equippedItems = new Dictionary<string, string>()
+                };
+            }
+        }
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        // 서버 분기
+        var updates = new Dictionary<string, object>();
+        foreach(var kvp in slotMap)
+        {
+            string charId = kvp.Key;
+            int slotIndex = kvp.Value;
+            if(CurrentUser.Characters.characterDictionary.TryGetValue(charId, out var charData))
+            {
+                charData.partySlot = slotIndex;
+                updates[$"{StringConsts.UserConstants.Characters}/{CurrentUser.UID}/{charId}/partySlot"] = slotIndex;
+            }
+        }
+
+        try
+        {
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            // 씬 전환 등으로 정상 취소된 경우 조용히 false 반환
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"파티 슬롯 동기화 실패: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 장비 착용 및 대상자 교체(스왑)를 원자적으로 처리하는 복합 트랜잭션
+    /// 이전 착용자가 존재할 경우 해당 슬롯을 null로 해제함과 동시에, 새 대상 캐릭터 슬롯에 instanceId를 단일 패킷으로 커밋
+    /// </summary>
+    public async UniTask<bool> SwapEquipmentTransactionAsync(string targetCharId, EquipmentSlot slot, string newInstanceId, string previousOwnerCharId = null, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+
+        // 로컬 분기
+        string slotKey = slot.ToString();
+        if (!string.IsNullOrEmpty(previousOwnerCharId) && previousOwnerCharId != targetCharId)
+        {
+            if (CurrentUser.Characters.characterDictionary.TryGetValue(previousOwnerCharId, out var prevChar))
+                prevChar.equippedItems.Remove(slotKey);
+        }
+
+        if (CurrentUser.Characters.characterDictionary.TryGetValue(targetCharId, out var targetChar))
+            targetChar.equippedItems[slotKey] = newInstanceId;
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        // 서버 분기
+        var updates = new Dictionary<string, object>();
+        string uid = CurrentUser.UID;
+
+        if (!string.IsNullOrEmpty(previousOwnerCharId) && previousOwnerCharId != targetCharId)
+            updates[$"{StringConsts.UserConstants.Characters}/{uid}/{previousOwnerCharId}/{EquippedSlotMap}/{slotKey}"] = null;
+
+        updates[$"{StringConsts.UserConstants.Characters}/{uid}/{targetCharId}/{EquippedSlotMap}/{slotKey}"] = newInstanceId;
+
+        try
+        {
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"장비 장착 트랜잭션 실패: {ex.Message}");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// 장비 강화 결과와 소모 재료 차감을 원자적으로 동기화하는 트랜잭션
+    /// 인벤토리 내 장비 수치 갱신(enhanceLevel, totalEnhanceBonus)과 소모품 수량 차감을 단일 UpdateChildrenAsync로 처리하여 데이터 불일치를 방지
+    /// </summary>
+    public async UniTask<bool> EnhanceEquipmentTransactionAsync(string instanceId, int newLevel, float newBonus, string materialItemId, int remainingMaterialCount, CancellationToken ct = default)
+    {
+        if (CurrentUser == null) return false;
+
+        if (CurrentUser.Inventory.Data.equipments.TryGetValue(instanceId, out var equip))
+        {
+            equip.enhanceLevel = newLevel;
+            equip.totalEnhanceBonus = newBonus;
+        }
+        CurrentUser.Inventory.Data.consumables[materialItemId] = remainingMaterialCount;
+
+        if (IsLocalMode)
+        {
+            SaveLocalUserData();
+            return true;
+        }
+
+        string uid = CurrentUser.UID;
+        var updates = new Dictionary<string, object>
+        {
+            { $"{Inventories}/{uid}/{Equipments}/{instanceId}/enhanceLevel", newLevel },
+            { $"{Inventories}/{uid}/{Equipments}/{instanceId}/totalEnhanceBonus", newBonus },
+            { $"{Inventories}/{uid}/{Consumables}/{materialItemId}", remainingMaterialCount }
+        };
+
+        try
+        {
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+            return true;
+        }
+        catch (OperationCanceledException) { return false; }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"장비 강화 트랜잭션 실패: {ex.Message}");
+            return false;
+        }
+    }
+    #endregion
+
+    #region [Check API : 닉네임 중복 검사]
+    public async UniTask<bool> IsNicknameDuplicateAsync(string nickname, CancellationToken ct = default)
+    {
+        if (IsLocalMode) return false; // 로컬 테스트는 닉네임 중복 검사 무조건 통과
+
+        try
+        {
+            var snapshot = await GetNicknameRef(nickname).GetValueAsync().AsUniTask().AttachExternalCancellation(ct);
+            return snapshot != null && snapshot.Exists;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"닉네임 중복 {ex.Message}");
+            return true; ;
+        }
+    }
+    #endregion
+
+
+    #region [Delete : 계정 탈퇴(삭제) API]
+    /// <summary>
+    /// 계정 탈퇴 시 유저의 모든 흔적을 영구 삭제
+    /// 로컬 모드는 저장 키 및 세션 플래그를 삭제하며, 서버 모드는 users, characters, inventories 노드와 함께 닉네임 선점 인덱스까지 null로 일괄 삭제
+    /// </summary>
+    public async UniTask<bool> DeleteUserDataAsync(string uid, CancellationToken ct = default)
+    {
+        if (IsLocalMode)
+        {
+            PlayerPrefs.DeleteKey(LOCAL_SAVE_DATA_KEY);
+            PlayerPrefs.SetInt("IS_LOCAL_GUEST_ACTIVE", 0);
+            PlayerPrefs.Save();
+            ClearLocalData();
+            IsLocalMode = false;
+            UtilDebug.Log("[로컬] PlayerPrefs 로컬 세이브 데이터 및 세션 완전 초기화 완료");
+            return true;
+        }
+
+        try
+        {
+            string nickname = CurrentUser?.Profile?.nickname;
+
+            var updates = new Dictionary<string, object>
+            {
+                { $"{Users}/{uid}", null },
+                { $"{Characters}/{uid}", null },
+                { $"{Inventories}/{uid}", null }
+            };
+
+            if (!string.IsNullOrEmpty(nickname))
+            {
+                updates.Add($"{Nicknames}/{nickname}", null);
+            }
+            await rootRef.UpdateChildrenAsync(updates).AsUniTask().AttachExternalCancellation(ct);
+
+            ClearLocalData();
+            UtilDebug.Log($"전체 도메인 데이터 및 닉네임 삭제 완료 (UID: {uid})");
+            return true;
+        }
+        catch (OperationCanceledException)
+        {
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"유저 데이터 삭제 실패 {ex.Message}");
+            return false;
+        }
+    }
+    #endregion
+
+    public void ClearLocalData() => CurrentUser = null;
+}

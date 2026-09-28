@@ -1,9 +1,8 @@
-﻿/*
-Firebase를 이용한 로그인 시스템 테스트용 클래스입니다.
-Email / Password 로그인, Google 로그인, 계정 삭제 기능을 포함하고 있으며, 인증 상태 변경 이벤트를 통해 UI 업데이트를 지원합니다.
+﻿/*담담자 - 송태훈
+Firebase App 의존성 확인 및 FirebaseAuth 인스턴스를 초기화하고 인증 상태를 관리
+이메일/비밀번호 로그인·회원가입, 구글 자격 증명 로그인 및 계정 삭제 비동기 API를 제공
  */
 using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using Firebase;
 using Firebase.Auth;
@@ -13,43 +12,58 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
 {
     private FirebaseAuth auth;
     private FirebaseUser user;
+    private bool isInitialized = false;
 
     public FirebaseUser CurrentUser => user;
     public string UserId => user != null ? user.UserId : string.Empty;
 
     public event Action<bool, string> OnAuthStateChanged;
 
-    public override void Init()
-    {
-        base.Init();
-        InitializeFirebaseAsync().Forget();
-    }
+    //
+    public bool isLocalTestMode = false;
 
     /// <summary>
-    /// Firebase 초기화 및 종속성 확인 후 FirebaseAuth 인스턴스를 가져옵니다.
+    /// Firebase 의존성 확인 및 FirebaseAuth 초기화를 비동기로 완료 보장
     /// </summary>
-    private async UniTaskVoid InitializeFirebaseAsync()
+    public async UniTask<bool> InitializeFirebaseAsync(System.Threading.CancellationToken ct = default)
     {
-        var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask();
-        if (dependencyStatus == DependencyStatus.Available)
+        if (isInitialized) return true;
+
+        try
         {
-            auth = FirebaseAuth.DefaultInstance;
-            // static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서
-            if (auth.CurrentUser != null)
+            var dependencyStatus = await FirebaseApp.CheckAndFixDependenciesAsync().AsUniTask().AttachExternalCancellation(ct);
+            if (dependencyStatus == DependencyStatus.Available)
             {
-                SignOut();
+                auth = FirebaseAuth.DefaultInstance;
+                // static으로 인한 user 메모리 저장을 해제하는 임시 처리. 테스트를 위해서. Build 시 삭제
+                if (auth.CurrentUser != null)
+                {
+                    SignOut();
+                }
+                user = auth.CurrentUser;    // 로그인 된 세션이 있는지 캐싱
+                auth.StateChanged += HandleAuthStateChanged;
+                isInitialized = true;
+                return true;
             }
-            auth.StateChanged += HandleAuthStateChanged;
+            else
+            {
+                UtilDebug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
+                return false;
+            }
         }
-        else
+        catch (OperationCanceledException)
         {
-            UtilDebug.LogError($"Firebase 종속성 오류: {dependencyStatus}");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"Auth 초기화 예외 발생: {ex.Message}");
+            return false;
         }
     }
 
     /// <summary>
-    /// Firebase 인증 상태 변경 이벤트를 처리합니다. 로그인 상태가 변경될 때마다 OnAuthStateChanged 이벤트를 호출합니다.
-    /// 추후 진행에 따라 Lobby 씬에서 로그인 상태를 확인하고 UI를 업데이트하도록 변경 필요.
+    /// Firebase 인증 상태가 변경될 때 캐싱된 유저 객체를 갱신하고 외부(UI/Controller)로 상태 알림 이벤트 입니다.
     /// </summary>
     private void HandleAuthStateChanged(object sender, EventArgs e)
     {
@@ -70,8 +84,14 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     /// <summary>
     /// Firebase 이메일/비밀번호 기반 로그인 메서드입니다. 로그인 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    public async UniTask<bool> SignInWithEmailAsync(string email, string password, CancellationToken ct = default)
+    public async UniTask<bool> SignInWithEmailAsync(string email, string password, System.Threading.CancellationToken ct = default)
     {
+        if(!isInitialized || auth == null)
+        {
+            UtilDebug.LogError("Auth 인스턴스가 초기화 x");
+            return false;
+        }
+
         try
         {
             AuthResult authResult = await auth.SignInWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
@@ -91,8 +111,14 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     /// <summary>
     /// Firebase 이메일/비밀번호 기반 회원가입 메서드입니다. 회원가입 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    public async UniTask<bool> CreateWithEmailAsync(string email, string password, CancellationToken ct = default)
+    public async UniTask<bool> CreateWithEmailAsync(string email, string password, System.Threading.CancellationToken ct = default)
     {
+        if (!isInitialized || auth == null)
+        {
+            UtilDebug.LogError("Auth 인스턴스가 초기화 x");
+            return false;
+        }
+
         try
         {
             AuthResult authResult = await auth.CreateUserWithEmailAndPasswordAsync(email, password).AsUniTask().AttachExternalCancellation(ct);
@@ -110,10 +136,16 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     }
 
     /// <summary>
-    /// Firebase 구글 인증 토큰 기반 로그인 메서드입니다. 로그인 성공 시 true, 실패 시 false를 반환합니다.
+    /// 네이티브 플랫폼에서 수신한 Google IdToken으로 Credential을 생성하여 Firebase에 인증을 요청합니다.
     /// </summary>
-    public async UniTask<bool> SignInWithGoogleTokenAsync(string idToken, CancellationToken ct = default)
+    public async UniTask<bool> SignInWithGoogleTokenAsync(string idToken, System.Threading.CancellationToken ct = default)
     {
+        if (!isInitialized || auth == null)
+        {
+            UtilDebug.LogError("Auth 인스턴스가 초기화 x");
+            return false;
+        }
+
         try
         {
             Credential credential = GoogleAuthProvider.GetCredential(idToken, null);
@@ -134,7 +166,7 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
     /// <summary>
     /// Firebase 계정 삭제 메서드입니다. 로그인된 계정이 없으면 실패를 반환하며, 삭제 성공 시 true, 실패 시 false를 반환합니다.
     /// </summary>
-    public async UniTask<(bool success, string errorMessage)> DeleteAccountAsync(CancellationToken ct = default)
+    public async UniTask<(bool success, string errorMessage)> DeleteAccountAsync(System.Threading.CancellationToken ct = default)
     {
         if (user == null)
         {
@@ -159,7 +191,6 @@ public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
             return (false, ex.Message);
         }
     }
-
 
     public void SignOut()
     {

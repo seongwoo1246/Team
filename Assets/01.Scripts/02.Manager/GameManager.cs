@@ -1,224 +1,206 @@
-﻿using Cysharp.Threading.Tasks;
-using UnityEngine;
+﻿/* 담당자 - 송태훈
+인게임 전역 상태(GameState) 전이 및 프레임레이트 등 기본 앱 환경을 제어하는 싱글톤
+등록된 ISyncable 객체들의 상태를 취합하여 5분 주기, 백그라운드 전환, 앱 종료 시 서버 및 로컬에 안전하게 플러시
+ */
+
 using System;
-using Debug = DebugLogger<GameManager>;
-/// <summary>
-/// 게임의 전체 상태를 나타내는 상태판
-/// </summary>
+using System.Threading;
+using Cysharp.Threading.Tasks;
+using UnityEngine;
+using UtilDebug = DebugLogger<GameManager>;
+
 public enum GameState
 {
-    //에셋 다운로드 및 기본 설정 준비 중
-    Init,
-    // 유저 로그인 대기중
-    Login,
-    //파이어 베이스에서 유저 데이터 불러오는 중
-    FatchUserData,
-   //로비화면 (자동사냥)
-    Lobby,
-    //전투중(챌린지 모드( 싸움은 스테이지 매니저에서 해결)
-    StageBattle
+    None,
+    Initializing,   // 타이틀 부트스트랩 단계
+    Lobby,          // 메인 로비 (파밍 포함)
+    Paused          // 게임 일시 정지
 }
-
-
-
-
 
 public class GameManager : Singleton<GameManager>
 {
+    private readonly System.Collections.Generic.List<ISyncable> _syncables = new();
+    private const float AUTO_FLUSH_INTERVAL_SECONDS = 300f;
+    private CancellationTokenSource _autoFlushCts;
+    private bool _isFlushing = false;
 
-    [Header("연결할 다른 매니저들")]
-    [SerializeField] private AddressableLoader addressableLoader;
+    private GameState _currentState = GameState.None;
+    public GameState CurrentState => _currentState;
 
-    public GameState CurrentState {  get; private set; }
-
-    private void Start()
+    public event Action<GameState> OnGameStateChanged;
+    protected override void Awake()
     {
-        StartGameSequenceAsync().Forget();
+        isDDOL = true; // 전역 유지 싱글톤
+        base.Awake();
+        Application.targetFrameRate = 60;
+        Screen.sleepTimeout = SleepTimeout.NeverSleep;
+    }
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+        StopPeriodicFlushLoop();
     }
 
-    #region 1. 게임 전체 시퀸스 (순서대로 진행되는 메인 흐름)
-
-    private async UniTaskVoid StartGameSequenceAsync()
+    public void RegisterSyncable(ISyncable syncable)
     {
-        //1단계 에셋 다운로드 및 초기 설정
-        ChangeState(GameState.Init);
-        Debug.Log("[GameManager] : addressable 패치 및 다운로드 시작");
-        bool isAssetReady = await addressableLoader.CheckAndDownLoadUpdateAsync(Progress =>
-        {
-            Debug.Log($" 다운로드 진행율 : {Progress * 100}%");
-        });
+        if(syncable != null && !_syncables.Contains(syncable))
+            _syncables.Add(syncable);
+    }
+    public void UnregisterSyncable(ISyncable syncable) => _syncables.Remove(syncable);
 
-        if(!isAssetReady)
+    /// <summary>
+    /// 게임 전역 상태 전환
+    /// </summary>
+    public void ChangeState(GameState newState)
+    {
+        if (_currentState == newState) return;
+
+        UtilDebug.Log($"게임 상태 전환: {_currentState} -> {newState}");
+        _currentState = newState;
+        OnGameStateChanged?.Invoke(_currentState);
+
+        switch (newState)
         {
-            Debug.LogWarning(" 에셋 다운로드 실패했습니다. 인터넷을 확인하세요.");
+            case GameState.Lobby:
+                Time.timeScale = 1f;
+                StartPeriodicFlushLoop(); // 로비 진입 시 5분 자동 동기화 가동
+                break;
+            case GameState.Paused:
+                Time.timeScale = 0f;
+                break;
+            default:
+                StopPeriodicFlushLoop();
+                break;
+        }
+    }
+
+    #region 앱 생명주기 및 강제 데이터 동기화
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (pauseStatus)
+        {
+            // 백그라운드 전환 시 서버 및 로컬 데이터 강제 플러시
+            FlushGameDataAsync().Forget();
+        }
+    }
+
+    private void OnApplicationQuit()
+    {
+        // 앱 종료 시 최종 동기화
+        FlushGameDataAsync().Forget();
+    }
+
+
+    #region 비정상 종료 / 강제 로그아웃 복귀 처리
+    /// <summary>
+    /// 세션 만료, 네트워크 단절 등으로 게임을 초기 타이틀 화면으로 안전하게 리셋할 때 호출
+    /// </summary>
+    public async UniTask ReturnToTitleSceneAsync()
+    {
+        UtilDebug.LogWarning("타이틀 씬으로 강제 복귀");
+
+        StopPeriodicFlushLoop() ;
+
+        // 1. 서비스 로케이터의 로컬 서비스 일괄 해제
+        ServiceLocator.ClearSceneLocalServices();
+
+        // 2. 유저 캐시 정리
+        UserManager.Instance.ClearLocalData();
+
+        // 3. 부트스트랩 씬으로 전환
+        await SceneLoadManager.Instance.LoadSceneFlowAsync(SceneId.BootstrapScene);
+        ChangeState(GameState.Initializing);
+    }
+    #endregion
+
+    /// <summary>
+    /// 5분마다 인게임 데이터를 정기적으로 서버 및 메모리에 플러시하는 백그라운드 루프
+    /// </summary>
+    private void StartPeriodicFlushLoop()
+    {
+        StopPeriodicFlushLoop();
+        _autoFlushCts = new CancellationTokenSource();
+        RunPeriodicFlushLoop(_autoFlushCts.Token).Forget();
+    }
+
+    private void StopPeriodicFlushLoop()
+    {
+        if (_autoFlushCts != null)
+        {
+            _autoFlushCts.Cancel();
+            _autoFlushCts.Dispose();
+            _autoFlushCts = null;
+        }
+    }
+
+    private async UniTaskVoid RunPeriodicFlushLoop(CancellationToken token)
+    {
+        UtilDebug.Log($"5분 주기 자동 동기화 루프 가동 시작");
+
+        while (!token.IsCancellationRequested)
+        {
+            await UniTask.Delay(TimeSpan.FromSeconds(AUTO_FLUSH_INTERVAL_SECONDS), cancellationToken: token);
+
+            if (token.IsCancellationRequested) break;
+
+            UtilDebug.Log("정기 자동 동기화(5분) 트리거 실행");
+            await FlushGameDataAsync();
+        }
+    }
+
+    /// <summary>
+    /// 재화, 마지막 로그인 시각, 인벤토리 등의 데이터를 한 번에 안전하게 저장
+    /// 중요한 이벤트 발생 시 무조건 호출 넣기
+    /// </summary>
+    public async UniTask FlushGameDataAsync()
+    {
+        if (_isFlushing)
+        {
+            UtilDebug.LogWarning("이미 데이터 플러시가 진행 중입니다. 호출을 생략합니다.");
             return;
         }
 
-        //2단계 파이어베이스 로그인
-        ChangeState(GameState.Login);
-        Debug.Log("[GameManager] : 로그인 화면으로 나왔습니다.");
-        string userId = await WaitForUserLoginAsync();
+        _isFlushing = true;
+        UtilDebug.Log("전역 데이터 일괄 수집 및 플러시 시작");
 
-        //3단계 유저 데이터 받아오기
-        ChangeState(GameState.FatchUserData);
-        Debug.Log($"[GameManager] : {userId}님의 유저 데이터를 받아옵니다.");
-        await FetchFirebaseUserDataAsync(userId);
-
-        //4단계 로비 진입 및 자동 사냥 시작
-        EnterLoddy();
-    }
-    #endregion
-
-    #region 2. 파이어베이스 &데이터 처리단계(임의적으로 만든 함수로 나중에 다시 손 볼 예정)
-
-    /// <summary>
-    /// 유저가 아이디/비번을 치고 로그인 버튼을 누를 때 까지 대기하는 비동기함수
-    /// </summary>
-    /// <returns>로그인 한 아이디</returns>
-    private async UniTask<string> WaitForUserLoginAsync()
-    {
-        //실제로는 UI와 연결해서 로그인 하는 상태
-        await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
-
-        string LoggedInUserId = "대충 로그인 성공후 넘어온 아이디";
-        return LoggedInUserId;
-    }
-
-    private async UniTask FetchFirebaseUserDataAsync(string userId)
-    {
-        //여기서 파이어베이스 서버와 아이디가 같은지 확인하고 정보 받는 부분
-        await UniTask.Delay(TimeSpan.FromSeconds(1.5f));
-        Debug.Log("[GameManager] : 유저 데이터 로드 완료");
-    }
-
-    #endregion
-
-    #region 3. 로비 및 스테이지 이동(전투 부분은 => 스테이지 매니저)
-
-    /// <summary>
-    /// 모든 작업 완료 후 로비로 이동하는 함수
-    /// </summary>
-    public void EnterLoddy()
-    {
-        ChangeState(GameState.Lobby);
-        Debug.Log("[GameManager] : 로비로 돌아왔습니다. (처치보상/분당보상)이 쌓이기 시작합니다.");
-        //이 부분에서 게임 나가 있는 동안 쌓인 보상들 받는 함수
-        ScenesManager.instance.LoadScenes(ScenesName.Lobby);
-
-    }
-
-    /// <summary>
-    /// 스테이지 선택후 파밍에서 챌린지로 바뀌는 상태변화 함수
-    /// </summary>
-    /// <param name="stageId"></param>
-    /// <returns></returns>
-    public async UniTaskVoid StartSStageAsync(int  stageId)
-    {
-        ChangeState(GameState.StageBattle);
-        Debug.Log($"{stageId}번째 스테이지 입장");
-
-       // 로비씬 초기화 하며 스테이지 시작
-    }
-
-    #endregion
-
-    #region 4. 앱 상태 관리 (백그라운드 감지)
-
-    /// <summary>
-    /// 백그라운드로 화면이 전환 될때 할 함수
-    /// </summary>
-    /// <param name="focus"></param>
-    private void OnApplicationFocus(bool focus)
-    {
-        if(!focus)
+        try
         {
-            Debug.Log("[GameManager] : 게임이 백그라운드로 돌아갔습니다. Ui와 진행상황 저장");
-            // 혹은 타임스케줄을 0으로 만들어서 일시 정지 등등
+            var ct = this.destroyCancellationToken;
+
+            // 1. 등록된 모든 ISyncable의 최신 상태를 UserInfo 메모리로 일괄 취합
+            for (int i = 0; i < _syncables.Count; i++)
+            {
+                _syncables[i]?.SyncToUserMemory();
+            }
+
+            // 2. 유저 최종 접속 시간 갱신 및 RTDB 통째 일괄 커밋
+            if (UserManager.Instance != null && UserManager.Instance.CurrentUser != null)
+            {
+                // Profile 객체가 살아있는지 한 번 더 확인
+                if (UserManager.Instance.CurrentUser.Profile != null)
+                {
+                    await UserManager.Instance.UpdateLastLoginTimeAsync(ct);
+                }
+                await UserManager.Instance.SaveAllInfoAsync(ct);
+            }
+
+            // 3. PlayerPrefs 강제 디스크 쓰기
+            PlayerPrefs.Save();
+
+            UtilDebug.Log("전역 데이터 플러시 완료");
         }
-        else
+        catch (OperationCanceledException)
         {
-            Debug.Log("[GameManager] : 유저가 게임으로 복귀했습니다.");
-            //혹은 타임스케줄을 1으로 만들어서 일시 정지 해제 등등
+            // 작업 취소 정상 대응
+        }
+        catch (Exception ex)
+        {
+            UtilDebug.LogError($"데이터 플러시 중 오류 발생: {ex.Message}");
+        }
+        finally
+        {
+            _isFlushing = false;
         }
     }
-
-    private void ChangeState(GameState state)
-    {
-        
-        CurrentState = state;
-        Debug.Log($"[상태 변경] => {state}");
-    }
-
     #endregion
-
-    //서버가 들고있어야 할 것
-    /*
-     처음에 받아올 것들(처음에 전체 데이터 리소스를 다운로드 최초1회)
-    1. adressable에 있는 에셋번들(스프라이트, 애니메이션 클립, )
-    2. 사운드
-    다운로드 후 bool true로 바꾸기
-    
-    
-    유저가 입력한 아이디를 키값으로 하는 딕셔너리를 만든후 로그인시 아이디가 같고 비밀번호가 틀리지 않다면 받아오는 정보들
-    1. 유닛 데이터 (픽셀, 카툰)
-    2. 스테이지 정보
-    3. 재화정보
-    4. 우편함 정보
-    5. 
-
-    */
-
-    // 로컬이 들고 있어도 되는 것
-    /*
-     
-
-     */
-
-
-
-    //로고 나오는 동안 할 행동들
-    /*
-
-   DataManager -> GameManager 게임 시작 관련 데이터 정보 초기화 및 받아오기
-  ex)사운드, 
-
-   */
-
-
-    //로그인 씬에서 해야 할 행동들
-    /*
-      
-     GameManager -> Server 로그인 정보 보내기 , 정보 대조 , 맞을시 밑으로 연결 , 틀리면 재입력 요구
-    <로딩중 화면> ScenesManager -> GameManager 로비씬 이동
-    Server -> GameManager  유저정보 보내기, 스테이지 정보, 강화치 정보
-    로비씬 Ui, 자동사냥 및 미접속 보상 정보 받기 ,  우편함 정보 받아오기
-
-     */
-
-
-    //로비씬 에서 해야 할 행동들
-    /*
-     
-
-     자동 사냥 시스템 활성화 ( 분당 n원 만큼에 재화 획득)
-    ScenesManager - > GameManager 스테이지 선택시 자기 씬 한 번 더 불러서 
-    StageManager - > GameManager 초기화 작업 및 나오는 몬스터와 웨이브 정보 불러오기
-    GameManager -> Server 스테이지 클리어 여부 서버로 전송
-    Server -> GameManager 보스 클리어 후 배경과 몬스터 정보 받아오기
-
-
-
-    백그라운드상태 일 때 
-    UI 정지 혹은 비활성화 
-
-
-     */
-
-
-
-
-
-
-
-
 }

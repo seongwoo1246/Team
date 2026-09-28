@@ -1,16 +1,18 @@
+﻿// 작성자: 김주연
 /*
 스테이지 실패 시 뜨는 선택 화면. 다시 하기 / 파밍으로 버튼을 눌러 진행 방향을 고름
 StageManager는 실패해도 클리어와 마찬가지로 자동으로 아무 데도 안 가고 대기만 하므로,
 이 패널이 그 대기 상태의 UI
 */
 
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
 /// StageManager.StageFailed를 구독해서 실패 선택 화면을 띄움
 /// 버튼 2개(다시 하기 / 파밍으로)의 OnClick을 각각 OnClickRetry / OnClickReturnToFarming에 연결해서 쓴다
 /// </summary>
-public sealed class StageFailPanel : MonoBehaviour
+public sealed class StageFailPanel : MonoBehaviour, ILoadable
 {
     [Tooltip("실패 화면 전체 패널 (평소엔 꺼져있다가 실패 순간에만 켜짐)")]
     [SerializeField] private GameObject panelRoot;
@@ -18,23 +20,58 @@ public sealed class StageFailPanel : MonoBehaviour
     // 방금 실패한 스테이지 번호 (다시 하기 버튼 누를 때 씀)
     private int _failedStageNumber;
 
+    private StageManager _stageManager;
+
+    public int LoadOrder => 40;
+
+    private void Awake()
+    {
+        SceneLoadManager.Instance.RegisterLoadable(this);
+    }
+
     private void OnEnable()
     {
-        if (StageManager.instance != null)
-        {
-            StageManager.instance.StageFailed += OnStageFailed;
-            StageManager.instance.ChallengeStarted += OnChallengeStarted;
-        }
-
+        TryBindStageManager();
         SetPanelActive(false);
     }
 
     private void OnDisable()
     {
-        if (StageManager.instance != null)
+        UnbindStageManager();
+    }
+
+    public UniTask OnSceneLoadCreate(SceneId scene) => UniTask.CompletedTask;
+
+    public void Init(SceneId scene)
+    {
+        if (scene != SceneId.LobbyScene) return;
+        try { TryBindStageManager(); }
+        catch (System.Exception ex) { DebugLogger<StageFailPanel>.LogError($"초기화 중 예외 발생: {ex.Message}"); }
+    }
+
+    public void OnSceneDestory(SceneId scene)
+    {
+        UnbindStageManager();
+    }
+
+    private void TryBindStageManager()
+    {
+        if (ServiceLocator.TryGet<StageManager>(out StageManager stageMng))
         {
-            StageManager.instance.StageFailed -= OnStageFailed;
-            StageManager.instance.ChallengeStarted -= OnChallengeStarted;
+            _stageManager = stageMng;
+            _stageManager.StageFailed -= OnStageFailed;
+            _stageManager.StageFailed += OnStageFailed;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
+            _stageManager.ChallengeStarted += OnChallengeStarted;
+        }
+    }
+
+    private void UnbindStageManager()
+    {
+        if (_stageManager != null)
+        {
+            _stageManager.StageFailed -= OnStageFailed;
+            _stageManager.ChallengeStarted -= OnChallengeStarted;
         }
     }
 
@@ -55,10 +92,9 @@ public sealed class StageFailPanel : MonoBehaviour
     public void OnClickRetry()
     {
         SetPanelActive(false);
-
-        if (StageManager.instance != null)
+        if (_stageManager != null)
         {
-            StageManager.instance.RetryStage(_failedStageNumber);
+            _stageManager.RetryStage(_failedStageNumber);
         }
     }
 
@@ -67,17 +103,26 @@ public sealed class StageFailPanel : MonoBehaviour
     {
         SetPanelActive(false);
 
-        if (StageManager.instance != null)
+        if (_stageManager != null)
         {
-            StageManager.instance.EnterFarming();
+            _stageManager.EnterFarming();
         }
     }
 
     private void SetPanelActive(bool active)
     {
-        if (panelRoot != null)
+        if (panelRoot == null)
         {
-            panelRoot.SetActive(active);
+            return;
+        }
+
+        panelRoot.SetActive(active);
+
+        // MainUI가 같은 Canvas_Stage 밑에 있고 나중 순서라 그 위로 그려짐 - 실패 패널을 띄울 때마다
+        // 맨 위(맨 마지막 자식)로 올려서, MainUI에 클릭이 가로채여 버튼이 안 눌리는 문제를 막는다
+        if (active)
+        {
+            panelRoot.transform.SetAsLastSibling();
         }
     }
 }

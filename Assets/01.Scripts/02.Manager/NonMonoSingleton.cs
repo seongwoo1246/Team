@@ -1,4 +1,4 @@
-﻿/*
+﻿/* 담당자 - 송태훈
  MonoBehaviour를 상속받지 않는 싱글톤 -> 메모리 절약 가능
  */
 
@@ -11,7 +11,7 @@ public class NonMonoSingleton<T> where T : class, new()
 {
     private static T _instance;
 
-    public static T instance
+    public static T Instance
     {
         get
         {

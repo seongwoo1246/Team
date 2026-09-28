@@ -1,6 +1,11 @@
 ﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+//담당자 - 정성우
+/*
+마찬가지로 사용은 안되고 있지만 인벤토리 초안 작성에 포인트를 두고 만든 스크립트 슬롯이다. 
+
+ */
 
 
 /// <summary>

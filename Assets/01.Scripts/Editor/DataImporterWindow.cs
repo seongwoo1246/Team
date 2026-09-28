@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 깃허브에 누가올려놔서 베껴옴 개나이스
 구글 시트에서 내보낸 CSV를 읽어 ScriptableObject 에셋을 자동 갱신하는 에디터툴
 
@@ -9,7 +10,7 @@
   2) 프로젝트의  Assets/03.Data/02.CSV/  폴더에 넣는다
         Characters.csv  (또는 3_Characters.csv)
         Monsters.csv    (또는 5_Monsters.csv)
-        Equipment.csv   (또는 6_Equipment.csv)
+        Equipment.csv   (또는 8_Equipment.csv)
   3) 상단 메뉴  Tools → 데이터 임포터  에서 창을 열고 버튼을 누름
   4) 결과 SO는  Assets/03.Data/00.UnitSO/Characters , /Monsters ,
      Assets/03.Data/01.InventorySO/Equipment  에 생성됨
@@ -37,11 +38,16 @@ public class DataImporterWindow : EditorWindow
     // 장비는 인벤토리 쪽 데이터 폴더에 따로 (Characters/Monsters랑 폴더가 다름)
     private const string EQUIPMENT_OUTPUT = "Assets/03.Data/01.InventorySO/Equipment";
 
+    // 스테이지 로스터는 SO 하나뿐이라 경로가 고정
+    private const string STAGE_ROSTER_OUTPUT = "Assets/03.Data/00.UnitSO/Stages/StageRosterData.asset";
+
     // CSV 파일 이름 후보 (숫자 접두사가 붙어도 찾을 수 있게)
     private static readonly string[] CharacterCsvNames = { "Characters.csv", "3_Characters.csv" };
     private static readonly string[] MonsterCsvNames = { "Monsters.csv", "5_Monsters.csv" };
     private static readonly string[] ConfigCsvNames = { "Config.csv", "_Config.csv", "1_Config.csv" };
-    private static readonly string[] EquipmentCsvNames = { "Equipment.csv", "6_Equipment.csv" };
+    private static readonly string[] EquipmentCsvNames = { "Equipment.csv", "8_Equipment.csv" };
+    private static readonly string[] StageRosterConfigCsvNames = { "StageRosterConfig.csv", "6_StageRosterConfig.csv" };
+    private static readonly string[] StageRosterBossCsvNames = { "StageRosterBosses.csv", "7_StageRosterBosses.csv" };
 
     [MenuItem("Tools/데이터 임포터")]
     private static void Open()
@@ -79,6 +85,16 @@ public class DataImporterWindow : EditorWindow
             ImportEquipment();
         }
 
+        if (GUILayout.Button("스테이지 로스터 CSV 가져오기 (설정값)", GUILayout.Height(30f)))
+        {
+            ImportStageRosterConfig();
+        }
+
+        if (GUILayout.Button("스테이지 로스터 CSV 가져오기 (보스 등장표)", GUILayout.Height(30f)))
+        {
+            ImportStageRosterBosses();
+        }
+
         EditorGUILayout.Space(6f);
 
         if (GUILayout.Button("전체 가져오기", GUILayout.Height(34f)))
@@ -87,6 +103,8 @@ public class DataImporterWindow : EditorWindow
             ImportMonsters();
             ImportConfig();
             ImportEquipment();
+            ImportStageRosterConfig();
+            ImportStageRosterBosses();
         }
     }
 
@@ -222,6 +240,122 @@ public class DataImporterWindow : EditorWindow
         SaveAll();
         DebugLogger<DataImporterWindow>.Log($"Config {kv.Count}개 항목 가져오기 완료");
         EditorUtility.DisplayDialog("데이터 임포터", "GameConfig 가져오기 완료", "확인");
+    }
+
+    /// <summary>
+    /// StageRosterConfig CSV (key,value 형식) 를 읽어 StageRosterData의 숫자 필드들을 갱신
+    /// (bossMonsters 리스트는 ImportStageRosterBosses가 따로 처리)
+    /// </summary>
+    private void ImportStageRosterConfig()
+    {
+        string path = FindCsv(StageRosterConfigCsvNames);
+        if (path == null)
+        {
+            EditorUtility.DisplayDialog("데이터 임포터", $"StageRosterConfig CSV 를 찾지 못했습니다.\n{CSV_FOLDER} 에 StageRosterConfig.csv 를 넣어주세요.", "확인");
+            return;
+        }
+
+        List<Dictionary<string, string>> rows = ReadCsv(path);
+        Dictionary<string, string> kv = new Dictionary<string, string>();
+        foreach (Dictionary<string, string> row in rows)
+        {
+            if (row.TryGetValue("key", out string key)
+                && row.TryGetValue("value", out string value)
+                && !string.IsNullOrWhiteSpace(key))
+            {
+                kv[key.Trim()] = value;
+            }
+        }
+
+        StageRosterData asset = GetOrCreateAsset<StageRosterData>(STAGE_ROSTER_OUTPUT);
+        ApplyRow(asset, kv);
+
+        SaveAll();
+        DebugLogger<DataImporterWindow>.Log($"StageRosterConfig {kv.Count}개 항목 가져오기 완료");
+        EditorUtility.DisplayDialog("데이터 임포터", "StageRosterData 설정값 가져오기 완료", "확인");
+    }
+
+    /// <summary>
+    /// StageRosterBoss CSV (monster_id, unlock_stage 형식) 를 읽어 StageRosterData.bossMonsters 리스트를 통째로 갱신
+    /// monster_id로 프로젝트 안의 Monster 프리팹을 찾아서 참조로 채워넣음
+    /// </summary>
+    private void ImportStageRosterBosses()
+    {
+        string path = FindCsv(StageRosterBossCsvNames);
+        if (path == null)
+        {
+            EditorUtility.DisplayDialog("데이터 임포터", $"StageRosterBosses CSV 를 찾지 못했습니다.\n{CSV_FOLDER} 에 StageRosterBosses.csv 를 넣어주세요.", "확인");
+            return;
+        }
+
+        Dictionary<string, Monster> monsterLookup = BuildMonsterPrefabLookup();
+        List<Dictionary<string, string>> rows = ReadCsv(path);
+        List<MonsterUnlockEntry> bossList = new List<MonsterUnlockEntry>();
+
+        foreach (Dictionary<string, string> row in rows)
+        {
+            if (!row.TryGetValue("monster_id", out string monsterId) || string.IsNullOrWhiteSpace(monsterId))
+            {
+                continue;
+            }
+
+            if (!monsterLookup.TryGetValue(monsterId.Trim(), out Monster monsterPrefab))
+            {
+                Debug.LogWarning($"[데이터 임포터] monster_id '{monsterId}'에 해당하는 Monster 프리팹을 프로젝트에서 못 찾았습니다.");
+                continue;
+            }
+
+            int unlockStage = 1;
+            if (row.TryGetValue("unlock_stage", out string stageRaw))
+            {
+                int.TryParse(stageRaw.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out unlockStage);
+            }
+
+            MonsterUnlockEntry entry = new MonsterUnlockEntry();
+            typeof(MonsterUnlockEntry).GetField("monsterPrefab", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(entry, monsterPrefab);
+            typeof(MonsterUnlockEntry).GetField("unlockStage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(entry, unlockStage);
+            bossList.Add(entry);
+        }
+
+        StageRosterData asset = GetOrCreateAsset<StageRosterData>(STAGE_ROSTER_OUTPUT);
+        typeof(StageRosterData).GetField("bossMonsters", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(asset, bossList);
+        EditorUtility.SetDirty(asset);
+
+        SaveAll();
+        DebugLogger<DataImporterWindow>.Log($"StageRosterBosses {bossList.Count}개 항목 가져오기 완료");
+        EditorUtility.DisplayDialog("데이터 임포터", $"보스 등장표 {bossList.Count}개 가져오기 완료", "확인");
+    }
+
+    /// <summary>
+    /// 프로젝트 전체에서 Monster 컴포넌트가 붙은 프리팹을 찾아 StatData.Id → 프리팹 맵으로 만든다
+    /// (같은 id를 가진 프리팹이 여러 개면 먼저 찾은 것을 씀 - 실제 스폰은 이 참조가 아니라
+    /// StatData.Id로 풀에서 꺼내오므로 어떤 사본이든 상관없음)
+    /// </summary>
+    private static Dictionary<string, Monster> BuildMonsterPrefabLookup()
+    {
+        Dictionary<string, Monster> lookup = new Dictionary<string, Monster>();
+        string[] guids = AssetDatabase.FindAssets("t:Prefab");
+
+        foreach (string guid in guids)
+        {
+            string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
+            GameObject go = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (go == null || !go.TryGetComponent(out Monster monster) || monster.StatData == null)
+            {
+                continue;
+            }
+
+            string id = monster.StatData.Id;
+            if (!lookup.ContainsKey(id))
+            {
+                lookup[id] = monster;
+            }
+        }
+
+        return lookup;
     }
 
     // 에셋 유틸

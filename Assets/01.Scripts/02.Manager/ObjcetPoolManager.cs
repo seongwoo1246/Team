@@ -1,6 +1,12 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using Debug = DebugLogger<ObjcetPoolManager>;
+//담당자 - 정성우
+/*
+오브젝트 풀링을 이용해서 생성 후 관리를 효율적으로 하기위해 만들었으며 인터페이스를 이용해서 종류별 소환과 소환시 필요한 설정을 하게 만들었다.
+제네릭 오브젝트 풀링도 같이 하면서 이거 하나로 생성 및 관리를 다 할 수 있도록 설계함
+
+ */
 
 /// <summary>
 /// 오브젝트 폴링 할 모든 친구들한태 넣어줄 인터페이스
@@ -19,9 +25,11 @@ public interface IPoolable
 /// </summary>
 public enum enumType
 {
-    Cartoon,
+    Cartoon_Monster,
+    Cartoon_Boss,
     Pixel,
-    Item,
+    Item_Mail,
+    Item_Gear,
     Particle,
     UI,
 

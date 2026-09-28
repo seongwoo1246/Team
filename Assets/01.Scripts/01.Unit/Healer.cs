@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 힐러
 공격 대신, 사거리 안에서 체력 비율이 가장 낮은 아군 1명을 회복함
 힐량은 CharacterBase.Power (StatCalculator가 계산한 값)를 그대로 사용
@@ -155,4 +156,7 @@ public class Healer : CharacterBase
 
         return null;
     }
+
+    public override string Skill1Name => "전체 회복";
+    public override string Skill2Name => "부활";
 }

@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 구글 시트 _Config 탭의 전역 값을 담는 SO.
 파티 강화 6트랙(Power/Hp/Crit/CritDamage/GoldGain/AttackSpeed)의 비용 파라미터를 다음
 

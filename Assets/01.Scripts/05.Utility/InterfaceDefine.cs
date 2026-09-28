@@ -1,0 +1,32 @@
+﻿/// <summary>
+/// 씬이 전환되면서 초기화 순서가 보장되어야 하는 객체를 SceneLoadManager를 통해 보장되게 해주는 인터페이스
+/// </summary>
+public interface ILoadable
+{
+    int LoadOrder { get; }
+    Cysharp.Threading.Tasks.UniTask OnSceneLoadCreate(SceneId scene);
+    void Init(SceneId scene);
+
+    void OnSceneDestory(SceneId scene);
+}
+
+/// <summary>
+/// 문자열 고유 Id를 가지는 데이터 에셋용 인터페이스
+/// </summary>
+public interface IIdentifiable
+{
+    string Id { get; }
+}
+
+public interface ISceneBootstrap
+{
+    Cysharp.Threading.Tasks.UniTask OnSceneReadyAsync();
+}
+
+public interface ISyncable
+{
+    /// <summary>
+    /// 현재 데이터를 서버에 저장할 최신 메모리로 갱신
+    /// </summary>
+    void SyncToUserMemory();
+}

@@ -1,14 +1,22 @@
+﻿/*
+담당자 - 홍준호
+ 최하단 바텀 패널 버튼용 
+ 패널 이동용 스크립트
+ */
+
 using UnityEngine;
 
 public class UI_Navigator : MonoBehaviour
 {
-    // �� �Ʒ� �޴� ��ư�� ���� �г� �̵�
+    // 맨 아래 메뉴 버튼들 각각 패널 이동
 
     [SerializeField] private GameObject mainPanel;
     [SerializeField] private GameObject characterPanel;
     [SerializeField] private GameObject shopPanel;
     [SerializeField] private GameObject rankingPanel;
     [SerializeField] private GameObject challengePanel;
+
+    [SerializeField] private CharacterSelectController characterSelectController;
 
     public void OpenMain()
     {
@@ -18,24 +26,54 @@ public class UI_Navigator : MonoBehaviour
 
     public void OpenCharacter()
     {
+        if (characterPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         characterPanel.SetActive(true);
+
+        // 캐릭터 패널 진입 시, 초기 화면 전사로 설정
+        if (characterSelectController != null)
+        {
+            characterSelectController.SelectWarrior();
+        }
     }
 
     public void OpenShop()
     {
+        if (shopPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         shopPanel.SetActive(true);
     }
 
     public void OpenRanking()
     {
+        if (rankingPanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         rankingPanel.SetActive(true);
     }
 
     public void OpenChallenge()
     {
+        if (challengePanel.activeSelf)
+        {
+            OpenMain();
+            return;
+        }
+
         CloseAllPanels();
         challengePanel.SetActive(true);
     }

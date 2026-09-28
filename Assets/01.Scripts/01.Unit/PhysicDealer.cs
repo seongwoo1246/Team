@@ -1,4 +1,5 @@
-﻿/*
+// 작성자: 김주연
+/*
 물리 딜러 (예: 전사).
 가장 가까운 적 1체를 때리는 CharacterBase 기본 동작을 거의 그대로 씀
 필요하면 아래 훅만 override 해서 연출 붙임!
@@ -47,16 +48,16 @@ public class PhysicDealer : CharacterBase
         }
     }
 
-    /// <summary>스킬1: 강타. 가장 가까운 적 1체에게 평타보다 훨씬 센 단일 타격</summary>
+    /// <summary>스킬1: 강타. 체력이 가장 낮은 적 1체에게 평타보다 훨씬 센 단일 타격 (막타 우선)</summary>
     protected override void UseSkill1()
     {
-        IEntity target = GetNearestEntity(EnemyLayer);
+        IEntity target = GetLowestHpEntity(EnemyLayer);
         if (target == null || target.IsDead)
         {
             return;
         }
 
-        target.TakeDamage(Power * powerStrikeMultiplier);
+        DealDamage(target, powerStrikeMultiplier);
     }
 
     /// <summary>스킬2: 휩쓸기. 사거리 안 적 전체에게 동시에 피해</summary>
@@ -67,8 +68,6 @@ public class PhysicDealer : CharacterBase
         {
             return;
         }
-
-        float damage = Power * cleaveMultiplier;
 
         for (int i = 0; i < count; i++)
         {
@@ -83,7 +82,7 @@ public class PhysicDealer : CharacterBase
                 continue;
             }
 
-            target.TakeDamage(damage);
+            DealDamage(target, cleaveMultiplier);
         }
     }
 
@@ -94,5 +93,8 @@ public class PhysicDealer : CharacterBase
     /// <summary>스킬2(휩쓸기)도 동일한 조건</summary>
     protected override bool CanUseSkill2() => HasEnemyInRange();
 
-    private bool HasEnemyInRange() => GetNearestEntity(EnemyLayer) != null;
+    private bool HasEnemyInRange() => GetLowestHpEntity(EnemyLayer) != null;
+
+    public override string Skill1Name => "강타";
+    public override string Skill2Name => "휩쓸기";
 }
