@@ -29,6 +29,10 @@ public class MonsterStatData : ScriptableObject, IIdentifiable
     // 레벨당 체력 증가율
     [SerializeField] private float hpGrowthPerLevel = StatCalculator.DEFAULT_MONSTER_HP_GROWTH;
 
+    [Header("보스 배율 (일반 몬스터는 1)")]
+    [Tooltip("Kind가 Boss일 때 체력에 추가로 곱할 배율. 시트: boss_hp_mult")]
+    [SerializeField] private float bossHpMultiplier = 1f;
+
     public string Id => id;
 
     public string NameKr => nameKr;
@@ -43,4 +47,6 @@ public class MonsterStatData : ScriptableObject, IIdentifiable
     public float MoveSpeed => moveSpeed;
 
     public float HpGrowthPerLevel => hpGrowthPerLevel;
+
+    public float BossHpMultiplier => bossHpMultiplier;
 }

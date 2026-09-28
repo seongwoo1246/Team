@@ -19,3 +19,4 @@ MonoBehaviour:
   baseAttack: 16
   moveSpeed: 0.8
   hpGrowthPerLevel: 1.2
+  bossHpMultiplier: 4
