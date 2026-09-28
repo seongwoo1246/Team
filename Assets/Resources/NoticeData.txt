@@ -1,14 +1,12 @@
-﻿
-
 {
- "version" :  "1.0.0",
- "notices" : [
-	{
-	 "id" : 1,
-	 "title" : "Pixle Vs Cartoon Start",
-	 "content" : "게임이 시작되었습니다. 공지 읽어 보셨나요?",
-	 "imageUrl" : "",
-	 "linkUrl" : ""
-	}
+  "isMaintenance": false,
+  "notices": [
+    {
+      "id": 1,
+      "title": "Pixle Vs Cartoon Start",
+      "content": "게임을 시작하였습니다. 공지 읽어 보셨나요?",
+      "imageUrl": "",
+      "linkUrl": ""
+    }
   ]
 }
