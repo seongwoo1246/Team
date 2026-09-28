@@ -15,7 +15,8 @@ using UtilDebug = DebugLogger;
 
 /// <summary>
 /// 서버 RTDB와 통신하는 모든 유저 데이터의 최상위 추상 베이스 클래스
-/// 각 도메인(유저 기본 정보, 캐릭터, 인벤토리 등)에 맞게 대상 노드 경로를 정의하고 Get / Set 로직을 override
+/// 각 도메인(유저 기본 정보, 캐릭터, 인벤토리 등)에 
+/// 맞게 대상 노드 경로를 정의하고 Get / Set 로직을 override
 /// </summary>
 [Serializable]
 abstract public class BaseRequestData

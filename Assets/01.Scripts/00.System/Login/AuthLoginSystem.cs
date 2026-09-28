@@ -8,6 +8,12 @@ using Firebase;
 using Firebase.Auth;
 using UtilDebug = DebugLogger<AuthLoginSystem>;
 
+/*
+Firebase App 의존성 확인 및 FirebaseAuth 인스턴스를 
+초기화하고 인증 상태를 관리
+이메일/비밀번호 로그인·회원가입, 
+구글 자격 증명 로그인 및 계정 삭제 비동기 API를 제공
+*/
 public class AuthLoginSystem : NonMonoSingleton<AuthLoginSystem>
 {
     private FirebaseAuth auth;

@@ -200,7 +200,6 @@ public sealed class StageManager : MonoBehaviour, ILoadable, ISyncable
         ServiceLocator.Register<StageManager>(this, ServiceLifetime.Local);
         SceneLoadManager.Instance.RegisterLoadable(this);
         GameManager.Instance.RegisterSyncable(this);
-       
     }
 
     #region ILoadable + ISyncable 구현부 - 송태훈
