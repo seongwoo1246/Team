@@ -32,7 +32,7 @@ public class GoogleLogin : MonoBehaviour
                     }
                 }
             }
-            catch (Exception ex)
+            catch (System.Exception ex)
             {
                 OnLogStatus?.Invoke($"구글 호출 예외: {ex.Message}");
             }
