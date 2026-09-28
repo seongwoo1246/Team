@@ -1,13 +1,12 @@
 ﻿/* 담당자 - 송태훈
-  
- 
+인게임 전역 상태(GameState) 전이 및 프레임레이트 등 기본 앱 환경을 제어하는 싱글톤
+등록된 ISyncable 객체들의 상태를 취합하여 5분 주기, 백그라운드 전환, 앱 종료 시 서버 및 로컬에 안전하게 플러시
  */
 
 using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.Rendering;
 using UtilDebug = DebugLogger<GameManager>;
 
 public enum GameState

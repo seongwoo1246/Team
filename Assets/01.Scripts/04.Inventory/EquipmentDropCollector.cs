@@ -7,9 +7,6 @@ EquipmentInventory.AddItem()을 불러주는 코드가 없어서 드랍은 되�
 
 로그인 시 서버 인벤토리 복원 + 드랍 시 서버 저장도 여기서 같이 처리함(RestoreSavedEquipment)
 */
-/* 공동 작성자 - 송태훈
- 
- */
 
 using Cysharp.Threading.Tasks;
 using UnityEngine;
