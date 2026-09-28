@@ -115,11 +115,12 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
                 if (loadingView != null)
                     await loadingView.UpdateSliderSmoothAsync(0.5f, 0.2f, this.destroyCancellationToken);
 
-                // 5. 새 씬 매니저 순차 초기화 ( 오름차순 )
-
-                await LTSManagerInitAsync(nextScene);
-                // 6. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기
+                // 5. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기
                 await LTSBootstrapRunnerAsync(nextScene);
+
+                // 6. 새 씬 매니저 순차 초기화 ( 오름차순 )
+                await LTSManagerInitAsync(nextScene);
+                
             }
 
 
@@ -188,10 +189,35 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
         await Resources.UnloadUnusedAssets().ToUniTask(cancellationToken: this.destroyCancellationToken);
         System.GC.Collect();
     }
-
     /// <summary>
-    /// 새 씬 매니저 순차 초기화 비동기 메서드 ( 오름차순 )
+    /// // 5. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기 비동기 메서드
     /// </summary>
+    private async UniTask LTSBootstrapRunnerAsync(SceneId scene)
+    {
+        var bootstrapRunner = UnityEngine.Object.FindAnyObjectByType<MonoBehaviour>() as ISceneBootstrap;
+        if (bootstrapRunner == null)
+        {
+            var allRunners = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
+            foreach (var mono in allRunners)
+            {
+                if (mono is ISceneBootstrap target)
+                {
+                    bootstrapRunner = target;
+                    break;
+                }
+            }
+        }
+
+        if (bootstrapRunner != null)
+        {
+            UtilDebug.Log($"[{scene}] ISceneBootstrap 감지 - 씬 셋업 대기 시작");
+            await bootstrapRunner.OnSceneReadyAsync();
+            UtilDebug.Log($"[{scene}] ISceneBootstrap 씬 셋업 완료");
+        }
+    }
+    /// <summary>
+     /// 6. 새 씬 매니저 순차 초기화 비동기 메서드 ( 오름차순 )
+     /// </summary>
     private async UniTask LTSManagerInitAsync(SceneId scene)
     {
         var sortedLoadables = _loadables.OrderBy(x => x.LoadOrder).ToList();
@@ -232,30 +258,4 @@ public class SceneLoadManager : Singleton<SceneLoadManager>
         }
     }
 
-    /// <summary>
-    /// // 6. 씬 내부 BootstrapRunner 실행 및 셋업 완료 대기 비동기 메서드
-    /// </summary>
-    private async UniTask LTSBootstrapRunnerAsync(SceneId scene)
-    {
-        var bootstrapRunner = UnityEngine.Object.FindAnyObjectByType<MonoBehaviour>() as ISceneBootstrap;
-        if (bootstrapRunner == null)
-        {
-            var allRunners = UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None);
-            foreach (var mono in allRunners)
-            {
-                if (mono is ISceneBootstrap target)
-                {
-                    bootstrapRunner = target;
-                    break;
-                }
-            }
-        }
-
-        if (bootstrapRunner != null)
-        {
-            UtilDebug.Log($"[{scene}] ISceneBootstrap 감지 - 씬 셋업 대기 시작");
-            await bootstrapRunner.OnSceneReadyAsync();
-            UtilDebug.Log($"[{scene}] ISceneBootstrap 씬 셋업 완료");
-        }
-    }
 }

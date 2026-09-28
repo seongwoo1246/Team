@@ -1,12 +1,10 @@
-﻿/// <summary>
-/// 씬이 전환되면서 초기화 순서가 보장되어야 하는 객체를 SceneLoadManager를 통해 보장되게 해주는 인터페이스
-/// </summary>
+﻿// 씬이 전환되면서 초기화 순서가 보장되어야 하는 객체를
+// SceneLoadManager를 통해 보장되게 해주는 인터페이스
 public interface ILoadable
 {
     int LoadOrder { get; }
     Cysharp.Threading.Tasks.UniTask OnSceneLoadCreate(SceneId scene);
     void Init(SceneId scene);
-
     void OnSceneDestory(SceneId scene);
 }
 
