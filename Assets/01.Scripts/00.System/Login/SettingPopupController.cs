@@ -48,9 +48,6 @@ public class SettingsPopupController : MonoBehaviour
 
     private void Awake()
     {
-
-       
-      
         //슬라이더 값을 음악 소리로 넘겨주기
         if (bgmvolume != null)
         {
@@ -71,8 +68,8 @@ public class SettingsPopupController : MonoBehaviour
 
 
         // 닫기 버튼 바인딩
-        if (closeButton != null)
-        {
+        if (closeButton != null)     
+         {
             closeButton.onClick.AddListener(ClosePopup);
         }
 
@@ -116,12 +113,10 @@ public class SettingsPopupController : MonoBehaviour
         {
             deleteConfirmNoButton.onClick.AddListener(() =>
             {
-                if (deleteConfirmPanel != null) deleteConfirmPanel.SetActive(false);
+                if (deleteConfirmPanel != null)
+                    deleteConfirmNoButton.onClick.AddListener(CloseDeleteConfirmPanel);
             });
         }
-
-
-
     }
 
     #region 담당자 - 정성우 소리 관련 함수들
@@ -140,8 +135,6 @@ public class SettingsPopupController : MonoBehaviour
             PlayerPrefs.SetInt("BGMMute", isMuted ? 1 : 0);
             
         }
-       
-
     }
     public void MuteOnOffSFX()
     {
@@ -311,6 +304,13 @@ public class SettingsPopupController : MonoBehaviour
         else
         {
             OnConfirmDeleteAccountAsync().Forget();
+        }
+    }
+    private void CloseDeleteConfirmPanel()
+    {
+        if (deleteConfirmPanel != null)
+        {
+            deleteConfirmPanel.SetActive(false);
         }
     }
 
