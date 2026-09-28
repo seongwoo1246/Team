@@ -25,10 +25,6 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
     // 몬스터 레벨(보통 스테이지 번호)
     [SerializeField] private int level = 1;
 
-    [Header("보스 배율 (일반 몬스터는 1)")]
-    // 보스일 때 체력에 추가로 곱할 배율
-    [SerializeField] private float bossHpMultiplier = 1f;
-
     [Header("전투")]
     // 공격 간격(초)
     [SerializeField] private float attackInterval = 1.5f;
@@ -354,7 +350,7 @@ public class Monster : MonoBehaviour, IEntity, IPoolObject
             StatCalculator.DEFAULT_MONSTER_GROWTH_TAPER_EXPONENT, StatCalculator.MONSTER_GROWTH_TAPER_BREAK_STAGE, StatCalculator.DEFAULT_MONSTER_LATE_GROWTH_RATE);
         if (isBoss)
         {
-            hp *= bossHpMultiplier;
+            hp *= statData.BossHpMultiplier;
         }
         _maxHP = hp;
 
