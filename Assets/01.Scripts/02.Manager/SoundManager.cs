@@ -6,7 +6,9 @@ using UnityEngine.UI;
 using Debug = DebugLogger<SoundManager>;
 //담당자 - 정성우
 /*
- 효과음, BGM등 소리를 담당 하는 매니저 
+ 효과음, BGM등 소리를 담당 하는 매니저  
+이번에는 믹서를 이용해서 사로 다른 소스에서 소리를 바꿔가며 소리의 입체감을 더할 수 있도록 시도해봄 
+사운드 데이터를 만들어 모아두고 거기서 이름으로 호출하는 식으로 사용하였다.
  */
 
 [Serializable]

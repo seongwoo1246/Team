@@ -8,7 +8,10 @@ using UnityEngine.UI;
 using UnityEngine.Video;
 using Debug = DebugLogger<ADManager>;
 //담당자 - 정성우
-
+/*
+ 광고 시스템을 직접 구현하기위해 만든 스크립트로 서버를 통해서 보상을 받아오도록 하는게 맞는 거지만 시간과 규모 관계상 그렇게 못했고 나중에 유니티에 내장 되어있는 광고시스템도 사용해볼 예정
+이번 프로젝트에서는 광고 시스템을 직접 구현 해본다는 것의 의미를 두고 있음
+ */
 
 /// <summary>
 /// 지금은 아니지만 나중에 광고를 넣어야 하게 될 때 필요한 클래스(이번 프로젝트에서는 짧은 아무 동영상으로 대체함)
@@ -29,6 +32,8 @@ public class ADManager : MonoBehaviour
     [SerializeField] private List<VideoClip> RewardADList = new List<VideoClip>();
     // 중간에 강제로 나올 영상
     [SerializeField] private List<VideoClip> InterstitialADList = new List<VideoClip>();
+
+    public GameObject dim;
 
     //씬 파괴 및 광고 취소 제어용 
     private CancellationTokenSource adCancellationTokenSource;
@@ -82,8 +87,9 @@ public class ADManager : MonoBehaviour
 
         SoundManager.Instance.SetBGMVolume(0);
         SoundManager.Instance.SetSFXVolume(0);
-      
+
         //UI 활성화 및 영상 재생
+        dim.SetActive(true);
         SetupAdUi(selectedClip);
         openAdBtn.gameObject.SetActive(false);
 
@@ -227,6 +233,7 @@ public class ADManager : MonoBehaviour
 
     public void CloseRewardAD()
     {
+        dim.SetActive(false);
         openAdBtn.gameObject.SetActive(true);
         closeAdBtn.gameObject.SetActive(false);
 

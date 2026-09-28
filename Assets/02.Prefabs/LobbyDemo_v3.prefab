@@ -18481,6 +18481,7 @@ MonoBehaviour:
   - {fileID: 32900000, guid: 908c8ab3358fcad45825ae838f99de74, type: 3}
   InterstitialADList:
   - {fileID: 32900000, guid: a738ed3191f6f0c45aa1a7c89768f4bd, type: 3}
+  dim: {fileID: 5206294661579617495}
   type: 0
   amount: 2000
 --- !u!328 &7711936467368658702

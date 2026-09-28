@@ -2,6 +2,15 @@
 using System.Threading;
 using UnityEngine;
 using UnityEngine.UI;
+// 담당장 정성우
+/*
+배틀 들어갈 때 배경을 담당하고 화면 전환 효과를 담당하고 있다.
+배경을 무한 스크롤 형태를 이용해서 만들었지만 무슨 이유인지 배경이 멈춰서 움직이질 않는다. 
+아무래도 스탑 위치가 잘 못 된게 아닐까 추측 중이다.
+
+ */
+
+
 
 public class ImageManager : MonoBehaviour
 {

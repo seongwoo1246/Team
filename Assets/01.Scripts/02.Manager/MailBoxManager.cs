@@ -8,6 +8,11 @@ using System.IO;
 using Cysharp.Threading.Tasks;
 
 //담당자 - 정성우
+/*
+우편을 관리하는 매니저로 서버에서 직접 보내줘야 하나 시간과 규모상 로컬에서 보내는 기능을 만들어서 보내는 기능 사용시 우편에 생기도록 만들었다.
+AddMail을 매개변수를 바꿔가며 중복함으로써 한가지 명령어로 여러 종류의 우편을 보낼 수 있도록 만들었다.
+
+ */
 
 public enum RewardType
 {

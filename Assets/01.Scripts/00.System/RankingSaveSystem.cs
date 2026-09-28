@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 // 담당장 - 정성우
 /*
-랭킹을 로컬에서 Json파일로 저장하고 관리 하기 위해서 만든  스크립트
+랭킹을 로컬에서 Json파일로 저장하고 관리 하기 위해서 만든  순수 C# 스크립트
 
  */
 
@@ -30,6 +30,11 @@ public static class RankingSaveSystem
 
     }
 
+
+    /// <summary>
+    /// 랭킹 데이터 불러오기 위한 함수
+    /// </summary>
+    /// <returns></returns>
     public static LocalRankingDataWrapper LoadRankingData()
     {
         if(!PlayerPrefs.HasKey(Save_Key))

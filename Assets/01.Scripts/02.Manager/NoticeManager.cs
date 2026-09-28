@@ -8,7 +8,11 @@ using UnityEngine.Networking;
 using UnityEngine.UI;
 using Debug = DebugLogger<NoticeManager>;
 //담당자 - 정성우
+/*
+공지를 관리하는 매니저로 게임 시작 할때 공지가 나오게 만들었으며 링크와 이미지 텍스트등을 원래 서버에서 만들어두고 불러오는 식이어야 하지만 시간과 규모상 로컬에서 돌아가도록 만들었다.
+공지 리소스를 만들어두고 리소스를 불러와서 나오도록 만들었다.
 
+ */
 #region 공지사항 데이터 모델 ( 유니티JsonUtility 호환)
 [System.Serializable]
 public class NoticeItem
